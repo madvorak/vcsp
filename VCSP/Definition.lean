@@ -67,14 +67,14 @@ def ValuedCspInstance.OptimumSolution (I : ValuedCspInstance Γ ι) (x : ι → 
 def glueValuedCspInstances (I₁ I₂ : ValuedCspInstance Γ ι) : ValuedCspInstance Γ ι :=
   List.append (I₁ : List (ValuedCspTerm Γ ι)) (I₂ : List (ValuedCspTerm Γ ι))
 
-lemma ValuedCspInstance.glue_optimumSolutions
+lemma optimumSolution_glueValuedCspInstances
     {I₁ I₂ : ValuedCspInstance Γ ι} {x : ι → D}
     (opt₁ : I₁.OptimumSolution x) (opt₂ : I₂.OptimumSolution x) :
     (glueValuedCspInstances I₁ I₂).OptimumSolution x := by
   intro y
   specialize opt₁ y
   specialize opt₂ y
-  unfold evalSolution
+  unfold ValuedCspInstance.evalSolution
   unfold glueValuedCspInstances
   rw [List.map_append', List.sum_append]
   rw [List.map_append', List.sum_append]

@@ -2,7 +2,7 @@ import VCSP.Definition
 
 variable {D C ι : Type} [Nonempty D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCspTemplate D C}
 
-lemma ValuedCspInstance.glue_optimalSolutions
+lemma optimalSolution_glueValuedCspInstances
     {I₁ I₂ : ValuedCspInstance Γ ι} {x : ι → D}
     (opt₁ : I₁.OptimalSolution x) (opt₂ : I₂.OptimalSolution x) :
     (glueValuedCspInstances I₁ I₂).OptimalSolution x := by
@@ -33,11 +33,11 @@ lemma ValuedCspInstance.OptimalSolution.toOptimum {I : ValuedCspInstance Γ ι} 
   push_neg at opt
   exact opt y
 
-lemma ValuedCspInstance.glue_optimalSolutions'
+lemma optimalSolution_glueValuedCspInstances'
     {I₁ I₂ : ValuedCspInstance Γ ι} {x : ι → D}
     (opt₁ : I₁.OptimalSolution x) (opt₂ : I₂.OptimalSolution x) :
     (glueValuedCspInstances I₁ I₂).OptimalSolution x := by
   apply ValuedCspInstance.OptimumSolution.toOptimal
-  apply ValuedCspInstance.glue_optimumSolutions
+  apply optimumSolution_glueValuedCspInstances
   · exact opt₁.toOptimum
   · exact opt₂.toOptimum
