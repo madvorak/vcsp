@@ -15,10 +15,12 @@ def ValuedCspInstance.evalMinimize {D C : Type} [Nonempty D] [OrderedAddCommMono
     (I : ValuedCspInstance Γ (ι ⊕ μ)) (x : ι → D) : C :=
   sInf { z | ∃ m : μ → D, I.evalPartial x m = z }
 
+-- Problem: `[InfSet C]` is not guaranteed to respect `≤` given by `[OrderedAddCommMonoid C]`
+-- Eric Wieser suggests: `[CompleteLattice C] [AddCommMonoid C] [CovariantClass C C (· + ·) (· ≤ ·)]`
+
 /-- Function expressed by a `Γ` instance `I` exposing `n` free variables. -/
 def ValuedCspInstance.expresses {D C : Type} [Nonempty D] [OrderedAddCommMonoid C] [InfSet C]
-    {Γ : ValuedCspTemplate D C} {n : ℕ} {μ : Type}
-    (I : ValuedCspInstance Γ (Fin n ⊕ μ)) :
+    {Γ : ValuedCspTemplate D C} {n : ℕ} {μ : Type} (I : ValuedCspInstance Γ (Fin n ⊕ μ)) :
     Σ (k : ℕ), (Fin k → D) → C :=
   ⟨n, I.evalMinimize⟩
 
@@ -54,7 +56,8 @@ lemma ValuedCspTemplate.subset_expressivePower_self {D C : Type}
     · intro c_is
       use e
       rw [c_is]
-  simp [ValuedCspTerm.evalSolution] -- works with `CompleteLinearOrder` or `CompleteLattice` but not with `InfSet`
+  simp [ValuedCspTerm.evalSolution] -- works with `CompleteLinearOrder` or `CompleteLattice`
+  -- but not with `InfSet` or `CompleteSemilatticeInf`
 
 /-- Expressive power is an idempotent operation on VCSP templates. -/
 lemma ValuedCspTemplate.expressivePower_expressivePower {D C : Type}

@@ -21,8 +21,8 @@ private def exampleFiniteValuedInstance : ValuedCspInstance exampleFiniteValuedC
 
 #eval exampleFiniteValuedInstance.evalSolution ![(3 : ℚ), (-2 : ℚ)]
 
-example : exampleFiniteValuedInstance.optimumSolution ![(0 : ℚ), (0 : ℚ)] := by
-  unfold ValuedCspInstance.optimumSolution
+example : exampleFiniteValuedInstance.OptimumSolution ![(0 : ℚ), (0 : ℚ)] := by
+  unfold ValuedCspInstance.OptimumSolution
   unfold exampleFiniteValuedCsp
   intro s
   convert_to 0 ≤ ValuedCspInstance.evalSolution exampleFiniteValuedInstance s
@@ -111,6 +111,6 @@ private def exampleSolutionIncorrect7 : Fin 4 → Fin 3 := ![2, 2, 0, 2]
 #eval exampleCrispCspInstance.evalSolution exampleSolutionIncorrect6 -- `true` means WRONG here
 #eval exampleCrispCspInstance.evalSolution exampleSolutionIncorrect7 -- `true` means WRONG here
 
-example : exampleCrispCspInstance.optimumSolution exampleSolutionCorrect0 := by
+example : exampleCrispCspInstance.OptimumSolution exampleSolutionCorrect0 := by
   intro _
   apply Bool.false_le
