@@ -12,10 +12,9 @@ private def absRat : (Fin 1 → ℚ) → ℚ := @n1ary_of_unary ℚ ℚ Abs.abs
 
 private def exampleAbs : Σ (k : ℕ), (Fin k → ℚ) → ℚ := ⟨1, absRat⟩
 
-private def exampleFiniteValuedCsp : ValuedCspTemplate ℚ :=
-  ValuedCspTemplate.mk ℚ {exampleAbs}
+private def exampleFiniteValuedCsp : ValuedCspTemplate ℚ ℚ := {exampleAbs}
 
-private lemma abs_in : ⟨1, absRat⟩ ∈ exampleFiniteValuedCsp.F := rfl
+private lemma abs_in : ⟨1, absRat⟩ ∈ exampleFiniteValuedCsp := rfl
 
 private def exampleFiniteValuedInstance : ValuedCspInstance exampleFiniteValuedCsp (Fin 2) :=
   [valuedCspTerm_of_unary abs_in 0, valuedCspTerm_of_unary abs_in 1]
@@ -60,10 +59,9 @@ private def beqBool : (Fin 2 → Fin 3) → Bool := n2ary_of_binary BEq.beq
 
 private def exampleEquality : Σ (k : ℕ), (Fin k → Fin 3) → Bool := ⟨2, beqBool⟩
 
-private def exampleCrispCsp : ValuedCspTemplate Bool :=
-  ValuedCspTemplate.mk (Fin 3) {exampleEquality}
+private def exampleCrispCsp : ValuedCspTemplate (Fin 3) Bool := {exampleEquality}
 
-private lemma beq_in : ⟨2, beqBool⟩ ∈ exampleCrispCsp.F := rfl
+private lemma beq_in : ⟨2, beqBool⟩ ∈ exampleCrispCsp := rfl
 
 private def exampleTermAB : ValuedCspTerm exampleCrispCsp (Fin 4) :=
   valuedCspTerm_of_binary beq_in 0 1
