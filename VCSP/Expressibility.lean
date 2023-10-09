@@ -1,4 +1,4 @@
-import VCSP.Basic
+import VCSP.Definition
 import Mathlib.Order.ConditionallyCompleteLattice.Basic
 
 

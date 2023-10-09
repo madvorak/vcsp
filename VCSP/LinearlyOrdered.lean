@@ -1,4 +1,4 @@
-import VCSP.Basic
+import VCSP.Definition
 
 variable {D C ι : Type} [Nonempty D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCspTemplate D C}
 

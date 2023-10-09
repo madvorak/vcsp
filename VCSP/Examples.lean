@@ -1,4 +1,4 @@
-import VCSP.Basic
+import VCSP.Definition
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Rat.Order
 import Mathlib.Tactic.Linarith

@@ -1,5 +1,6 @@
 import Mathlib.Algebra.Order.Monoid.Defs
 import Mathlib.Data.Fin.VecNotation
+import VCSP.Preliminaries
 
 /-!
 
@@ -17,17 +18,6 @@ General-Valued CSP subsumes Min-Cost-Hom (including 3-SAT for example) and Finit
 * `ValuedCspInstance.optimumSolution`: Is given solution a minimum of the VCSP instance?
 
 -/
-
-def n1ary_of_unary {α β : Type} (f : α → β) : (Fin 1 → α) → β :=
-  fun a => f (a 0)
-
-def n2ary_of_binary {α β : Type} (f : α → α → β) : (Fin 2 → α) → β :=
-  fun a => f (a 0) (a 1)
-
-lemma List.map_append' {α β : Type} (f : α → β) (l₁ l₂ : List α) :
-    List.map f (List.append l₁ l₂) = l₁.map f ++ l₂.map f := by
-  induction l₁ <;> simp_all
-
 
 /-- A template for a valued CSP problem with domain `D` and costs in `C`. -/
 @[reducible]
