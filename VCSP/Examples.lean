@@ -10,7 +10,7 @@ import Mathlib.Data.Bool.Basic
 
 private def absRat : (Fin 1 → ℚ) → ℚ := @n1ary_of_unary ℚ ℚ Abs.abs
 
-private def exampleAbs : Σ (k : ℕ), (Fin k → ℚ) → ℚ := ⟨1, absRat⟩
+private def exampleAbs : Σ (n : ℕ), (Fin n → ℚ) → ℚ := ⟨1, absRat⟩
 
 private def exampleFiniteValuedCsp : ValuedCspTemplate ℚ ℚ := {exampleAbs}
 
@@ -57,7 +57,7 @@ instance crispCodomain : LinearOrderedAddCommMonoid Bool where
 
 private def beqBool : (Fin 2 → Fin 3) → Bool := n2ary_of_binary BEq.beq
 
-private def exampleEquality : Σ (k : ℕ), (Fin k → Fin 3) → Bool := ⟨2, beqBool⟩
+private def exampleEquality : Σ (n : ℕ), (Fin n → Fin 3) → Bool := ⟨2, beqBool⟩
 
 private def exampleCrispCsp : ValuedCspTemplate (Fin 3) Bool := {exampleEquality}
 

@@ -22,20 +22,20 @@ General-Valued CSP subsumes Min-Cost-Hom (including 3-SAT for example) and Finit
 /-- A template for a valued CSP problem with domain `D` and costs in `C`. -/
 @[reducible]
 def ValuedCspTemplate (D C : Type) [Nonempty D] [OrderedAddCommMonoid C] : Type :=
-  Set (Σ (k : ℕ), (Fin k → D) → C) -- Cost functions from `D^k` to `C` for any `k`
+  Set (Σ (n : ℕ), (Fin n → D) → C) -- Cost functions from `D^n` to `C` for any `n`
 
 variable {D C : Type} [Nonempty D] [OrderedAddCommMonoid C]
 
 /-- A term in a valued CSP instance over the template `Γ`. -/
 structure ValuedCspTerm (Γ : ValuedCspTemplate D C) (ι : Type) where
   /-- Arity of the function -/
-  k : ℕ
+  n : ℕ
   /-- Which cost function is instantiated -/
-  f : (Fin k → D) → C
+  f : (Fin n → D) → C
   /-- The cost function comes from the template -/
-  inΓ : ⟨k, f⟩ ∈ Γ
+  inΓ : ⟨n, f⟩ ∈ Γ
   /-- Which variables are plugged as arguments to the cost function -/
-  app : Fin k → ι
+  app : Fin n → ι
 
 def valuedCspTerm_of_unary {Γ : ValuedCspTemplate D C} {ι : Type} {f₁ : D → C}
     (ok : ⟨1, n1ary_of_unary f₁⟩ ∈ Γ) (i : ι) : ValuedCspTerm Γ ι :=
