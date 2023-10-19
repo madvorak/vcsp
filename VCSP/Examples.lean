@@ -1,9 +1,6 @@
 import VCSP.Definition
-import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Rat.Order
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.Cases
-import Mathlib.Data.Bool.Basic
+import Mathlib.Tactic.Positivity
 
 
 -- Example: minimize |x| + |y| where x and y are rational numbers
@@ -30,13 +27,10 @@ example : exampleFiniteValuedInstance.OptimumSolution ![(0 : ℚ), (0 : ℚ)] :=
       List.map_cons, List.map_cons, List.map_nil, List.sum_cons, List.sum_cons, List.sum_nil,
       add_zero]
   show 0 ≤ |s 0| + |s 1|
-  have s0nn : 0 ≤ |s 0|
-  · exact abs_nonneg (s 0)
-  have s1nn : 0 ≤ |s 1|
-  · exact abs_nonneg (s 1)
-  linarith
+  positivity
 
 
+-- Example: B ≠ A ≠ C ≠ D ≠ B ≠ C with three available labels (i.e., 3-coloring of K₄⁻)
 
 private def Bool_add_le_add_left (a b : Bool) :
   (a = false ∨ b = true) → ∀ (c : Bool), (((c || a) = false) ∨ ((c || b) = true)) :=
@@ -52,8 +46,6 @@ instance crispCodomain : LinearOrderedAddCommMonoid Bool where
   add_zero := Bool.or_false
   add_comm := Bool.or_comm
   add_le_add_left := Bool_add_le_add_left
-
--- Example: B ≠ A ≠ C ≠ D ≠ B ≠ C with three available labels (i.e., 3-coloring of K₄⁻)
 
 private def beqBool : (Fin 2 → Fin 3) → Bool := n2ary_of_binary BEq.beq
 
