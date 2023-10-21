@@ -41,7 +41,7 @@ def FractionalOperation.IsFractionalPolymorphismFor
   ∀ f ∈ Γ, f.snd.AdmitsFractional ω
 
 def FractionalOperation.IsSymmetric
-    {D : Type} [Nonempty D] {m k : ℕ} (ω : FractionalOperation D m k) : Prop :=
+    {D : Type} {m k : ℕ} (ω : FractionalOperation D m k) : Prop :=
   ∀ x y : (Fin m → D), List.ofFn x ~ List.ofFn y → ω x = ω y
 
 def FractionalOperation.IsSymmetricFractionalPolymorphismFor
@@ -49,6 +49,8 @@ def FractionalOperation.IsSymmetricFractionalPolymorphismFor
     (ω : FractionalOperation D m k) (Γ : ValuedCspTemplate D C) : Prop :=
   ω.IsFractionalPolymorphismFor Γ ∧ ω.IsSymmetric
 
+
+section attic
 
 def FractionalOperationAbstract (D : Type) (m : ℕ) : Type :=
   ((Fin m → D) → D) →₀ ℕ -- TODO at least one output `> 0`
@@ -77,3 +79,5 @@ def WeightedOperation.IsWeightedPolymorphism
     {D C : Type} [Nonempty D] [OrderedRing C] {m : ℕ}
     (Γ : ValuedCspTemplate D C) (ω : WeightedOperation D C m) : Prop :=
   ∀ f ∈ Γ, f.snd.AdmitsWeighted ω
+
+end attic
