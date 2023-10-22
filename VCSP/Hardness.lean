@@ -1,7 +1,7 @@
 import VCSP.Expressibility
 import VCSP.FractionalPolymorphisms
 import Mathlib.GroupTheory.GroupAction.BigOperators
-import Mathlib.Tactic.Linarith
+import Mathlib.Algebra.GroupPower.Order
 
 
 lemma fractionalPolymorphism_expressivePower {D C : Type} {m k : ℕ}
@@ -29,15 +29,66 @@ def Function.HasMaxCutPropertyAt {D C : Type} [OrderedAddCommMonoid C]
 def Function.HasMaxCutProperty {D C : Type} [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) : Prop :=
   ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
+lemma two_nsmul_le_two_nsmul {C : Type} [LinearOrderedAddCommGroup C] {x y : C}
+    (hyp : 2 • x ≤ 2 • y) : x ≤ y :=
+  le_of_nsmul_le_nsmul (by decide) hyp
+
+lemma two_nsmul_le_two_nsmul_ {C : Type} [LinearOrderedAddCommMonoid C] {x y : C}
+    [CovariantClass C C (· + ·) (· < ·)]
+    [CovariantClass C C (Function.swap (· + ·)) (· < ·)]
+    (hyp : 2 • x ≤ 2 • y) : x ≤ y :=
+  le_of_nsmul_le_nsmul (by decide) hyp
+
 lemma two_smul_le_two_smul {C : Type} [OrderedAddCommMonoid C] {x y : C}
     (hyp : 2 • x ≤ 2 • y) : x ≤ y := by
+  -- Does not hold this way!!!
   sorry
 
 lemma apply222tt {D : Type} (ω : FractionalOperation D 2 2) (a b c d : D) :
     ω.tt ![ ![a, b] , ![c, d] ] = ![ ![ ω ![a, c] 0 , ω ![b, d] 0 ] , ![ ω ![a, c] 1 , ω ![b, d] 1 ] ] := by
-  sorry
+  ext i j
+  simp only [FractionalOperation.tt]
+  match j with
+  | 0 =>
+    show ω (fun i => ![ ![a, b] , ![c, d] ] i 0) i = ![ ![ω ![a, c] 0, ω ![b, d] 0], ![ω ![a, c] 1, ω ![b, d] 1]] i 0
+    have i0 : ∀ i : Fin 2, ![ ![a, b] , ![c, d] ] i 0 = ![ a , c ] i
+    · intro i 
+      match i with
+      | 0 => rfl
+      | 1 => rfl
+    simp [i0]
+    /-have ii : ![ ![ω ![a, c] 0, ω ![b, d] 0], ![ω ![a, c] 1, ω ![b, d] 1]] i 0 = ![ ω ![a, c] 0, ω ![a, c] 1] i
+    · match i with
+      | 0 => rfl
+      | 1 => rfl
+    simp [ii]-/
+    match i with
+    | 0 => simp
+    | 1 => simp
+  | 1 => 
+    have i1 : ∀ i : Fin 2, ![ ![a, b] , ![c, d] ] i 1 = ![ b , d ] i
+    · intro i 
+      match i with
+      | 0 => rfl
+      | 1 => rfl
+    simp [i1]
+    match i with
+    | 0 => simp
+    | 1 => simp
 
-lemma Function.HasMaxCutProperty.forbids_commutative {D C : Type} [LinearOrderedCommRing C] -- TODO suffices [OrderedAddCommMonoid C]
+lemma todo_name {C : Type} [OrderedAddCommMonoid C] [IsLeftCancelAdd C] {x x' y y' : C}
+    (hxy : x + y ≤ x' + y') (hx : x > x') (hy : y > y') : False := by
+  have impossible : x + y < x + y
+  · apply hxy.trans_lt
+    apply (OrderedAddCommMonoid.add_le_add_left y' y (le_of_lt hy) x').trans_lt
+    rw [add_comm x', add_comm x]
+    apply lt_of_le_of_ne
+    · exact add_le_add (le_of_eq rfl) (le_of_lt hx)
+    rw [add_ne_add_right]
+    exact ne_of_lt hx
+  exact LT.lt.false impossible
+
+lemma Function.HasMaxCutProperty.forbids_commutative {D C : Type} [OrderedAddCommMonoid C] [IsLeftCancelAdd C]
     {f : (Fin 2 → D) → C} {ω : FractionalOperation D 2 2}
     (mcf : f.HasMaxCutProperty) (symmega : ω.IsSymmetric) :
     ¬ f.AdmitsFractional ω := by
@@ -79,12 +130,26 @@ lemma Function.HasMaxCutProperty.forbids_commutative {D C : Type} [LinearOrdered
     rcases fne equ with ⟨ha0, hb0⟩ | ⟨ha0, hb0⟩ <;>
     · rw [← hb0] at ha0
       exact hab ha0
-  clear * - tt_le wrong0 wrong1
-  have tt_lt :
-    f ![ ω ![a, b] 0 , ω ![a, b] 0 ] + f ![ ω ![a, b] 1, ω ![a, b] 1 ] <
-    f ![ ω ![a, b] 0 , ω ![a, b] 0 ] + f ![ ω ![a, b] 1, ω ![a, b] 1 ]
-  · linarith -- TODO suffices [OrderedAddCommMonoid C], remove import
-  exact LT.lt.false tt_lt
+  exact todo_name tt_le wrong0 wrong1
+
+lemma Function.HasMaxCutProperty.forbids_commutative' {D C : Type} [OrderedAddCommMonoid C] [IsRightCancelAdd C]
+    {f : (Fin 2 → D) → C} {ω : FractionalOperation D 2 2}
+    (mcf : f.HasMaxCutProperty) (symmega : ω.IsSymmetric) :
+    ¬ f.AdmitsFractional ω :=
+  let _ := AddCommSemigroup.IsRightCancelAdd.toIsLeftCancelAdd C;
+  Function.HasMaxCutProperty.forbids_commutative mcf symmega
+
+lemma Function.HasMaxCutProperty.forbids_commutative'' {D C : Type} [OrderedAddCommMonoid C] [IsCancelAdd C]
+    {f : (Fin 2 → D) → C} {ω : FractionalOperation D 2 2}
+    (mcf : f.HasMaxCutProperty) (symmega : ω.IsSymmetric) :
+    ¬ f.AdmitsFractional ω :=
+  Function.HasMaxCutProperty.forbids_commutative mcf symmega
+
+lemma Function.HasMaxCutProperty.forbids_commutative''' {D C : Type} [OrderedAddCommGroup C]
+    {f : (Fin 2 → D) → C} {ω : FractionalOperation D 2 2}
+    (mcf : f.HasMaxCutProperty) (symmega : ω.IsSymmetric) :
+    ¬ f.AdmitsFractional ω :=
+  Function.HasMaxCutProperty.forbids_commutative'' mcf symmega
 
 theorem Function.HasMaxCutProperty.forbids_symmetric {D C : Type} [OrderedAddCommMonoid C]
     {m k : ℕ} {f : (Fin 2 → D) → C} {ω : FractionalOperation D m k}

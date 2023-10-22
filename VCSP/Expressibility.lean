@@ -48,7 +48,7 @@ lemma ValuedCspTemplate.subset_expressivePower {D C : Type}
     simp only [Set.mem_setOf_eq, Set.mem_singleton_iff]
     constructor
     · rintro ⟨m, eq_c⟩
-      rw [←eq_c]
+      rw [← eq_c]
       simp [ValuedCspTerm.evalSolution]
     · intro c_is
       use e
