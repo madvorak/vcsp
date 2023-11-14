@@ -21,7 +21,7 @@ lemma Multiset.sum_lt_sum {ι M : Type*}
     {s : Multiset ι} {f g : ι → M}
     (all_le : ∀ i ∈ s, f i ≤ g i) (exists_lt : ∃ i ∈ s, f i < g i) :
     (s.map f).sum < (s.map g).sum :=
-by -- TODO move elsewhere
+by -- contribute to mathlib
   rcases s with ⟨l⟩
   simp only [quot_mk_to_coe'', coe_map, coe_sum]
   apply List.sum_lt_sum
@@ -45,7 +45,7 @@ by -- why not oneliner?
   | 1 => rfl
 
 
-variable {D C : Type} [OrderedAddCommMonoid C]
+variable {D C : Type*} [OrderedAddCommMonoid C]
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower {m : ℕ} [CompleteLattice C]
     {ω : FractionalOperation D m} {Γ : ValuedCsp D C}
@@ -82,7 +82,7 @@ lemma Function.HasMaxCutProperty.forbids_commutative -- TODO use `OrderedCancelA
   rcases mcf with ⟨a, b, hab, mcfab⟩
   intro contr
   specialize contr ![![a, b], ![b, a]]
-  rw [univ_val_map_2x2, ←mcfab.left, Multiset.sum_ofList_twice] at contr
+  rw [univ_val_map_2x2, ← mcfab.left, Multiset.sum_ofList_twice] at contr
   have sharp :
     2 • ((ω.tt ![![a, b], ![b, a]]).map (fun _ => f ![a, b])).sum <
     2 • ((ω.tt ![![a, b], ![b, a]]).map (fun r => f r)).sum
