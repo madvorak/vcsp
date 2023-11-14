@@ -1,105 +1,52 @@
-import VCSP.Definition
-import Mathlib.Data.Finsupp.Defs
-import Mathlib.Data.Finsupp.Multiset
+import Mathlib.Combinatorics.Optimization.ValuedCSP
+import Mathlib.Algebra.Module.BigOperators
+import Mathlib.Data.List.OfFn
 
 
-def FractionalOperation (D : Type) (m k : ℕ) : Type :=
-  (Fin m → D) → (Fin k → D)
+/-- TODO description -/
+@[reducible]
+def FractionalOperation (D : Type*) (m : ℕ) : Type _ :=
+  Multiset (((Fin m → D) → D) × ℕ)
 
-/-
-For documentation purposes, here is a "less compact" version of the upcoming two definitions:
+variable {D C : Type*} [OrderedAddCommMonoid C]
 
-[import Mathlib.Data.Matrix.Basic]
+/-- TODO maybe change to subtype -/
+def FractionalOperation.IsValid {m : ℕ} (ω : FractionalOperation D m) : Prop :=
+  ω ≠ ∅ ∧ ∀ g ∈ ω, g.snd ≠ 0
 
-def FractionalOperation.tt {D : Type} {m k n : ℕ}
-    (ω : FractionalOperation D m k) (x : (Fin m → (Fin n → D))) :
-    (Fin k → (Fin n → D)) :=
-  Matrix.transpose (fun (i : Fin n) => ω ((Matrix.transpose x) i))
+/-- TODO description -/
+def weightedApplication {m n : ℕ} (g : ((Fin m → D) → D) × ℕ) (x' : Fin n → Fin m → D) :
+    (Fin n → D) × ℕ :=
+  ⟨fun i => g.fst (x' i), g.snd⟩
 
-def Function.AdmitsFractional {D C : Type} [OrderedAddCommMonoid C] {n m k : ℕ}
-    (f : (Fin n → D) → C) (ω : FractionalOperation D m k) : Prop :=
+/-- TODO description -/
+def FractionalOperation.tt {m n : ℕ} (ω : FractionalOperation D m) (x : Fin m → Fin n → D) :
+    Multiset ((Fin n → D) × ℕ) :=
+  ω.map (fun g => weightedApplication g (Function.swap x))
+
+lemma weightedApplication_in {m n : ℕ} {ω : FractionalOperation D m} {g : ((Fin m → D) → D) × ℕ}
+    (hg : g ∈ ω) (x : Fin m → Fin n → D) :
+    weightedApplication g (Function.swap x) ∈ FractionalOperation.tt ω x := by
+  rw [FractionalOperation.tt, Multiset.mem_map]
+  exact ⟨g, hg, rfl⟩
+
+/-- TODO description -/
+def Function.AdmitsFractional {n m : ℕ} (f : (Fin n → D) → C) (ω : FractionalOperation D m) :
+    Prop :=
   ∀ x : (Fin m → (Fin n → D)),
-    m • List.sum (List.map (fun i => f ((ω.tt x) i)) (List.finRange k)) ≤
-    k • List.sum (List.map (fun i => f (      x  i)) (List.finRange m))
+    m • ((ω.tt x).map (fun r => r.snd • f r.fst)).sum ≤
+    (ω.map Prod.snd).sum • (Finset.univ.val.map (fun i => f (x i))).sum
 
-They should be defeq to the definitions below.
--/
-
-def FractionalOperation.tt {D : Type} {m k n : ℕ}
-    (ω : FractionalOperation D m k) (x : (Fin m → (Fin n → D)))
-    (a : Fin k) (b : Fin n) : D :=
-  (ω (fun (i : Fin m) => x i b)) a
-
-def Function.AdmitsFractional {D C : Type} [OrderedAddCommMonoid C] {n m k : ℕ}
-    (f : (Fin n → D) → C) (ω : FractionalOperation D m k) : Prop :=
-  ∀ x : (Fin m → (Fin n → D)),
-    m • List.sum (List.map (f ∘ (ω.tt x)) (List.finRange k)) ≤
-    k • List.sum (List.map (f ∘ x) (List.finRange m))
-
-def FractionalOperation.IsFractionalPolymorphismFor
-    {D C : Type} [Nonempty D] [OrderedAddCommMonoid C] {m k : ℕ}
-    (ω : FractionalOperation D m k) (Γ : ValuedCspTemplate D C) : Prop :=
+/-- TODO description -/
+def FractionalOperation.IsFractionalPolymorphismFor {m : ℕ}
+    (ω : FractionalOperation D m) (Γ : ValuedCsp D C) : Prop :=
   ∀ f ∈ Γ, f.snd.AdmitsFractional ω
 
-def FractionalOperation.IsSymmetric
-    {D : Type} {m k : ℕ} (ω : FractionalOperation D m k) : Prop :=
-  ∀ x y : (Fin m → D), List.ofFn x ~ List.ofFn y → ω x = ω y
+/-- TODO description -/
+def FractionalOperation.IsSymmetric {m : ℕ} (ω : FractionalOperation D m) : Prop :=
+  ∀ x y : (Fin m → D), List.ofFn x ~ List.ofFn y → ∀ g ∈ ω, g.fst x = g.fst y
 
-def FractionalOperation.IsSymmetricFractionalPolymorphismFor
-    {D C : Type} [Nonempty D] [OrderedAddCommMonoid C] {m k : ℕ}
-    (ω : FractionalOperation D m k) (Γ : ValuedCspTemplate D C) : Prop :=
+/-- TODO description -/
+def FractionalOperation.IsSymmetricFractionalPolymorphismFor {m : ℕ}
+    (ω : FractionalOperation D m) (Γ : ValuedCsp D C) : Prop :=
   ω.IsFractionalPolymorphismFor Γ ∧ ω.IsSymmetric
-
-
-section attic
-
-def FractionalOperationEnumerative (D : Type) (m : ℕ) : Type :=
-  (Fin m → D) → List (D × ℕ)
-
--- For `ω` to be valid, it must be a nonempty `List` and furthermore `.snd ≠ 0`
-def FractionalOperationEnumerative.IsValid {D : Type} {m : ℕ}
-    (ω : FractionalOperationEnumerative D m) : Prop :=
-  ∀ a : (Fin m → D), ω a ≠ [] ∧ ∀ o ∈ ω a, o.snd ≠ 0
-
-
-def WeightedOperation (D C : Type) [OrderedRing C] (m : ℕ) : Type :=
-  ((Fin m → D) → D) →₀ C -- TODO all outputs nonnegative and sum up to one
-
-def Function.AdmitsWeighted {D C : Type} [OrderedRing C] {n m : ℕ}
-    (f : (Fin n → D) → C) (ω : WeightedOperation D C m) : Prop :=
-  ∀ x : (Fin m → (Fin n → D)),
-    -- TODO apply `ω` and divide by the sum of its weights
-    m • Finset.sum (List.finRange m).toFinset (fun i => f (x i)) ≤
-    Finset.sum Finset.univ (f ∘ x)
-
-def WeightedOperation.IsWeightedPolymorphism
-    {D C : Type} [Nonempty D] [OrderedRing C] {m : ℕ}
-    (Γ : ValuedCspTemplate D C) (ω : WeightedOperation D C m) : Prop :=
-  ∀ f ∈ Γ, f.snd.AdmitsWeighted ω
-
-
-@[reducible]
-def FractionalOperation' (D : Type) (m : ℕ) : Type _ :=
-  ((Fin m → D) → D) →₀ ℕ
-
-def FractionalOperation'.IsValid {D : Type} {m : ℕ} (ω : FractionalOperation' D m) : Prop :=
-  ω.support.card > 0
-
-def FractionalOperation'.toFractionalOperation1 {D : Type} {m : ℕ} (ω : FractionalOperation' D m) :=
-  (Finsupp.toMultiset ω).map ((·, 1))
-/-
-lemma FractionalOperation.IsValid.toFractionalOperation1 {D : Type} {m : ℕ} [DecidableEq ((Fin m → D) → D)]
-    {ω : FractionalOperation' D m} (valid : ω.IsValid) :
-  ω.toFractionalOperation1.IsValid :=
-by
-  simp [FractionalOperation'.toFractionalOperation1, FractionalOperation.IsValid]
-  simp [FractionalOperation'.IsValid] at valid
-  intro contr
-  sorry
-
--- Wrong!!! `Multiset.mem_toEnumFinset` does not count occurences!
-def FractionalOperation'.toFractionalOperation {D : Type} {m : ℕ} [DecidableEq ((Fin m → D) → D)]
-    (ω : FractionalOperation' D m) : FractionalOperation D m :=
-  (Finsupp.toMultiset ω).toEnumFinset.val
--/
-end attic

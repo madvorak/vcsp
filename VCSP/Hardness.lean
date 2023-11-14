@@ -1,212 +1,136 @@
-import VCSP.Expressibility
 import VCSP.FractionalPolymorphisms
-import Mathlib.GroupTheory.GroupAction.BigOperators
-import Mathlib.Algebra.GroupPower.Order
+import VCSP.Expressibility
+import Mathlib.Algebra.Order.SMul
+import Mathlib.Data.Fin.VecNotation
 
 
-lemma fractionalPolymorphism_expressivePower {D C : Type} {m k : ℕ}
-    [Nonempty D] [OrderedAddCommMonoid C] [CompleteLattice C]
-    {ω : FractionalOperation D m k} {Γ : ValuedCspTemplate D C}
+lemma univ_val_map_2x2 {α β : Type*} {f : (Fin 2 → α) → β} {a b c d : α} :
+    Finset.univ.val.map (fun i => f (![![a, b], ![c, d]] i)) = [f ![a, b], f ![c, d]] :=
+  rfl
+
+lemma Multiset.sum_ofList_twice {M : Type*} [AddCommMonoid M] (x : M) :
+    Multiset.sum ↑[x, x] = 2 • x :=
+by -- not sure we want to keep this form
+  convert (add_nsmul x 1 1).symm
+  simp
+
+lemma Multiset.sum_lt_sum {ι M : Type*}
+    [OrderedAddCommMonoid M]
+    [CovariantClass M M (· + ·) (· ≤ ·)]
+    [CovariantClass M M (· + ·) (· < ·)]
+    {s : Multiset ι} {f g : ι → M}
+    (all_le : ∀ i ∈ s, f i ≤ g i) (exists_lt : ∃ i ∈ s, f i < g i) :
+    (s.map f).sum < (s.map g).sum :=
+by -- TODO move elsewhere
+  rcases s with ⟨l⟩
+  simp only [quot_mk_to_coe'', coe_map, coe_sum]
+  apply List.sum_lt_sum
+  · exact all_le
+  · exact exists_lt
+
+lemma column_of_2x2_left {α : Type*} (a b c d : α) :
+    (fun i => ![![a, b], ![c, d]] i 0) = (fun i => ![a, c] i) :=
+by -- why not oneliner?
+  ext i
+  match i with
+  | 0 => rfl
+  | 1 => rfl
+
+lemma column_of_2x2_right {α : Type*} (a b c d : α) :
+    (fun i => ![![a, b], ![c, d]] i 1) = (fun i => ![b, d] i) :=
+by -- why not oneliner?
+  ext i
+  match i with
+  | 0 => rfl
+  | 1 => rfl
+
+
+variable {D C : Type*} [OrderedAddCommMonoid C]
+
+lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower {m : ℕ} [CompleteLattice C]
+    {ω : FractionalOperation D m} {Γ : ValuedCsp D C}
     (frop : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
   intro f hf
-  simp only [ValuedCspTemplate.expressivePower, Set.mem_setOf_eq] at hf
+  simp only [ValuedCsp.expressivePower, Set.mem_setOf_eq] at hf
   rcases hf with ⟨q, μ, I, rfl⟩
-  simp only [ValuedCspInstance.expresses, ValuedCspInstance.evalMinimize]
+  simp only [ValuedCsp.Instance.expresses, ValuedCsp.Instance.evalMinimize]
   intro x
-  simp only [ValuedCspInstance.evalPartial, ValuedCspInstance.evalSolution]
-  rw [List.smul_sum, List.smul_sum, List.map_map, List.map_map]
+  simp only [ValuedCsp.Instance.evalPartial, ValuedCsp.Instance.evalSolution]
+  rw [Multiset.smul_sum, Multiset.smul_sum, Multiset.map_map, Multiset.map_map]
   unfold FractionalOperation.IsFractionalPolymorphismFor at frop
   unfold Function.AdmitsFractional at frop
-  unfold ValuedCspInstance at I
+  unfold ValuedCsp.Instance at I
   dsimp only
   sorry
 
-def Function.HasMaxCutPropertyAt {D C : Type} [OrderedAddCommMonoid C]
-    (f : (Fin 2 → D) → C) (a b : D) : Prop := -- `argmin f` is exactly `{ ![a, b] , ![b, a] }`
-  f ![a, b] = f ![b, a] ∧ ∀ x y : D, f ![a, b] ≤ f ![x, y] ∧ (f ![a, b] = f ![x, y] → a = x ∧ b = y ∨ a = y ∧ b = x)
+/-- Function `f` has Max-Cut property at labels `a` and `b` when `argmin f` is exactly:
+`{ ![a, b] , ![b, a] }` -/
+def Function.HasMaxCutPropertyAt (f : (Fin 2 → D) → C) (a b : D) : Prop :=
+  f ![a, b] = f ![b, a] ∧
+    ∀ x y : D, f ![a, b] ≤ f ![x, y] ∧ (f ![a, b] = f ![x, y] → a = x ∧ b = y ∨ a = y ∧ b = x)
 
-def Function.HasMaxCutPropertyAt' {D C : Type} [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) (a b : D) : Prop :=
-  ∀ x : Fin 2 → D, f x ∈ lowerBounds (Set.range f) ↔ x = ![a, b] ∨ x = ![b, a]
-
-example {D C : Type} [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) (a b : D) :
-  f.HasMaxCutPropertyAt a b ↔ f.HasMaxCutPropertyAt' a b :=
-by
-  constructor
-  · rintro ⟨heq, hmin⟩
-    intro x
-    constructor
-    · intro hyp
-      rw [mem_lowerBounds] at hyp
-      simp only [Set.mem_range, forall_exists_index, forall_apply_eq_imp_iff] at hyp
-      sorry
-    · intro hyp
-      cases hyp with
-      | inl hab =>
-        unfold lowerBounds
-        simp only [Set.mem_range, forall_exists_index, forall_apply_eq_imp_iff, Set.mem_setOf_eq]
-        intro y
-        rw [hab]
-        sorry
-        /-convert (hmin (y 0) (y 1)).left
-        exact List.ofFn_inj.mp rfl-/
-      | inr hba =>
-        unfold lowerBounds
-        simp only [Set.mem_range, forall_exists_index, forall_apply_eq_imp_iff, Set.mem_setOf_eq]
-        intro y
-        rw [hba, ← heq]
-        sorry
-        /-convert (hmin (y 0) (y 1)).left
-        exact List.ofFn_inj.mp rfl-/
-  · intro mcp
-    constructor
-    · sorry
-    · intro x y
-      constructor
-      · specialize mcp ![a, b]
-        simp at mcp
-        rw [mem_lowerBounds] at mcp
-        simp only [Set.mem_range, forall_exists_index, forall_apply_eq_imp_iff] at mcp
-        apply mcp
-        sorry
-        sorry
-      · intro habxy
-        sorry
-
-def Function.HasMaxCutProperty {D C : Type} [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) : Prop :=
+/-- Function `f` has Max-Cut property at some two non-identical labels. -/
+def Function.HasMaxCutProperty (f : (Fin 2 → D) → C) : Prop :=
   ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
-lemma two_nsmul_le_two_nsmul {C : Type} [LinearOrderedAddCommGroup C] {x y : C}
-    (hyp : 2 • x ≤ 2 • y) : x ≤ y :=
-  le_of_nsmul_le_nsmul (by decide) hyp
-
-lemma two_nsmul_le_two_nsmul' {C : Type} [LinearOrderedAddCommMonoid C] {x y : C}
-    [CovariantClass C C (· + ·) (· < ·)]
-    (hyp : 2 • x ≤ 2 • y) : x ≤ y :=
-  le_of_nsmul_le_nsmul (by decide) hyp
-
-lemma two_nsmul_le_two_nsmul'' {C : Type} [OrderedAddCommMonoid C] {x y : C}
-    [ContravariantClass ℕ C HSMul.hSMul LE.le]
-    -- useless lemma but demonstrates what kind of assumptions (partial order...) we would like to work with
-    (hyp : 2 • x ≤ 2 • y) : x ≤ y :=
-  @ContravariantClass.elim ℕ C HSMul.hSMul LE.le _ _ _ _ hyp
-
-lemma apply222tt {D : Type} (ω : FractionalOperation D 2 2) (a b c d : D) :
-    ω.tt ![ ![a, b] , ![c, d] ] = ![ ![ ω ![a, c] 0 , ω ![b, d] 0 ] , ![ ω ![a, c] 1 , ω ![b, d] 1 ] ] := by
-  ext i j
-  match j with
-  | 0 =>
-    have h0 : ∀ k : Fin 2, ![ ![a, b] , ![c, d] ] k 0 = ![ a , c ] k
-    · intro k
-      match k with
-      | 0 => rfl
-      | 1 => rfl
-    match i with
-    | 0 => simp [FractionalOperation.tt, h0]
-    | 1 => simp [FractionalOperation.tt, h0]
-  | 1 =>
-    have h1 : ∀ k : Fin 2, ![ ![a, b] , ![c, d] ] k 1 = ![ b , d ] k
-    · intro k
-      match k with
-      | 0 => rfl
-      | 1 => rfl
-    match i with
-    | 0 => simp [FractionalOperation.tt, h1]
-    | 1 => simp [FractionalOperation.tt, h1]
-
-lemma todo_name {C : Type} [OrderedAddCommMonoid C] [IsLeftCancelAdd C] {x x' y y' : C}
-    (hxy : x + y ≤ x' + y') (hx : x > x') (hy : y > y') : False := by
-  have impossible : x + y < x + y
-  · apply hxy.trans_lt
-    apply (OrderedAddCommMonoid.add_le_add_left y' y (le_of_lt hy) x').trans_lt
-    rw [add_comm x', add_comm x]
-    apply lt_of_le_of_ne
-    · exact add_le_add (le_of_eq rfl) (le_of_lt hx)
-    rw [add_ne_add_right]
-    exact ne_of_lt hx
-  exact LT.lt.false impossible
-
-lemma Function.HasMaxCutProperty.forbids_commutative {D C : Type} [LinearOrderedAddCommMonoid C] [IsLeftCancelAdd C]
-    {f : (Fin 2 → D) → C} {ω : FractionalOperation D 2 2}
-    (mcf : f.HasMaxCutProperty) (symmega : ω.IsSymmetric) :
+lemma Function.HasMaxCutProperty.forbids_commutative -- TODO use `OrderedCancelAddCommMonoid`
+    [CovariantClass C C (· + ·) (· < ·)] [OrderedSMul ℕ C]
+    {f : (Fin 2 → D) → C} (mcf : f.HasMaxCutProperty)
+    {ω : FractionalOperation D 2} (valid : ω.IsValid) (symmega : ω.IsSymmetric) :
     ¬ f.AdmitsFractional ω := by
-  intro contr
   rcases mcf with ⟨a, b, hab, mcfab⟩
-  have cclass : CovariantClass C C (· + ·) (· < ·) -- TODO refactor into a typeclass instance
-  · constructor
-    intro x y z hyz
-    show x + y < x + z
-    have hle : x + y ≤ x + z
-    · exact add_le_add_left (le_of_lt hyz) x
-    have hne : x + y ≠ x + z
-    · intro contr
-      apply LT.lt.ne hyz
-      apply add_left_cancel
-      exact contr
-    exact Ne.lt_of_le hne hle
-  have tt_le := two_nsmul_le_two_nsmul' (contr ![ ![a, b] , ![b, a] ])
-  clear contr
-  rw [
-    show
-      List.map (f ∘ ![ ![a, b] , ![b, a] ]) (List.finRange 2) =
-      [ f ![a, b] , f ![b, a] ] by
-      rfl,
-    show
-      List.sum [ f ![a, b] , f ![b, a] ] =
-      f ![a, b] + f ![b, a] by
-      simp,
-    apply222tt,
-    show ω ![b, a] = ω ![a, b] by
-      apply symmega
-      apply List.Perm.swap,
-    show
-      List.map (f ∘ ![ ![ ω ![a, b] 0 , ω ![a, b] 0 ], ![ ω ![a, b] 1 , ω ![a, b] 1 ]]) (List.finRange 2) =
-      [ f ![ ω ![a, b] 0 , ω ![a, b] 0 ] , f ![ ω ![a, b] 1 , ω ![a, b] 1 ] ] by
-      rfl,
-    show
-      List.sum [ f ![ ω ![a, b] 0 , ω ![a, b] 0 ] , f ![ ω ![a, b] 1 , ω ![a, b] 1 ] ] =
-      f ![ ω ![a, b] 0, ω ![a, b] 0 ] + f ![ ω ![a, b] 1, ω ![a, b] 1 ] by
-      simp
-  ] at tt_le
-  have wrong0 : f ![ω ![a, b] 0, ω ![a, b] 0] > f ![a, b]
-  · obtain ⟨fle, fne⟩ := mcfab.right (ω ![a, b] 0) (ω ![a, b] 0)
-    refine Ne.lt_of_le ?_neq0 fle
-    intro equ
-    rcases fne equ with ⟨ha0, hb0⟩ | ⟨ha0, hb0⟩ <;>
-    · rw [← hb0] at ha0
-      exact hab ha0
-  have wrong1 : f ![ω ![a, b] 1, ω ![a, b] 1] > f ![b, a]
-  · obtain ⟨fle, fne⟩ := mcfab.right (ω ![a, b] 1) (ω ![a, b] 1)
-    rw [← mcfab.left]
-    refine Ne.lt_of_le ?_neq1 fle
-    intro equ
-    rcases fne equ with ⟨ha0, hb0⟩ | ⟨ha0, hb0⟩ <;>
-    · rw [← hb0] at ha0
-      exact hab ha0
-  exact todo_name tt_le wrong0 wrong1
-
-lemma Function.HasMaxCutProperty.forbids_commutative' {D C : Type} [LinearOrderedAddCommMonoid C] [IsRightCancelAdd C]
-    {f : (Fin 2 → D) → C} {ω : FractionalOperation D 2 2}
-    (mcf : f.HasMaxCutProperty) (symmega : ω.IsSymmetric) :
-    ¬ f.AdmitsFractional ω :=
-  let _ := AddCommSemigroup.IsRightCancelAdd.toIsLeftCancelAdd C;
-  Function.HasMaxCutProperty.forbids_commutative mcf symmega
-
-lemma Function.HasMaxCutProperty.forbids_commutative'' {D C : Type} [LinearOrderedAddCommMonoid C] [IsCancelAdd C]
-    -- see also `AddCancelCommMonoid`
-    {f : (Fin 2 → D) → C} {ω : FractionalOperation D 2 2}
-    (mcf : f.HasMaxCutProperty) (symmega : ω.IsSymmetric) :
-    ¬ f.AdmitsFractional ω :=
-  Function.HasMaxCutProperty.forbids_commutative mcf symmega
-
-lemma Function.HasMaxCutProperty.forbids_commutative''' {D C : Type} [LinearOrderedAddCommGroup C]
-    {f : (Fin 2 → D) → C} {ω : FractionalOperation D 2 2}
-    (mcf : f.HasMaxCutProperty) (symmega : ω.IsSymmetric) :
-    ¬ f.AdmitsFractional ω :=
-  Function.HasMaxCutProperty.forbids_commutative'' mcf symmega
-
-theorem Function.HasMaxCutProperty.forbids_symmetric {D C : Type} [LinearOrderedAddCommMonoid C] [IsLeftCancelAdd C]
-    {m k : ℕ} {f : (Fin 2 → D) → C} {ω : FractionalOperation D m k}
-    (mcf : f.HasMaxCutProperty) (omega : ω.IsSymmetric) :
-    ¬ f.AdmitsFractional ω := by
-  sorry
+  intro contr
+  specialize contr ![![a, b], ![b, a]]
+  -- on each row `r` we have `f r.fst > f a b = f b a`
+  rw [univ_val_map_2x2, ←mcfab.left, Multiset.sum_ofList_twice] at contr
+  have sharp :
+    2 • ((ω.tt ![![a, b], ![b, a]]).map (fun r => r.snd • f ![a, b])).sum <
+    2 • ((ω.tt ![![a, b], ![b, a]]).map (fun r => r.snd • f r.fst)).sum
+  · obtain ⟨nonempty, nonzeros⟩ := valid
+    have rows_lt : ∀ r ∈ (ω.tt ![![a, b], ![b, a]]), r.snd • f ![a, b] < r.snd • f r.fst
+    · intro r rin
+      rw [FractionalOperation.tt, Multiset.mem_map, Prod.exists] at rin
+      rcases rin with ⟨o, w, in_omega, eq_r⟩
+      have rsnd_pos : 0 < r.snd
+      · rw [← eq_r]
+        exact Nat.pos_of_ne_zero (nonzeros (o, w) in_omega)
+      have key : f ![a, b] < f r.fst
+      · rw [show r.1 = ![r.fst 0, r.fst 1] from List.ofFn_inj.mp rfl]
+        apply lt_of_le_of_ne (mcfab.right (r.fst 0) (r.fst 1)).left
+        intro equ
+        have asymm : r.fst 0 ≠ r.fst 1
+        · rcases (mcfab.right (r.fst 0) (r.fst 1)).right equ with ⟨ha0, hb1⟩ | ⟨ha1, hb0⟩
+          · rw [ha0, hb1] at hab
+            exact hab
+          · rw [ha1, hb0] at hab
+            exact hab.symm
+        apply asymm
+        rw [← eq_r]
+        show o (fun j => ![![a, b], ![b, a]] j 0) = o (fun j => ![![a, b], ![b, a]] j 1)
+        rw [column_of_2x2_left, column_of_2x2_right]
+        exact symmega ![a, b] ![b, a] (List.Perm.swap b a []) (o, w) in_omega
+      exact smul_lt_smul_of_pos key rsnd_pos
+    have half_sharp :
+      ((ω.tt ![![a, b], ![b, a]]).map (fun r => r.snd • f ![a, b])).sum <
+      ((ω.tt ![![a, b], ![b, a]]).map (fun r => r.snd • f r.fst)).sum
+    · apply Multiset.sum_lt_sum
+      · intro r rin
+        exact le_of_lt (rows_lt r rin)
+      · obtain ⟨g, gin⟩ := Multiset.exists_mem_of_ne_zero nonempty
+        use weightedApplication g (Function.swap ![![a, b], ![b, a]])
+        constructor
+        · apply weightedApplication_in gin
+        · apply rows_lt
+          apply weightedApplication_in gin
+    exact smul_lt_smul_of_pos half_sharp (by decide)
+  have impos : 2 • (ω.map (fun r => r.snd • f ![a, b])).sum < (ω.map Prod.snd).sum • 2 • f ![a, b]
+  · convert lt_of_lt_of_le sharp contr
+    simp [FractionalOperation.tt, weightedApplication, Multiset.map_map]
+  have rhs_swap : (ω.map Prod.snd).sum • 2 • f ![a, b] = 2 • (ω.map Prod.snd).sum • f ![a, b]
+  · apply nsmul_left_comm
+  have distrib : (ω.map (fun r => r.snd • f ![a, b])).sum = (ω.map Prod.snd).sum • f ![a, b]
+  · rw [Multiset.sum_smul, Multiset.map_map]
+    rfl
+  rw [rhs_swap, distrib] at impos
+  exact ne_of_lt impos rfl
