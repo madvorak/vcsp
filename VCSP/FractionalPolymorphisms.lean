@@ -1,5 +1,6 @@
 import VCSP.Definition
 import Mathlib.Data.Finsupp.Defs
+import Mathlib.Data.Finsupp.Multiset
 
 
 def FractionalOperation (D : Type) (m k : ℕ) : Type :=
@@ -52,10 +53,6 @@ def FractionalOperation.IsSymmetricFractionalPolymorphismFor
 
 section attic
 
-def FractionalOperationAbstract (D : Type) (m : ℕ) : Type :=
-  ((Fin m → D) → D) →₀ ℕ -- TODO at least one output `> 0`
-
-
 def FractionalOperationEnumerative (D : Type) (m : ℕ) : Type :=
   (Fin m → D) → List (D × ℕ)
 
@@ -80,4 +77,29 @@ def WeightedOperation.IsWeightedPolymorphism
     (Γ : ValuedCspTemplate D C) (ω : WeightedOperation D C m) : Prop :=
   ∀ f ∈ Γ, f.snd.AdmitsWeighted ω
 
+
+@[reducible]
+def FractionalOperation' (D : Type) (m : ℕ) : Type _ :=
+  ((Fin m → D) → D) →₀ ℕ
+
+def FractionalOperation'.IsValid {D : Type} {m : ℕ} (ω : FractionalOperation' D m) : Prop :=
+  ω.support.card > 0
+
+def FractionalOperation'.toFractionalOperation1 {D : Type} {m : ℕ} (ω : FractionalOperation' D m) :=
+  (Finsupp.toMultiset ω).map ((·, 1))
+/-
+lemma FractionalOperation.IsValid.toFractionalOperation1 {D : Type} {m : ℕ} [DecidableEq ((Fin m → D) → D)]
+    {ω : FractionalOperation' D m} (valid : ω.IsValid) :
+  ω.toFractionalOperation1.IsValid :=
+by
+  simp [FractionalOperation'.toFractionalOperation1, FractionalOperation.IsValid]
+  simp [FractionalOperation'.IsValid] at valid
+  intro contr
+  sorry
+
+-- Wrong!!! `Multiset.mem_toEnumFinset` does not count occurences!
+def FractionalOperation'.toFractionalOperation {D : Type} {m : ℕ} [DecidableEq ((Fin m → D) → D)]
+    (ω : FractionalOperation' D m) : FractionalOperation D m :=
+  (Finsupp.toMultiset ω).toEnumFinset.val
+-/
 end attic

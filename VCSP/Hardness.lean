@@ -26,6 +26,53 @@ def Function.HasMaxCutPropertyAt {D C : Type} [OrderedAddCommMonoid C]
     (f : (Fin 2 → D) → C) (a b : D) : Prop := -- `argmin f` is exactly `{ ![a, b] , ![b, a] }`
   f ![a, b] = f ![b, a] ∧ ∀ x y : D, f ![a, b] ≤ f ![x, y] ∧ (f ![a, b] = f ![x, y] → a = x ∧ b = y ∨ a = y ∧ b = x)
 
+def Function.HasMaxCutPropertyAt' {D C : Type} [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) (a b : D) : Prop :=
+  ∀ x : Fin 2 → D, f x ∈ lowerBounds (Set.range f) ↔ x = ![a, b] ∨ x = ![b, a]
+
+example {D C : Type} [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) (a b : D) :
+  f.HasMaxCutPropertyAt a b ↔ f.HasMaxCutPropertyAt' a b :=
+by
+  constructor
+  · rintro ⟨heq, hmin⟩
+    intro x
+    constructor
+    · intro hyp
+      rw [mem_lowerBounds] at hyp
+      simp only [Set.mem_range, forall_exists_index, forall_apply_eq_imp_iff] at hyp
+      sorry
+    · intro hyp
+      cases hyp with
+      | inl hab =>
+        unfold lowerBounds
+        simp only [Set.mem_range, forall_exists_index, forall_apply_eq_imp_iff, Set.mem_setOf_eq]
+        intro y
+        rw [hab]
+        sorry
+        /-convert (hmin (y 0) (y 1)).left
+        exact List.ofFn_inj.mp rfl-/
+      | inr hba =>
+        unfold lowerBounds
+        simp only [Set.mem_range, forall_exists_index, forall_apply_eq_imp_iff, Set.mem_setOf_eq]
+        intro y
+        rw [hba, ← heq]
+        sorry
+        /-convert (hmin (y 0) (y 1)).left
+        exact List.ofFn_inj.mp rfl-/
+  · intro mcp
+    constructor
+    · sorry
+    · intro x y
+      constructor
+      · specialize mcp ![a, b]
+        simp at mcp
+        rw [mem_lowerBounds] at mcp
+        simp only [Set.mem_range, forall_exists_index, forall_apply_eq_imp_iff] at mcp
+        apply mcp
+        sorry
+        sorry
+      · intro habxy
+        sorry
+
 def Function.HasMaxCutProperty {D C : Type} [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) : Prop :=
   ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
@@ -57,7 +104,7 @@ lemma apply222tt {D : Type} (ω : FractionalOperation D 2 2) (a b c d : D) :
     match i with
     | 0 => simp [FractionalOperation.tt, h0]
     | 1 => simp [FractionalOperation.tt, h0]
-  | 1 => 
+  | 1 =>
     have h1 : ∀ k : Fin 2, ![ ![a, b] , ![c, d] ] k 1 = ![ b , d ] k
     · intro k
       match k with
