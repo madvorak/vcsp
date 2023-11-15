@@ -38,7 +38,7 @@ lemma ValuedCsp.subset_expressivePower [CompleteLattice C]
   unfold ValuedCsp.Instance.evalSolution
   simp_rw [Multiset.map_singleton, Multiset.sum_singleton]
   let e : Empty → D := fun _ => (by contradiction)
-  convert_to sInf {z | ValuedCsp.Term.evalSolution ⟨n, f, hfΓ, Sum.inl⟩ (Sum.elim x e) = z} = f x
+  convert_to sInf { z | ValuedCsp.Term.evalSolution ⟨n, f, hfΓ, Sum.inl⟩ (Sum.elim x e) = z } = f x
   · rw [Set.setOf_eq_eq_singleton']
     apply congr_arg
     ext c

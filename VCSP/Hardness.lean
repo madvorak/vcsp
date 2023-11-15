@@ -21,7 +21,7 @@ lemma Multiset.sum_lt_sum {ι M : Type*}
     {s : Multiset ι} {f g : ι → M}
     (all_le : ∀ i ∈ s, f i ≤ g i) (exists_lt : ∃ i ∈ s, f i < g i) :
     (s.map f).sum < (s.map g).sum :=
-by -- contribute to mathlib
+by -- TODO contribute to mathlib
   rcases s with ⟨l⟩
   simp only [quot_mk_to_coe'', coe_map, coe_sum]
   apply List.sum_lt_sum
@@ -45,10 +45,11 @@ by -- why not oneliner?
   | 1 => rfl
 
 
-variable {D C : Type*} [OrderedAddCommMonoid C]
+variable {D C : Type*}
 
-lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower {m : ℕ} [CompleteLattice C]
-    {ω : FractionalOperation D m} {Γ : ValuedCsp D C}
+lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
+    [OrderedAddCommMonoid C] [CompleteLattice C]
+    {m : ℕ} {ω : FractionalOperation D m} {Γ : ValuedCsp D C}
     (frop : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
   intro f hf
@@ -66,20 +67,33 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower {m : ℕ} 
 
 /-- Function `f` has Max-Cut property at labels `a` and `b` when `argmin f` is exactly:
    `{ ![a, b] , ![b, a] }` -/
-def Function.HasMaxCutPropertyAt (f : (Fin 2 → D) → C) (a b : D) : Prop :=
+def Function.HasMaxCutPropertyAt [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) (a b : D) : Prop :=
   f ![a, b] = f ![b, a] ∧
     ∀ x y : D, f ![a, b] ≤ f ![x, y] ∧ (f ![a, b] = f ![x, y] → a = x ∧ b = y ∨ a = y ∧ b = x)
 
 /-- Function `f` has Max-Cut property at some two non-identical labels. -/
-def Function.HasMaxCutProperty (f : (Fin 2 → D) → C) : Prop :=
+def Function.HasMaxCutProperty [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) : Prop :=
   ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
-lemma Function.HasMaxCutProperty.forbids_commutative -- TODO use `OrderedCancelAddCommMonoid`
-    [CovariantClass C C (· + ·) (· < ·)] [OrderedSMul ℕ C]
+lemma Function.HasMaxCutProperty.forbids_commutative [OrderedCancelAddCommMonoid C]
     {f : (Fin 2 → D) → C} (mcf : f.HasMaxCutProperty)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) (symmega : ω.IsSymmetric) :
     ¬ f.AdmitsFractional ω := by
   rcases mcf with ⟨a, b, hab, mcfab⟩
+  have ccCC : CovariantClass C C (· + ·) (· < ·)
+  · exact AddLeftCancelSemigroup.covariant_add_lt_of_covariant_add_le C
+  have osNC : OrderedSMul ℕ C
+  · constructor
+    · intro a b n hab hzn
+      induction n with
+      | zero => simp only at hzn
+      | succ n ih =>
+        sorry
+    · intro a b n hnsmul hzn
+      induction n with
+      | zero => simp only at hzn
+      | succ n ih =>
+        sorry
   intro contr
   specialize contr ![![a, b], ![b, a]]
   rw [univ_val_map_2x2, ← mcfab.left, Multiset.sum_ofList_twice] at contr
@@ -119,12 +133,12 @@ lemma Function.HasMaxCutProperty.forbids_commutative -- TODO use `OrderedCancelA
           simp [FractionalOperation.tt]
           use g
     exact smul_lt_smul_of_pos half_sharp (by decide)
-  have impos : 2 • (ω.map (fun _ => f ![a, b])).sum < (Multiset.card ω : ℕ) • 2 • f ![a, b]
+  have impos : 2 • (ω.map (fun _ => f ![a, b])).sum < Multiset.card.toFun ω • 2 • f ![a, b]
   · convert lt_of_lt_of_le sharp contr
     simp [FractionalOperation.tt, Multiset.map_map]
-  have rhs_swap : (Multiset.card ω : ℕ) • 2 • f ![a, b] = 2 • (Multiset.card ω : ℕ) • f ![a, b]
+  have rhs_swap : Multiset.card.toFun ω • 2 • f ![a, b] = 2 • Multiset.card.toFun ω • f ![a, b]
   · apply nsmul_left_comm
-  have distrib : (ω.map (fun _ => f ![a, b])).sum = (Multiset.card ω : ℕ) • f ![a, b]
+  have distrib : (ω.map (fun _ => f ![a, b])).sum = Multiset.card.toFun ω • f ![a, b]
   · simp
   rw [rhs_swap, distrib] at impos
   exact ne_of_lt impos rfl
