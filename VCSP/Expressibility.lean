@@ -37,7 +37,7 @@ lemma ValuedCsp.subset_expressivePower [CompleteLattice C]
   ext x
   unfold ValuedCsp.Instance.evalSolution
   simp_rw [Multiset.map_singleton, Multiset.sum_singleton]
-  let e : Empty → D := fun _ => (by contradiction)
+  let e : Empty → D := (fun _ => by contradiction)
   convert_to sInf { z | ValuedCsp.Term.evalSolution ⟨n, f, hfΓ, Sum.inl⟩ (Sum.elim x e) = z } = f x
   · rw [Set.setOf_eq_eq_singleton']
     apply congr_arg
@@ -54,5 +54,10 @@ lemma ValuedCsp.subset_expressivePower [CompleteLattice C]
 
 /-- Expressive power is an idempotent operation on VCSP templates. -/
 lemma ValuedCsp.expressivePower_expressivePower [CompleteLattice C]
-    (Γ : ValuedCsp D C) : Γ.expressivePower.expressivePower = Γ.expressivePower := by
+    (Γ : ValuedCsp D C) : Γ.expressivePower = Γ.expressivePower.expressivePower := by
+  apply Set.eq_of_subset_of_subset
+  · apply ValuedCsp.subset_expressivePower
+  rintro ⟨n, f⟩ hfΓ
+  unfold ValuedCsp.expressivePower at *
+  -- exact hfΓ -- Note that `I` and `I` are over different VCSPs!
   sorry

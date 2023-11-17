@@ -19,14 +19,15 @@ lemma optimumSolution_glueValuedCspInstances
   rw [Multiset.map_add, Multiset.sum_add]
   exact add_le_add (opt₁ y) (opt₂ y)
 
-/-- Condition for `x` being an optimal solution to given `Γ` instance `I` (nothing is below it).-/
+/-- Condition for `x` being an optimal solution to given `Γ` instance `I` (nothing is below it). -/
 def ValuedCsp.Instance.IsOptimalSolution (I : Γ.Instance ι) (x : ι → D) : Prop :=
   ¬ ∃ y : ι → D, I.evalSolution y < I.evalSolution x
 
 lemma ValuedCsp.Instance.IsOptimumSolution.toOptimal {I : Γ.Instance ι} {x : ι → D}
     (opt : I.IsOptimumSolution x) : I.IsOptimalSolution x := by
   rintro ⟨y, contr⟩
-  exact LT.lt.false (LT.lt.trans_le contr (opt y))
+  apply (contr.trans_le (opt y)).ne
+  rfl
 
 lemma ValuedCsp.Instance.IsOptimalSolution.toOptimum {I : Γ.Instance ι} {x : ι → D}
     (opt : I.IsOptimalSolution x) : I.IsOptimumSolution x := by
