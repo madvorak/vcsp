@@ -10,8 +10,8 @@ lemma univ_val_map_2x2 {α β : Type*} {f : (Fin 2 → α) → β} {a b c d : α
 
 lemma Multiset.sum_ofList_twice {M : Type*} [AddCommMonoid M] (x : M) :
     Multiset.sum ↑[x, x] = 2 • x :=
-by -- not sure we want to keep this form
-  convert (add_nsmul x 1 1).symm
+by
+  rw [two_nsmul x]
   simp
 
 lemma Multiset.sum_lt_sum {ι M : Type*}
@@ -74,42 +74,10 @@ def Function.HasMaxCutPropertyAt [OrderedAddCommMonoid C] (f : (Fin 2 → D) →
 def Function.HasMaxCutProperty [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) : Prop :=
   ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
-lemma noo [OrderedCancelAddCommMonoid C] {x y z w : C} (hlt : x + z < y + w) (hzw : ¬ (z < w)) :
-     x < y :=
-/- Counterexample:
-(1, 1) + (1, 1) < (0, 3) + (3, 0)
-¬ (1, 1) < (3, 0)
-¬ (1, 1) < (0, 3)
-We will need stronger assumptions. OrderedCancelAddCommMonoid is not enough. -/
-  sorry
-
 lemma Function.HasMaxCutProperty.forbids_commutative [OrderedCancelAddCommMonoid C]
     {f : (Fin 2 → D) → C} (mcf : f.HasMaxCutProperty)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) (symmega : ω.IsSymmetric) :
     ¬ f.AdmitsFractional ω := by
-  have ccCC : CovariantClass C C (· + ·) (· < ·) -- automatic?
-  · exact AddLeftCancelSemigroup.covariant_add_lt_of_covariant_add_le C
-  have osNC : OrderedSMul ℕ C -- overkill?
-  · constructor
-    · intro a b n hab hzn
-      induction n with
-      | zero => simp only at hzn
-      | succ n ih =>
-        rw [succ_nsmul, succ_nsmul]
-        cases n with
-        | zero => rwa [Nat.zero_eq, zero_smul, add_zero, zero_smul, add_zero]
-        | succ n => exact add_lt_add hab (ih n.succ_pos)
-    · intro a b n hnsmul hzn
-      induction n with
-      | zero => simp only at hzn
-      | succ n ih =>
-        rw [succ_nsmul, succ_nsmul] at hnsmul
-        cases n with
-        | zero => rwa [Nat.zero_eq, zero_smul, add_zero, zero_smul, add_zero] at hnsmul
-        | succ n =>
-          by_cases hyp : n.succ • a < n.succ • b
-          · exact ih hyp n.succ_pos
-          · exact noo hnsmul hyp
   intro contr
   rcases mcf with ⟨a, b, hab, mcfab⟩
   specialize contr ![![a, b], ![b, a]]
@@ -149,9 +117,8 @@ lemma Function.HasMaxCutProperty.forbids_commutative [OrderedCancelAddCommMonoid
         · apply rows_lt
           simp [FractionalOperation.tt]
           use g
-    -- Strictly speaking, we only need `x + x ≤ y + y` to imply `x ≤ y` here?
-    -- Strictly speaking, we only need `x < y` to imply `x + x < y + y` here.
-    exact smul_lt_smul_of_pos half_sharp (by decide)
+    rw [two_nsmul, two_nsmul]
+    exact add_lt_add half_sharp half_sharp
   have impos : 2 • (ω.map (fun _ => f ![a, b])).sum < Multiset.card.toFun ω • 2 • f ![a, b]
   · convert lt_of_lt_of_le sharp contr
     simp [FractionalOperation.tt, Multiset.map_map]
