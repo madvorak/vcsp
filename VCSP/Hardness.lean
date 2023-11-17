@@ -10,13 +10,10 @@ lemma univ_val_map_2x2 {α β : Type*} {f : (Fin 2 → α) → β} {a b c d : α
 
 lemma Multiset.sum_ofList_twice {M : Type*} [AddCommMonoid M] (x : M) :
     Multiset.sum ↑[x, x] = 2 • x :=
-by
-  rw [two_nsmul x]
-  simp
+by simp [two_nsmul]
 
 lemma Multiset.sum_lt_sum {ι M : Type*}
-    [OrderedAddCommMonoid M]
-    [CovariantClass M M (· + ·) (· < ·)]
+    [OrderedCancelAddCommMonoid M]
     {s : Multiset ι} {f g : ι → M}
     (all_le : ∀ i ∈ s, f i ≤ g i) (exists_lt : ∃ i ∈ s, f i < g i) :
     (s.map f).sum < (s.map g).sum :=
