@@ -32,6 +32,7 @@ lemma ValuedCsp.subset_expressivePower (Γ : ValuedCsp D C) :
   unfold ValuedCsp.expressivePower
   rw [Set.mem_setOf_eq]
   use n, Empty
+  unfold ValuedCsp.Instance
   use {ValuedCsp.Term.mk n f hfΓ Sum.inl}
   unfold ValuedCsp.Instance.expresses
   simp [ValuedCsp.Instance.evalMinimize, ValuedCsp.Instance.evalPartial]
