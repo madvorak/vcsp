@@ -24,7 +24,6 @@ def Function.AdmitsFractional {n m : ℕ} (f : (Fin n → D) → C) (ω : Fracti
     Prop :=
   ∀ x : (Fin m → (Fin n → D)),
     m • ((ω.tt x).map f).sum ≤ Multiset.card.toFun ω • (Finset.univ.val.map (fun i => f (x i))).sum
-  --m • ((ω.tt x).map f).sum ≤ Multiset.card.toFun ω • (Finset.univ.val.map (f ∘ x)).sum
 
 /-- TODO description -/
 def FractionalOperation.IsFractionalPolymorphismFor {m : ℕ}

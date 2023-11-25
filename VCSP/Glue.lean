@@ -4,6 +4,7 @@ import Mathlib.Combinatorics.Optimization.ValuedCSP
 variable {D C : Type*} [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*}
 
 def glueValuedCspInstances (I₁ I₂ : Γ.Instance ι) : Γ.Instance ι :=
+  -- here `+` means the same as `∪` or `++` but for multisets instead of sets or lists
   (I₁ : Multiset (Γ.Term ι)) + (I₂ : Multiset (Γ.Term ι))
 
 lemma optimumSolution_glueValuedCspInstances

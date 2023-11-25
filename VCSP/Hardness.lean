@@ -12,8 +12,7 @@ lemma Multiset.sum_ofList_twice {M : Type*} [AddCommMonoid M] (x : M) :
     Multiset.sum ↑[x, x] = 2 • x :=
 by simp [two_nsmul]
 
-lemma Multiset.sum_lt_sum {ι M : Type*}
-    [OrderedCancelAddCommMonoid M]
+lemma Multiset.sum_lt_sum {ι M : Type*} [OrderedCancelAddCommMonoid M]
     {s : Multiset ι} {f g : ι → M}
     (all_le : ∀ i ∈ s, f i ≤ g i) (exists_lt : ∃ i ∈ s, f i < g i) :
     (s.map f).sum < (s.map g).sum :=
@@ -44,8 +43,8 @@ by -- why not oneliner?
 variable {D C : Type*}
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
-    [OrderedAddCommMonoid C] [CompleteLattice C]
-    {m : ℕ} {ω : FractionalOperation D m} {Γ : ValuedCsp D C}
+    [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
+    {m : ℕ} {ω : FractionalOperation D m}
     (frop : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
   intro f hf
