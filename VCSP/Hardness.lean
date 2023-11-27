@@ -50,13 +50,14 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
   intro f hf
   simp only [ValuedCsp.expressivePower, Set.mem_setOf_eq] at hf
   rcases hf with ⟨q, μ, I, rfl⟩
-  simp only [ValuedCsp.Instance.expresses, ValuedCsp.Instance.evalMinimize]
+  unfold ValuedCsp.Instance.expresses
+  unfold ValuedCsp.Instance.evalMinimize
   intro x
-  simp only [ValuedCsp.Instance.evalPartial, ValuedCsp.Instance.evalSolution]
   rw [Multiset.smul_sum, Multiset.smul_sum, Multiset.map_map, Multiset.map_map]
   unfold FractionalOperation.IsFractionalPolymorphismFor at frop
   unfold Function.AdmitsFractional at frop
-  unfold ValuedCsp.Instance at I
+  unfold ValuedCsp.Instance.evalPartial
+  unfold ValuedCsp.Instance.evalSolution
   dsimp only
   sorry
 

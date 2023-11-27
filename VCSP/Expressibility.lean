@@ -35,7 +35,9 @@ lemma ValuedCsp.subset_expressivePower (Γ : ValuedCsp D C) :
   unfold ValuedCsp.Instance
   use {ValuedCsp.Term.mk n f hfΓ Sum.inl}
   unfold ValuedCsp.Instance.expresses
-  simp [ValuedCsp.Instance.evalMinimize, ValuedCsp.Instance.evalPartial]
+  unfold ValuedCsp.Instance.evalMinimize
+  unfold ValuedCsp.Instance.evalPartial
+  simp
   ext x
   unfold ValuedCsp.Instance.evalSolution
   simp_rw [Multiset.map_singleton, Multiset.sum_singleton]

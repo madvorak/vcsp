@@ -1,3 +1,6 @@
-/build
-/lake-packages/*
+/build/
+/.lake/
+/lake-packages/
+/lakefile.olean
+/.cache
 *mwe*

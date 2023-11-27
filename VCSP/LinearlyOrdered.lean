@@ -16,8 +16,8 @@ lemma ValuedCsp.Instance.IsOptimalSolution.toOptimum {I : Γ.Instance ι} {x : �
   push_neg at opt
   exact opt y
 
-/-lemma optimalSolution_glueValuedCspInstances {I₁ I₂ : Γ.Instance ι} {x : ι → D}
+lemma optimalSolution_glueValuedCspInstances {I₁ I₂ : Γ.Instance ι} {x : ι → D}
     (opt₁ : I₁.IsOptimalSolution x) (opt₂ : I₂.IsOptimalSolution x) :
     (glueValuedCspInstances I₁ I₂).IsOptimalSolution x := by
   apply ValuedCsp.Instance.IsOptimumSolution.toOptimal
-  exact optimumSolution_glueValuedCspInstances opt₁.toOptimum opt₂.toOptimum-/
+  exact optimumSolution_glueValuedCspInstances opt₁.toOptimum opt₂.toOptimum
