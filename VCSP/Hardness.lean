@@ -4,6 +4,13 @@ import Mathlib.Algebra.Order.SMul
 import Mathlib.Data.Fin.VecNotation
 
 
+attribute [pp_dot] List.get List.take List.drop List.takeWhile List.dropWhile
+  Multiset.map Multiset.sum Function.swap Sigma.fst Sigma.snd
+  ValuedCsp.Term.evalSolution FractionalOperation.size FractionalOperation.tt
+
+
+section push_higher
+
 lemma univ_val_map_2x2 {α β : Type*} {f : (Fin 2 → α) → β} {a b c d : α} :
     Finset.univ.val.map (fun i => f (![![a, b], ![c, d]] i)) = [f ![a, b], f ![c, d]] :=
   rfl
@@ -39,6 +46,8 @@ by -- why not oneliner?
   | 0 => rfl
   | 1 => rfl
 
+end push_higher
+
 
 variable {D C : Type*}
 
@@ -53,12 +62,13 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
   unfold ValuedCsp.Instance.expresses
   unfold ValuedCsp.Instance.evalMinimize
   intro x
+  -- TODO is `Multiset.smul_sum` really desirable?
   rw [Multiset.smul_sum, Multiset.smul_sum, Multiset.map_map, Multiset.map_map]
   unfold FractionalOperation.IsFractionalPolymorphismFor at frop
   unfold Function.AdmitsFractional at frop
   unfold ValuedCsp.Instance.evalPartial
   unfold ValuedCsp.Instance.evalSolution
-  dsimp only
+  simp only [Function.comp_apply]
   sorry
 
 /-- Function `f` has Max-Cut property at labels `a` and `b` when `argmin f` is exactly:

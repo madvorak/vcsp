@@ -45,7 +45,7 @@ def FractionalOperation.IsSymmetricFractionalPolymorphismFor
     (ω : FractionalOperation D m) (Γ : ValuedCsp D C) : Prop :=
   ω.IsFractionalPolymorphismFor Γ ∧ ω.IsSymmetric
 
-/-- Operation is idempotent. -/
+/-- Operation (n-ary) is idempotent. -/
 def Function.IsIdempotentNary (g : (Fin m → D) → D) : Prop :=
   ∀ a : D, ∀ v : Fin m → D, (∀ i : Fin m, v i = a) → g v = a
 

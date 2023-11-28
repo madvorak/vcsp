@@ -2,7 +2,7 @@ import Lake
 open Lake DSL
 
 package vcsp {
-  moreServerArgs := #["-DautoImplicit=false"]
+  moreServerArgs := #["-DautoImplicit=false", "-Dpp.structureInstances=false"]
 }
 
 require mathlib from git
@@ -10,6 +10,6 @@ require mathlib from git
 
 @[default_target]
 lean_lib VCSP {
-  globs := #[.submodules `VCSP] 
+  globs := #[.submodules `VCSP]
   moreLeanArgs := #["-DautoImplicit=false"]
 }
