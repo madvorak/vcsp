@@ -106,7 +106,7 @@ lemma Function.HasMaxCutProperty.forbids_commutative [OrderedCancelAddCommMonoid
     · apply Multiset.sum_lt_sum
       · intro r rin
         exact le_of_lt (rows_lt r rin)
-      · rcases Multiset.exists_mem_of_ne_zero valid with ⟨g, _⟩
+      · obtain ⟨g, _⟩ := valid.contains
         use fun i => g ((Function.swap ![![a, b], ![b, a]]) i)
         constructor
         · simp [FractionalOperation.tt]
@@ -116,12 +116,12 @@ lemma Function.HasMaxCutProperty.forbids_commutative [OrderedCancelAddCommMonoid
           use g
     rw [two_nsmul, two_nsmul]
     exact add_lt_add half_sharp half_sharp
-  have impos : 2 • (ω.map (fun _ => f ![a, b])).sum < Multiset.card.toFun ω • 2 • f ![a, b]
+  have impos : 2 • (ω.map (fun _ => f ![a, b])).sum < ω.size • 2 • f ![a, b]
   · convert lt_of_lt_of_le sharp contr
     simp [FractionalOperation.tt, Multiset.map_map]
-  have rhs_swap : Multiset.card.toFun ω • 2 • f ![a, b] = 2 • Multiset.card.toFun ω • f ![a, b]
+  have rhs_swap : ω.size • 2 • f ![a, b] = 2 • ω.size • f ![a, b]
   · apply nsmul_left_comm
-  have distrib : (ω.map (fun _ => f ![a, b])).sum = Multiset.card.toFun ω • f ![a, b]
+  have distrib : (ω.map (fun _ => f ![a, b])).sum = ω.size • f ![a, b]
   · simp
   rw [rhs_swap, distrib] at impos
   exact ne_of_lt impos rfl
