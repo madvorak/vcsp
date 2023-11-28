@@ -4,9 +4,43 @@ import Mathlib.Algebra.Order.SMul
 import Mathlib.Data.Fin.VecNotation
 
 
-attribute [pp_dot] List.get List.take List.drop List.takeWhile List.dropWhile
-  Multiset.map Multiset.sum Function.swap Sigma.fst Sigma.snd
+section infoview_notation
+
+@[app_unexpander List.map]
+def List.map.unexpander : Lean.PrettyPrinter.Unexpander
+  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `map) $f)
+  | _ => throw ()
+
+@[app_unexpander List.take]
+def List.take.unexpander : Lean.PrettyPrinter.Unexpander
+  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `take) $f)
+  | _ => throw ()
+
+@[app_unexpander List.drop]
+def List.drop.unexpander : Lean.PrettyPrinter.Unexpander
+  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `drop) $f)
+  | _ => throw ()
+
+@[app_unexpander List.takeWhile]
+def List.takeWhile.unexpander : Lean.PrettyPrinter.Unexpander
+  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `takeWhile) $f)
+  | _ => throw ()
+
+@[app_unexpander List.dropWhile]
+def List.dropWhile.unexpander : Lean.PrettyPrinter.Unexpander
+  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `dropWhile) $f)
+  | _ => throw ()
+
+@[app_unexpander Multiset.map]
+def Multiset.map.unexpander : Lean.PrettyPrinter.Unexpander
+  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `map) $f)
+  | _ => throw ()
+
+attribute [pp_dot] List.get List.sum Multiset.sum
+  Function.swap Sigma.fst Sigma.snd
   ValuedCsp.Term.evalSolution FractionalOperation.size FractionalOperation.tt
+
+end infoview_notation
 
 
 section push_higher
@@ -25,7 +59,7 @@ lemma Multiset.sum_lt_sum {ι M : Type*} [OrderedCancelAddCommMonoid M]
     (s.map f).sum < (s.map g).sum :=
 by -- TODO contribute to mathlib
   rcases s with ⟨l⟩
-  simp only [quot_mk_to_coe'', coe_map, coe_sum]
+  simp only [Multiset.quot_mk_to_coe'', Multiset.coe_map, Multiset.coe_sum]
   apply List.sum_lt_sum
   · exact all_le
   · exact exists_lt
@@ -62,13 +96,17 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
   unfold ValuedCsp.Instance.expresses
   unfold ValuedCsp.Instance.evalMinimize
   intro x
-  -- TODO is `Multiset.smul_sum` really desirable?
+  -- TODO is `Multiset.smul_sum` really desirable here?
   rw [Multiset.smul_sum, Multiset.smul_sum, Multiset.map_map, Multiset.map_map]
   unfold FractionalOperation.IsFractionalPolymorphismFor at frop
   unfold Function.AdmitsFractional at frop
-  unfold ValuedCsp.Instance.evalPartial
-  unfold ValuedCsp.Instance.evalSolution
-  simp only [Function.comp_apply]
+  show
+    ((ω.tt x).map (fun y : Fin q → D =>
+        m • sInf { κ | ∃ z, (I.map (fun t => t.evalSolution (Sum.elim y z))).sum = κ })
+      ).sum ≤
+    (Finset.univ.val.map (fun i : Fin m =>
+        ω.size • sInf { κ | ∃ z, (I.map (fun t => t.evalSolution (Sum.elim (x i) z))).sum = κ })
+      ).sum
   sorry
 
 /-- Function `f` has Max-Cut property at labels `a` and `b` when `argmin f` is exactly:
