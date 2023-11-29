@@ -50,31 +50,29 @@ lemma univ_val_map_2x2 {α β : Type*} {f : (Fin 2 → α) → β} {a b c d : α
   rfl
 
 lemma Multiset.sum_ofList_twice {M : Type*} [AddCommMonoid M] (x : M) :
-    Multiset.sum ↑[x, x] = 2 • x :=
-by simp [two_nsmul]
+    Multiset.sum ↑[x, x] = 2 • x := by
+  simp [two_nsmul]
 
 lemma Multiset.sum_lt_sum {ι M : Type*} [OrderedCancelAddCommMonoid M]
     {s : Multiset ι} {f g : ι → M}
     (all_le : ∀ i ∈ s, f i ≤ g i) (exists_lt : ∃ i ∈ s, f i < g i) :
-    (s.map f).sum < (s.map g).sum :=
-by -- TODO contribute to mathlib
+    (s.map f).sum < (s.map g).sum := by
   rcases s with ⟨l⟩
   simp only [Multiset.quot_mk_to_coe'', Multiset.coe_map, Multiset.coe_sum]
   apply List.sum_lt_sum
   · exact all_le
   · exact exists_lt
+-- PR: https://github.com/leanprover-community/mathlib4/pull/8707
 
 lemma column_of_2x2_left {α : Type*} (a b c d : α) :
-    (fun i => ![![a, b], ![c, d]] i 0) = (fun i => ![a, c] i) :=
-by -- why not oneliner?
+    (fun i => ![![a, b], ![c, d]] i 0) = (fun i => ![a, c] i) := by
   ext i
   match i with
   | 0 => rfl
   | 1 => rfl
 
 lemma column_of_2x2_right {α : Type*} (a b c d : α) :
-    (fun i => ![![a, b], ![c, d]] i 1) = (fun i => ![b, d] i) :=
-by -- why not oneliner?
+    (fun i => ![![a, b], ![c, d]] i 1) = (fun i => ![b, d] i) := by
   ext i
   match i with
   | 0 => rfl

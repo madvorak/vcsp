@@ -11,3 +11,4 @@ My long-term goal is to formalize the dichotomy for fixed-template finite-valued
 ### Related PRs
 * https://github.com/leanprover-community/mathlib4/pull/7893
 * https://github.com/leanprover-community/mathlib4/pull/7894
+* https://github.com/leanprover-community/mathlib4/pull/8707
