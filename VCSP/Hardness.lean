@@ -72,6 +72,96 @@ end push_higher
 
 variable {D C : Type*}
 
+example [CompleteSemilatticeInf C] (a b c d : C) (hac : a ≤ c) (hbd : b ≤ d) :
+    sInf ({a, b} : Set C) ≤ sInf ({c, d} : Set C) := by
+  have hsa : sInf ({a, b} : Set C) ≤ a
+  · exact sInf_le (Set.mem_insert a {b})
+  have hsb : sInf ({a, b} : Set C) ≤ b
+  · rw [Set.pair_comm]
+    exact sInf_le (Set.mem_insert b {a})
+  have hsc : sInf ({a, b} : Set C) ≤ c
+  · exact hsa.trans hac
+  have hsd : sInf ({a, b} : Set C) ≤ d
+  · exact hsb.trans hbd
+  aesop
+
+example [OrderedAddCommMonoidWithInfima C] (a a' b b' c c' d d' : C)
+    (hac : a ≤ c) (hbd : b ≤ d) (hac' : a' ≤ c') (hbd' : b' ≤ d') :
+    sInf {a, b} + sInf {a', b'} ≤ sInf {c, d} + sInf {c', d'} := by
+  have hsc : sInf ({a, b} : Set C) ≤ c
+  · exact (sInf_le (Set.mem_insert a {b})).trans hac
+  have hsd : sInf ({a, b} : Set C) ≤ d
+  · rw [Set.pair_comm]
+    exact (sInf_le (Set.mem_insert b {a})).trans hbd
+  have hsc' : sInf ({a', b'} : Set C) ≤ c'
+  · exact (sInf_le (Set.mem_insert a' {b'})).trans hac'
+  have hsd' : sInf ({a', b'} : Set C) ≤ d'
+  · rw [Set.pair_comm]
+    exact (sInf_le (Set.mem_insert b' {a'})).trans hbd'
+  apply add_le_add <;> simp_all
+
+example [OrderedAddCommMonoidWithInfima C] (a b c d : Fin 2 → C) (hac : a ≤ c) (hbd : b ≤ d) :
+    (Finset.univ.val.map (fun i : Fin 2 => sInf {a i, b i})).sum ≤
+    (Finset.univ.val.map (fun i : Fin 2 => sInf {c i, d i})).sum := by
+  apply Multiset.sum_map_le_sum_map
+  intro i _
+  have hsci : sInf {a i, b i} ≤ c i
+  · exact (sInf_le (Set.mem_insert (a i) {b i})).trans (hac i)
+  have hsdi : sInf {a i, b i} ≤ d i
+  · rw [Set.pair_comm]
+    exact (sInf_le (Set.mem_insert (b i) {a i})).trans (hbd i)
+  simp [hsci, hsdi]
+
+example [CompleteLattice C] (f g : D → C) (hfg : ∀ x : D, f x ≤ g x) :
+    sInf { f x | x : D } ≤ sInf { g x | x : D } := by
+  simp only [le_sInf_iff, Set.mem_setOf_eq, forall_exists_index, forall_apply_eq_imp_iff]
+  intro a
+  have hfa : f a ∈ { f x | x : D }
+  · use a
+  exact sInf_le_of_le hfa (hfg a)
+
+example [OrderedAddCommMonoidWithInfima C] (n : ℕ) (a b : Fin n → D → C) (hab : a ≤ b) :
+    (Finset.univ.val.map (fun i : Fin n => sInf { a i j | j : D })).sum ≤
+    (Finset.univ.val.map (fun i : Fin n => sInf { b i j | j : D })).sum := by
+  apply Multiset.sum_map_le_sum_map
+  intro i _
+  simp only [le_sInf_iff, Set.mem_setOf_eq, forall_exists_index, forall_apply_eq_imp_iff]
+  intro x
+  have haix : a i x ∈ { a i j | j : D }
+  · use x
+  exact sInf_le_of_le haix (hab i x)
+
+example [OrderedAddCommMonoidWithInfima C] (n : ℕ) (a b c d : Fin n → D → C)
+    (hac : a ≤ c) (hbd : b ≤ d) :
+    (Finset.univ.val.map (fun i : Fin n => sInf { a i j + b i j | j : D })).sum ≤
+    (Finset.univ.val.map (fun i : Fin n => sInf { c i j + d i j | j : D })).sum := by
+  apply Multiset.sum_map_le_sum_map
+  intro i _
+  simp only [le_sInf_iff, Set.mem_setOf_eq, forall_exists_index, forall_apply_eq_imp_iff]
+  intro x
+  have habix : a i x + b i x ∈ { a i j + b i j | j : D }
+  · use x
+  apply sInf_le_of_le habix
+  apply add_le_add
+  · apply hac
+  · apply hbd
+
+example [OrderedAddCommMonoidWithInfima C] (n : ℕ) (x : Fin n → D → Multiset D)
+    (f g : D → C) (hfg : f ≤ g) :
+    (Finset.univ.val.map (fun i : Fin n => sInf { ((x i j).map f).sum | j : D })).sum ≤
+    (Finset.univ.val.map (fun i : Fin n => sInf { ((x i j).map g).sum | j : D })).sum := by
+  apply Multiset.sum_map_le_sum_map
+  intro i _
+  simp only [le_sInf_iff, Set.mem_setOf_eq, forall_exists_index, forall_apply_eq_imp_iff]
+  intro d
+  have hxidf : ((x i d).map f).sum ∈ { ((x i j).map f).sum | j : D }
+  · use d
+  apply sInf_le_of_le hxidf
+  apply Multiset.sum_map_le_sum_map
+  intro e _
+  exact hfg e
+
+
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
     [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
     {m : ℕ} {ω : FractionalOperation D m}
@@ -80,19 +170,15 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
   intro f hf
   simp only [ValuedCsp.expressivePower, Set.mem_setOf_eq] at hf
   rcases hf with ⟨q, μ, I, rfl⟩
-  unfold ValuedCsp.Instance.expresses
-  unfold ValuedCsp.Instance.evalMinimize
-  intro x
-  -- TODO is `Multiset.smul_sum` really desirable here?
-  rw [Multiset.smul_sum, Multiset.smul_sum, Multiset.map_map, Multiset.map_map]
   unfold FractionalOperation.IsFractionalPolymorphismFor at frop
   unfold Function.AdmitsFractional at frop
+  intro x
   show
-    ((ω.tt x).map (fun y : Fin q → D =>
-        m • sInf { κ | ∃ z, (I.map (fun t => t.evalSolution (Sum.elim y z))).sum = κ })
+    m • ((ω.tt x).map (fun y : Fin q → D =>
+        sInf { κ | ∃ z, (I.map (fun t => t.evalSolution (Sum.elim y z))).sum = κ })
       ).sum ≤
-    (Finset.univ.val.map (fun i : Fin m =>
-        ω.size • sInf { κ | ∃ z, (I.map (fun t => t.evalSolution (Sum.elim (x i) z))).sum = κ })
+    ω.size • (Finset.univ.val.map (fun i : Fin m =>
+        sInf { κ | ∃ z, (I.map (fun t => t.evalSolution (Sum.elim (x i) z))).sum = κ })
       ).sum
   sorry
 
