@@ -169,16 +169,16 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
   intro f hf
   simp only [ValuedCsp.expressivePower, Set.mem_setOf_eq] at hf
-  rcases hf with ⟨q, μ, I, rfl⟩
+  rcases hf with ⟨n, μ, I, rfl⟩
   unfold FractionalOperation.IsFractionalPolymorphismFor at frop
   unfold Function.AdmitsFractional at frop
   intro x
   show
-    m • ((ω.tt x).map (fun y : Fin q → D =>
-        sInf { κ | ∃ z, (I.map (fun t => t.evalSolution (Sum.elim y z))).sum = κ })
+    m • ((ω.tt x).map (fun y : Fin n → D =>
+        sInf { (I.map (fun t => t.evalSolution (Sum.elim y z))).sum | z : μ → D })
       ).sum ≤
     ω.size • (Finset.univ.val.map (fun i : Fin m =>
-        sInf { κ | ∃ z, (I.map (fun t => t.evalSolution (Sum.elim (x i) z))).sum = κ })
+        sInf { (I.map (fun t => t.evalSolution (Sum.elim (x i) z))).sum | z : μ → D })
       ).sum
   sorry
 
