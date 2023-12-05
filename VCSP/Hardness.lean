@@ -175,10 +175,10 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
   intro x
   show
     m • ((ω.tt x).map (fun y : Fin n → D =>
-        sInf { (I.map (fun t => t.evalSolution (Sum.elim y z))).sum | z : μ → D })
+        sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => t.evalSolution (Sum.elim y z))).sum | z : μ → D })
       ).sum ≤
     ω.size • (Finset.univ.val.map (fun i : Fin m =>
-        sInf { (I.map (fun t => t.evalSolution (Sum.elim (x i) z))).sum | z : μ → D })
+        sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => t.evalSolution (Sum.elim (x i) z))).sum | z : μ → D })
       ).sum
   sorry
 

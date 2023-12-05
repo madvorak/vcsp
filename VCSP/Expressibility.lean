@@ -14,7 +14,7 @@ variable [OrderedAddCommMonoidWithInfima C]
 /-- Evaluation of a `Γ` instance `I` for given partial solution `x`, minimizing over the rest. -/
 def ValuedCsp.Instance.evalMinimize {Γ : ValuedCsp D C} {ι μ : Type*}
     (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : C :=
-  sInf { z | ∃ y : μ → D, I.evalPartial x y = z }
+  sInf { I.evalPartial x y | y : μ → D }
 
 /-- Function expressed by a `Γ` instance `I` exposing `m` free variables. -/
 def ValuedCsp.Instance.expresses {Γ : ValuedCsp D C} {m : ℕ} {μ : Type*} (I : Γ.Instance (Fin m ⊕ μ)) :
@@ -23,7 +23,7 @@ def ValuedCsp.Instance.expresses {Γ : ValuedCsp D C} {m : ℕ} {μ : Type*} (I 
 
 /-- A new VCSP template made of all functions expressible by `Γ`. -/
 def ValuedCsp.expressivePower (Γ : ValuedCsp D C) : ValuedCsp D C :=
-  { f : Σ (n : ℕ), (Fin n → D) → C | ∃ m : ℕ, ∃ μ : Type, ∃ I : Γ.Instance (Fin m ⊕ μ), I.expresses = f }
+  { ValuedCsp.Instance.expresses I | (m : ℕ) (μ : Type) (I : Γ.Instance (Fin m ⊕ μ)) }
 
 /-- Expressive power of a VCSP template subsumes the template. -/
 lemma ValuedCsp.subset_expressivePower (Γ : ValuedCsp D C) :
@@ -37,32 +37,29 @@ lemma ValuedCsp.subset_expressivePower (Γ : ValuedCsp D C) :
   unfold ValuedCsp.Instance.expresses
   unfold ValuedCsp.Instance.evalMinimize
   unfold ValuedCsp.Instance.evalPartial
-  simp
+  rw [Sigma.mk.inj_iff, heq_eq_eq]
+  constructor
+  · rfl
   ext x
   unfold ValuedCsp.Instance.evalSolution
   simp_rw [Multiset.map_singleton, Multiset.sum_singleton]
-  let e : Empty → D := (fun _ => by contradiction)
-  convert_to sInf { z | ValuedCsp.Term.evalSolution ⟨n, f, hfΓ, Sum.inl⟩ (Sum.elim x e) = z } = f x
-  · rw [Set.setOf_eq_eq_singleton']
-    apply congr_arg
-    ext c
-    simp only [Set.mem_setOf_eq, Set.mem_singleton_iff]
-    constructor
-    · rintro ⟨m, eq_c⟩
-      rw [← eq_c]
-      simp [ValuedCsp.Term.evalSolution]
-    · intro c_is
-      use e
-      rw [c_is]
   convert sInf_singleton
-  simp [ValuedCsp.Term.evalSolution]
+  apply Set.eq_of_subset_of_subset
+  · simp [ValuedCsp.Term.evalSolution]
+  · intro c c_is
+    rw [Set.mem_singleton_iff] at c_is
+    rw [c_is]
+    exact ⟨fun _ => by contradiction, rfl⟩
 
 /-- Expressive power is an idempotent operation on VCSP templates. -/
 lemma ValuedCsp.expressivePower_expressivePower (Γ : ValuedCsp D C) :
     Γ.expressivePower = Γ.expressivePower.expressivePower := by
   apply Set.eq_of_subset_of_subset
   · apply ValuedCsp.subset_expressivePower
-  rintro ⟨n, f⟩ hfΓ
-  unfold ValuedCsp.expressivePower at *
-  -- exact hfΓ -- Note that `I` and `I` are over different VCSPs!
+  rintro ⟨n, f⟩ hnf
+  show
+    ∃ m : ℕ, ∃ μ : Type, ∃ I : Γ.Instance                 (Fin m ⊕ μ), I.expresses = ⟨n, f⟩
+  obtain ⟨mₑ, μₑ, Iₑ, hyp⟩ :
+    ∃ m : ℕ, ∃ μ : Type, ∃ I : Γ.expressivePower.Instance (Fin m ⊕ μ), I.expresses = ⟨n, f⟩
+    := hnf
   sorry
