@@ -180,6 +180,16 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
     ω.size • (Finset.univ.val.map (fun i : Fin m =>
         sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim (x i) z ∘ t.app))).sum | z : μ → D })
       ).sum
+  /-
+  have : `m • ((ω.tt x).map f.snd).sum ≤ ω.size • (Finset.univ.val.map fun i => f.snd (x i)).sum`
+  -/
+  apply I.induction
+  · simp
+    convert_to m • Multiset.card (ω.tt x) • (0 : C) ≤ ω.size • @Finset.card (Fin m) Finset.univ • (0 : C) using 3
+    · sorry
+    · sorry
+    rw [smul_zero, smul_zero, smul_zero, smul_zero]
+  intro T I₀ ih
   sorry
 
 /-- Function `f` has Max-Cut property at labels `a` and `b` when `argmin f` is exactly:
