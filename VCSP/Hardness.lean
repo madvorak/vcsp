@@ -100,9 +100,9 @@ example [OrderedAddCommMonoidWithInfima C] (a a' b b' c c' d d' : C)
     exact (sInf_le (Set.mem_insert b' {a'})).trans hbd'
   apply add_le_add <;> simp_all
 
-example [OrderedAddCommMonoidWithInfima C] (a b c d : Fin 2 → C) (hac : a ≤ c) (hbd : b ≤ d) :
-    (Finset.univ.val.map (fun i : Fin 2 => sInf {a i, b i})).sum ≤
-    (Finset.univ.val.map (fun i : Fin 2 => sInf {c i, d i})).sum := by
+example [OrderedAddCommMonoidWithInfima C] (a b c d : Fin 9 → C) (hac : a ≤ c) (hbd : b ≤ d) :
+    (Finset.univ.val.map (fun i : Fin 9 => sInf {a i, b i})).sum ≤
+    (Finset.univ.val.map (fun i : Fin 9 => sInf {c i, d i})).sum := by
   apply Multiset.sum_map_le_sum_map
   intro i _
   have hsci : sInf {a i, b i} ≤ c i
@@ -161,35 +161,64 @@ example [OrderedAddCommMonoidWithInfima C] (n : ℕ) (x : Fin n → D → Multis
   intro e _
   exact hfg e
 
+example [OrderedAddCommMonoidWithInfima C] (n m : ℕ) (x : Fin n → D → C) (y : Fin m → D → C)
+    (hfg : ∀ a : D,
+      (Finset.univ.val.map (fun i : Fin n => x i a)).sum ≤
+      (Finset.univ.val.map (fun i : Fin m => y i a)).sum ):
+    -- for now, we set the goal without the `sum` inside `sInf` and without `nsmul`
+    (Finset.univ.val.map (fun i : Fin n => sInf { x i a | a : D })).sum ≤
+    (Finset.univ.val.map (fun i : Fin m => sInf { y i a | a : D })).sum := by
+  sorry -- Broken !? Seems so, because ...
+
+example [OrderedAddCommMonoidWithInfima C] {T M : Type}
+    (W : Multiset T) (S : Multiset M) (f : T → D → C) (g : M → D → C)
+    (hfg : ∀ d : D,
+      (W.map (fun i : T => f i d)).sum ≤
+      (S.map (fun i : M => g i d)).sum ):
+    -- for now, we set the goal without the `sum` inside `sInf` and without `nsmul`
+    (W.map (fun i : T => sInf { f i a | a : D })).sum ≤
+    (S.map (fun i : M => sInf { g i a | a : D })).sum := by
+  sorry -- Does not hold !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
     [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
     {m : ℕ} {ω : FractionalOperation D m}
-    (frop : ω.IsFractionalPolymorphismFor Γ) :
+    (frpo : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
   intro f hf
-  simp only [ValuedCsp.expressivePower, Set.mem_setOf_eq] at hf
+  rw [ValuedCsp.expressivePower, Set.mem_setOf_eq] at hf
   rcases hf with ⟨n, μ, I, rfl⟩
-  unfold FractionalOperation.IsFractionalPolymorphismFor at frop
-  unfold Function.AdmitsFractional at frop
+  unfold FractionalOperation.IsFractionalPolymorphismFor at frpo
+  unfold Function.AdmitsFractional at frpo
   intro x
+  rw [Multiset.smul_sum, Multiset.map_map, Multiset.smul_sum, Multiset.map_map]
   show
-    m • ((ω.tt x).map (fun y : Fin n → D =>
-        sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim y z ∘ t.app))).sum | z : μ → D })
+    ((ω.tt x).map (fun y : Fin n → D =>
+        m • sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim y z ∘ t.app))).sum | z : μ → D })
       ).sum ≤
-    ω.size • (Finset.univ.val.map (fun i : Fin m =>
-        sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim (x i) z ∘ t.app))).sum | z : μ → D })
+    (Finset.univ.val.map (fun i : Fin m =>
+        ω.size • sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim (x i) z ∘ t.app))).sum | z : μ → D })
       ).sum
+  convert_to
+    ((ω.tt x).map (fun y : Fin n → D =>
+        sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => m • t.f (Sum.elim y z ∘ t.app))).sum | z : μ → D })
+      ).sum ≤
+    (Finset.univ.val.map (fun i : Fin m =>
+        sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => ω.size • t.f (Sum.elim (x i) z ∘ t.app))).sum | z : μ → D })
+      ).sum
+  · sorry
+  · sorry
   /-
-  have : `m • ((ω.tt x).map f.snd).sum ≤ ω.size • (Finset.univ.val.map fun i => f.snd (x i)).sum`
+  frpo : `m • ((ω.tt x).map f.snd).sum ≤ ω.size • (Finset.univ.val.map (fun i => f.snd (x i))).sum`
   -/
-  apply I.induction
-  · simp
-    convert_to m • Multiset.card (ω.tt x) • (0 : C) ≤ ω.size • @Finset.card (Fin m) Finset.univ • (0 : C) using 3
-    · sorry
-    · sorry
-    rw [smul_zero, smul_zero, smul_zero, smul_zero]
-  intro T I₀ ih
+  have part_ineq :
+    ∀ f₁ ∈ Γ, ∀ (x₁ : Fin m → Fin f₁.fst → D),
+      ((ω.tt x₁).map (fun v : Fin f₁.fst → D => m • f₁.snd v)).sum ≤
+      (Finset.univ.val.map (fun i : Fin m => ω.size • f₁.snd (x₁ i))).sum
+  · sorry -- from `frpo` using distributivity of `nsmul` over `sum` of `map`
+  clear frpo
+  -- now instantiate `part_ineq` for every term in `I`
   sorry
 
 /-- Function `f` has Max-Cut property at labels `a` and `b` when `argmin f` is exactly:
