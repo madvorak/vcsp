@@ -161,25 +161,6 @@ example [OrderedAddCommMonoidWithInfima C] (n : ℕ) (x : Fin n → D → Multis
   intro e _
   exact hfg e
 
-example [OrderedAddCommMonoidWithInfima C] (n m : ℕ) (x : Fin n → D → C) (y : Fin m → D → C)
-    (hfg : ∀ a : D,
-      (Finset.univ.val.map (fun i : Fin n => x i a)).sum ≤
-      (Finset.univ.val.map (fun i : Fin m => y i a)).sum ):
-    -- for now, we set the goal without the `sum` inside `sInf` and without `nsmul`
-    (Finset.univ.val.map (fun i : Fin n => sInf { x i a | a : D })).sum ≤
-    (Finset.univ.val.map (fun i : Fin m => sInf { y i a | a : D })).sum := by
-  sorry -- Broken !? Seems so, because ...
-
-example [OrderedAddCommMonoidWithInfima C] {T M : Type}
-    (W : Multiset T) (S : Multiset M) (f : T → D → C) (g : M → D → C)
-    (hfg : ∀ d : D,
-      (W.map (fun i : T => f i d)).sum ≤
-      (S.map (fun i : M => g i d)).sum ):
-    -- for now, we set the goal without the `sum` inside `sInf` and without `nsmul`
-    (W.map (fun i : T => sInf { f i a | a : D })).sum ≤
-    (S.map (fun i : M => sInf { g i a | a : D })).sum := by
-  sorry -- Does not hold !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
     [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
@@ -213,7 +194,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
   frpo : `m • ((ω.tt x).map f.snd).sum ≤ ω.size • (Finset.univ.val.map (fun i => f.snd (x i))).sum`
   -/
   have part_ineq :
-    ∀ f₁ ∈ Γ, ∀ (x₁ : Fin m → Fin f₁.fst → D),
+    ∀ f₁ ∈ Γ, ∀ x₁ : Fin m → Fin f₁.fst → D,
       ((ω.tt x₁).map (fun v : Fin f₁.fst → D => m • f₁.snd v)).sum ≤
       (Finset.univ.val.map (fun i : Fin m => ω.size • f₁.snd (x₁ i))).sum
   · sorry -- from `frpo` using distributivity of `nsmul` over `sum` of `map`
