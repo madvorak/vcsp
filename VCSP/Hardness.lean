@@ -2,6 +2,11 @@ import VCSP.FractionalPolymorphisms
 import VCSP.Expressibility
 import Mathlib.Algebra.Order.SMul
 import Mathlib.Data.Fin.VecNotation
+import Std.Data.Sum.Lemmas
+
+
+abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
+  (s.map f).sum
 
 
 section infoview_notation
@@ -36,7 +41,7 @@ def Multiset.map.unexpander : Lean.PrettyPrinter.Unexpander
   | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `map) $f)
   | _ => throw ()
 
-attribute [pp_dot] List.length List.get List.sum Multiset.sum
+attribute [pp_dot] List.length List.get List.sum Multiset.sum Multiset.summap
   Function.swap Sigma.fst Sigma.snd
   ValuedCsp.Term.evalSolution FractionalOperation.size FractionalOperation.tt
 
@@ -161,6 +166,21 @@ example [OrderedAddCommMonoidWithInfima C] (n : ℕ) (x : Fin n → D → Multis
   intro e _
   exact hfg e
 
+lemma sInf_summap_le_sInf_summap [OrderedAddCommMonoidWithInfima C] {μ : Type} {f g : D → μ → C}
+    (hfg : ∀ d, ∀ z, f d z ≤ g d z) (S : Multiset D) :
+    sInf { S.summap (f · z) | z : μ } ≤
+    sInf { S.summap (g · z) | z : μ } := by
+  apply sInf_le_sInf_of_forall_exists_le
+  intro x xin
+  rw [Set.mem_setOf_eq] at xin
+  obtain ⟨z, hxz⟩ := xin
+  use S.summap (f · z)
+  convert_to S.summap (f · z) ≤ x
+  · simp
+  rw [←hxz]
+  apply Multiset.sum_map_le_sum_map
+  intros
+  apply hfg
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
     [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
@@ -175,19 +195,15 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
   intro x
   rw [Multiset.smul_sum, Multiset.map_map, Multiset.smul_sum, Multiset.map_map]
   show
-    ((ω.tt x).map (fun y : Fin n → D =>
-        m • sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim y z ∘ t.app))).sum | z : μ → D })
-      ).sum ≤
-    (Finset.univ.val.map (fun i : Fin m =>
-        ω.size • sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim (x i) z ∘ t.app))).sum | z : μ → D })
-      ).sum
+    (ω.tt x).summap (fun y : Fin n → D =>
+        m • sInf { I.summap (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim y z ∘ t.app)) | z : μ → D }) ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+        ω.size • sInf { I.summap (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim (x i) z ∘ t.app)) | z : μ → D })
   convert_to
-    ((ω.tt x).map (fun y : Fin n → D =>
-        sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => m • t.f (Sum.elim y z ∘ t.app))).sum | z : μ → D })
-      ).sum ≤
-    (Finset.univ.val.map (fun i : Fin m =>
-        sInf { (I.map (fun t : Γ.Term (Fin n ⊕ μ) => ω.size • t.f (Sum.elim (x i) z ∘ t.app))).sum | z : μ → D })
-      ).sum
+    (ω.tt x).summap (fun y : Fin n → D =>
+        sInf { I.summap (fun t : Γ.Term (Fin n ⊕ μ) => m • t.f (Sum.elim y z ∘ t.app)) | z : μ → D }) ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+        sInf { I.summap (fun t : Γ.Term (Fin n ⊕ μ) => ω.size • t.f (Sum.elim (x i) z ∘ t.app)) | z : μ → D })
   · sorry
   · sorry
   /-
@@ -195,8 +211,8 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
   -/
   have part_ineq :
     ∀ f₁ ∈ Γ, ∀ x₁ : Fin m → Fin f₁.fst → D,
-      ((ω.tt x₁).map (fun v : Fin f₁.fst → D => m • f₁.snd v)).sum ≤
-      (Finset.univ.val.map (fun i : Fin m => ω.size • f₁.snd (x₁ i))).sum
+      (ω.tt x₁).summap (fun v : Fin f₁.fst → D => m • f₁.snd v) ≤
+      Finset.univ.val.summap (fun i : Fin m => ω.size • f₁.snd (x₁ i))
   · sorry -- from `frpo` using distributivity of `nsmul` over `sum` of `map`
   clear frpo
   -- now instantiate `part_ineq` for every term in `I`
