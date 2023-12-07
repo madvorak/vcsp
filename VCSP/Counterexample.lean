@@ -1,5 +1,4 @@
-import VCSP.AlgebraC
-import Mathlib.Data.Real.ENNReal
+import VCSP.AlgebraInst
 
 
 private lemma broken {C D : Type} [OrderedAddCommMonoidWithInfima C] {T M : Type}
