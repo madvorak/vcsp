@@ -7,6 +7,10 @@ import Mathlib.Data.Fin.VecNotation
 abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
   (s.map f).sum
 
+lemma Multiset.summap_singleton {α β : Type*} [AddCommMonoid β] (a : α) (f : α → β) :
+    Multiset.summap {a} f = f a := by
+  simp [Multiset.summap]
+
 
 section infoview_notation
 
@@ -166,7 +170,7 @@ example [OrderedAddCommMonoidWithInfima C] (n : ℕ) (x : Fin n → D → Multis
   exact hfg e
 
 lemma sInf_summap_le_sInf_summap [OrderedAddCommMonoidWithInfima C] {μ : Type} {f g : D → μ → C}
-    (hfg : ∀ d, ∀ z, f d z ≤ g d z) (S : Multiset D) :
+    (hfg : ∀ d : D, ∀ z : μ, f d z ≤ g d z) (S : Multiset D) :
     sInf { S.summap (f · z) | z : μ } ≤
     sInf { S.summap (g · z) | z : μ } := by
   apply sInf_le_sInf_of_forall_exists_le
@@ -180,6 +184,13 @@ lemma sInf_summap_le_sInf_summap [OrderedAddCommMonoidWithInfima C] {μ : Type} 
   apply Multiset.sum_map_le_sum_map
   intros
   apply hfg
+
+lemma sInf_summap_le_summap_sInf_summap [OrderedAddCommMonoidWithInfima C] {μ : Type}
+    {f : D → μ → C} {g : D → D → μ → C} {X : Multiset D}
+    (hfg : ∀ d : D, ∀ z : μ, f d z ≤ X.summap (fun x : D => g x d z)) (S : Multiset D) :
+    sInf { S.summap (f · z) | z : μ } ≤
+    X.summap (fun x : D => sInf { S.summap (g x · z) | z : μ }) := by
+  sorry
 
 -- If we have homomorphism `h` in place of fractional polymorphism `ω` ...
 example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C} {ι μ : Type} {I : Γ.Instance (ι ⊕ μ)}
@@ -201,6 +212,57 @@ example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C} {ι μ : Type} {
   show (Sum.elim (h ∘ x) (h ∘ z)) (t.app j) = (h ∘ Sum.elim x z) (t.app j)
   apply congr_fun
   exact (Sum.comp_elim h x z).symm
+
+lemma FractionalOperation.tt_singleton {m n : ℕ} {ω : FractionalOperation D m} (x : Fin m → Fin n → D)
+    {g : (Fin m → D) → D} (singleto : ω = {g}) :
+    ω.tt x = {fun i => g (Function.swap x i)} := by
+  unfold FractionalOperation.tt
+  rw [singleto, Multiset.map_singleton]
+
+-- If we have multimorphism `ω` in place of fractional polymorphism `ω` ...
+example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
+    {m : ℕ} {ω : FractionalOperation D m} (g : (Fin m → D) → D) (singleto : ω = {g})
+    (frpo : ω.IsFractionalPolymorphismFor Γ) :
+    ω.IsFractionalPolymorphismFor Γ.expressivePower := by
+  intro f hf
+  rw [ValuedCsp.expressivePower, Set.mem_setOf_eq] at hf
+  rcases hf with ⟨n, μ, I, rfl⟩
+  unfold FractionalOperation.IsFractionalPolymorphismFor at frpo
+  unfold Function.AdmitsFractional at frpo
+  intro x
+  rw [Multiset.smul_sum, Multiset.map_map, Multiset.smul_sum, Multiset.map_map]
+  convert_to
+    (ω.tt x).summap (fun y : Fin n → D =>
+        sInf { I.summap (fun t : Γ.Term (Fin n ⊕ μ) => m • t.f (Sum.elim y z ∘ t.app)) | z : μ → D }) ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+        sInf { I.summap (fun t : Γ.Term (Fin n ⊕ μ) => ω.size • t.f (Sum.elim (x i) z ∘ t.app)) | z : μ → D })
+  · sorry
+  · sorry
+  have part_ineq :
+    ∀ f₁ ∈ Γ, ∀ x₁ : Fin m → Fin f₁.fst → D,
+      (ω.tt x₁).summap (fun v : Fin f₁.fst → D => m • f₁.snd v) ≤
+      Finset.univ.val.summap (fun i : Fin m => ω.size • f₁.snd (x₁ i))
+  · sorry -- from `frpo` using distributivity of `nsmul` over `sum` of `map`
+
+  have size1 : ω.size = 1
+  · rw [singleto]
+    rfl
+  rw [FractionalOperation.tt_singleton _ singleto]
+  simp_rw [FractionalOperation.tt_singleton _ singleto] at part_ineq
+  rw [singleto] at *
+  simp_rw [size1, one_smul, Multiset.summap_singleton] at part_ineq ⊢
+  clear frpo singleto ω size1
+  show
+    sInf { I.summap (fun t => m • t.f (Sum.elim (fun i => g (Function.swap x i)) z ∘ t.app)) | z : μ → D } ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+        sInf { I.summap (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim (x i) z ∘ t.app)) | z : μ → D })
+  change
+    ∀ f₁ ∈ Γ, ∀ x₁ : Fin m → Fin f₁.fst → D,
+      m • f₁.snd (fun i => g (Function.swap x₁ i)) ≤
+      Finset.univ.val.summap (fun i : Fin m => f₁.snd (x₁ i))
+    at part_ineq
+  sorry
+
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
     [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
