@@ -2,7 +2,6 @@ import VCSP.FractionalPolymorphisms
 import VCSP.Expressibility
 import Mathlib.Algebra.Order.SMul
 import Mathlib.Data.Fin.VecNotation
-import Std.Data.Sum.Lemmas
 
 
 abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
@@ -181,6 +180,27 @@ lemma sInf_summap_le_sInf_summap [OrderedAddCommMonoidWithInfima C] {μ : Type} 
   apply Multiset.sum_map_le_sum_map
   intros
   apply hfg
+
+-- If we have homomorphism `h` in place of fractional polymorphism `ω` ...
+example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C} {ι μ : Type} {I : Γ.Instance (ι ⊕ μ)}
+    {h : D → D} (hhh : ∀ f ∈ Γ, ∀ x : Fin f.fst → D, f.snd (fun i => h (x i)) ≤ f.snd x) :
+  ∀ x : ι → D,
+    sInf { I.summap (fun t : Γ.Term (ι ⊕ μ) => t.f (Sum.elim (fun i => h (x i)) z ∘ t.app)) | z : μ → D } ≤
+    sInf { I.summap (fun t : Γ.Term (ι ⊕ μ) => t.f (Sum.elim x z ∘ t.app)) | z : μ → D } := by
+  intro x
+  apply sInf_le_sInf_of_forall_exists_le
+  intro c cin
+  rw [Set.mem_setOf_eq] at cin
+  obtain ⟨z, hcz⟩ := cin
+  simp only [Set.mem_setOf_eq, exists_exists_eq_and]
+  use (h ∘ z)
+  rw [←hcz]
+  apply Multiset.sum_map_le_sum_map
+  intro t _
+  convert hhh ⟨t.n, t.f⟩ t.inΓ (Sum.elim x z ∘ t.app) with j
+  show (Sum.elim (h ∘ x) (h ∘ z)) (t.app j) = (h ∘ Sum.elim x z) (t.app j)
+  apply congr_fun
+  exact (Sum.comp_elim h x z).symm
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
     [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
