@@ -190,7 +190,7 @@ lemma sInf_summap_le_summap_sInf_summap [OrderedAddCommMonoidWithInfima C] {μ :
     (hfg : ∀ d : D, ∀ z : μ, f d z ≤ X.summap (fun x : D => g x d z)) (S : Multiset D) :
     sInf { S.summap (f · z) | z : μ } ≤
     X.summap (fun x : D => sInf { S.summap (g x · z) | z : μ }) := by
-  sorry
+  sorry  -- Does not hold either!
 
 -- If we have homomorphism `h` in place of fractional polymorphism `ω` ...
 example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C} {ι μ : Type} {I : Γ.Instance (ι ⊕ μ)}

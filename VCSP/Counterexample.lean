@@ -10,11 +10,6 @@ private lemma broken {C D : Type} [OrderedAddCommMonoidWithInfima C] {T M : Type
     (S.map (fun i : M => sInf { g i a | a : D })).sum := by
   sorry
 
-noncomputable instance : OrderedAddCommMonoidWithInfima ENNReal := by
-  constructor
-  · apply sInf_le
-  · apply le_sInf
-
 example : False := by -- based on Yury G. Kudryashov's example
   let A : Multiset Unit := {()}
   let B : Multiset Bool := {true, false}
