@@ -192,6 +192,15 @@ lemma sInf_summap_le_summap_sInf_summap [OrderedAddCommMonoidWithInfima C] {μ :
     X.summap (fun x : D => sInf { S.summap (g x · z) | z : μ }) := by
   sorry  -- Does not hold either!
 
+lemma nsmul_sInf_summap_le_summap_sInf_summap [OrderedAddCommMonoidWithInfima C] {μ : Type}
+    {f : D → μ → C} {g : D → D → μ → C} {X : Multiset D}
+    (hfg : ∀ d : D, ∀ z : μ,
+        Multiset.card.toFun X • f d z ≤ X.summap (fun x : D => g x d z))
+    (S : Multiset D) :
+    Multiset.card.toFun X • sInf { S.summap (f · z) | z : μ } ≤
+    X.summap (fun x : D => sInf { S.summap (g x · z) | z : μ }) := by
+  sorry  -- Does not hold either!!
+
 -- If we have homomorphism `h` in place of fractional polymorphism `ω` ...
 example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C} {ι μ : Type} {I : Γ.Instance (ι ⊕ μ)}
     {h : D → D} (hhh : ∀ f ∈ Γ, ∀ x : Fin f.fst → D, f.snd (fun i => h (x i)) ≤ f.snd x) :
