@@ -12,43 +12,52 @@ lemma Multiset.summap_singleton {α β : Type*} [AddCommMonoid β] (a : α) (f :
   simp [Multiset.summap]
 
 
-section infoview_notation
+section better_notation
 
-@[app_unexpander List.map]
-def List.map.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `map) $f)
-  | _ => throw ()
-
+/-- Given `n : ℕ` and `l : List α`, print `List.take n l` as `l.take n` in Infoview. -/
 @[app_unexpander List.take]
 def List.take.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `take) $f)
+  | `($_ $n $l) => `($(l).$(Lean.mkIdent `take) $n)
   | _ => throw ()
 
+/-- Given `n : ℕ` and `l : List α`, print `List.drop n l` as `l.drop n` in Infoview. -/
 @[app_unexpander List.drop]
 def List.drop.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `drop) $f)
+  | `($_ $n $l) => `($(l).$(Lean.mkIdent `drop) $n)
   | _ => throw ()
 
+/-- Given `p : α → Bool` and `l : List α`, print `List.takeWhile p l` as `l.takeWhile p` in Infoview. -/
 @[app_unexpander List.takeWhile]
 def List.takeWhile.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `takeWhile) $f)
+  | `($_ $p $l) => `($(l).$(Lean.mkIdent `takeWhile) $p)
   | _ => throw ()
 
+/-- Given `p : α → Bool` and `l : List α`, print `List.dropWhile p l` as `l.dropWhile p` in Infoview. -/
 @[app_unexpander List.dropWhile]
 def List.dropWhile.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `dropWhile) $f)
+  | `($_ $p $l) => `($(l).$(Lean.mkIdent `dropWhile) $p)
   | _ => throw ()
 
+/-- Given `f : α → β` and `l : List α`, print `List.map f l` as `l.map f` in Infoview. -/
+@[app_unexpander List.map]
+def List.map.unexpander : Lean.PrettyPrinter.Unexpander
+  | `($_ $f $l) => `($(l).$(Lean.mkIdent `map) $f)
+  | _ => throw ()
+
+/-- Given `f : α → β` and `s : Multiset α`, print `Multiset.map f s` as `s.map f` in Infoview. -/
 @[app_unexpander Multiset.map]
 def Multiset.map.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $f $μ) => `($(μ).$(Lean.mkIdent `map) $f)
+  | `($_ $f $s) => `($(s).$(Lean.mkIdent `map) $f)
   | _ => throw ()
 
 attribute [pp_dot] List.length List.get List.sum Multiset.sum Multiset.summap
-  Function.swap Sigma.fst Sigma.snd
-  ValuedCsp.Term.evalSolution FractionalOperation.size FractionalOperation.tt
+  Sigma.fst Sigma.snd
+  ValuedCsp.Term.evalSolution ValuedCsp.Term.f ValuedCsp.Term.n
+  FractionalOperation.size FractionalOperation.tt
 
-end infoview_notation
+macro "change " h:ident " to " t:term : tactic => `(tactic| change $t at $h:ident)
+
+end better_notation
 
 
 section push_higher
@@ -261,11 +270,10 @@ example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
   rw [singleto] at *
   simp_rw [size1, one_smul, Multiset.summap_singleton] at part_ineq ⊢
   clear frpo singleto ω size1
-  change
+  change part_ineq to
     ∀ f₁ ∈ Γ, ∀ x₁ : Fin m → Fin f₁.fst → D,
       m • f₁.snd (fun i => g (Function.swap x₁ i)) ≤
       Finset.univ.val.summap (fun i : Fin m => f₁.snd (x₁ i))
-    at part_ineq
   show
     sInf { I.summap (fun t => m • t.f (Sum.elim (fun i => g (Function.swap x i)) z ∘ t.app)) | z : μ → D } ≤
     Finset.univ.val.summap (fun i : Fin m =>
@@ -301,10 +309,8 @@ example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
   convert this_ineq with j
   show (Sum.elim (fun i => g (Function.swap x i)) c ∘ t.app) j = g (Function.swap (fun i => Sum.elim (x i) c ∘ t.app) j)
   show (Sum.elim (fun i => g (Function.swap x i)) c) (t.app j) = g (Function.swap (fun i => Sum.elim (x i) c) (t.app j))
-  /-
-  show (Sum.elim (fun i => g (Function.swap x i)) c) (t.app j) = g ((fun i => Sum.elim (Function.swap x i) c) (t.app j))
-  simp [Sum.comp_elim]
-  -/
+  show (Sum.elim (fun i => g (fun k => Function.swap x i k)) c) (t.app j) = g (fun k => Function.swap (fun i => Sum.elim (x i) c) (t.app j) k)
+  show (Sum.elim (fun i => g (fun k => x k i)) c) (t.app j) = g (fun k => (fun i => Sum.elim (x i) c) k (t.app j))
   sorry
 
 
