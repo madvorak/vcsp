@@ -251,8 +251,8 @@ example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
     ∀ f₁ ∈ Γ, ∀ x₁ : Fin m → Fin f₁.fst → D,
       (ω.tt x₁).summap (fun v : Fin f₁.fst → D => m • f₁.snd v) ≤
       Finset.univ.val.summap (fun i : Fin m => ω.size • f₁.snd (x₁ i))
-  · sorry -- from `frpo` using distributivity of `nsmul` over `sum` of `map`
-
+  · sorry
+  -- `part_ineq` follows from `frpo` using distributivity of `nsmul` over `sum` of `map`
   have size1 : ω.size = 1
   · rw [singleto]
     rfl
@@ -261,15 +261,50 @@ example [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
   rw [singleto] at *
   simp_rw [size1, one_smul, Multiset.summap_singleton] at part_ineq ⊢
   clear frpo singleto ω size1
-  show
-    sInf { I.summap (fun t => m • t.f (Sum.elim (fun i => g (Function.swap x i)) z ∘ t.app)) | z : μ → D } ≤
-    Finset.univ.val.summap (fun i : Fin m =>
-        sInf { I.summap (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim (x i) z ∘ t.app)) | z : μ → D })
   change
     ∀ f₁ ∈ Γ, ∀ x₁ : Fin m → Fin f₁.fst → D,
       m • f₁.snd (fun i => g (Function.swap x₁ i)) ≤
       Finset.univ.val.summap (fun i : Fin m => f₁.snd (x₁ i))
     at part_ineq
+  show
+    sInf { I.summap (fun t => m • t.f (Sum.elim (fun i => g (Function.swap x i)) z ∘ t.app)) | z : μ → D } ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+        sInf { I.summap (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim (x i) z ∘ t.app)) | z : μ → D })
+  convert_to
+    sInf { I.summap (fun t => m • t.f (Sum.elim (fun i => g (Function.swap x i)) z ∘ t.app)) | z : μ → D } ≤
+    sInf { Finset.univ.val.summap (fun i : Fin m =>
+        I.summap (fun t : Γ.Term (Fin n ⊕ μ) => t.f (Sum.elim (x i) z ∘ t.app))) | z : μ → D }
+  · sorry
+  apply sInf_le_sInf_of_forall_exists_le
+  simp only [Set.mem_setOf_eq, exists_exists_eq_and, forall_exists_index, forall_apply_eq_imp_iff]
+  intro c
+  show
+    ∃ a : μ → D,
+      I.summap (fun t => m • t.f (Sum.elim (fun i => g (Function.swap x i)) a ∘ t.app)) ≤
+      Finset.univ.val.summap (fun i => I.summap (fun t => t.f (Sum.elim (x i) c ∘ t.app)))
+  convert_to
+    ∃ a : μ → D,
+      I.summap (fun t => m • t.f (Sum.elim (fun i => g (Function.swap x i)) a ∘ t.app)) ≤
+      I.summap (fun t => Finset.univ.val.summap (fun i => t.f (Sum.elim (x i) c ∘ t.app)))
+  · sorry
+  use c -- TODO `g ∘`
+  apply Multiset.sum_map_le_sum_map
+  intro t tin
+  show
+    m • t.f (Sum.elim (fun i => g (Function.swap x i)) c ∘ t.app) ≤
+    Finset.univ.val.summap (fun i : Fin m => t.f (Sum.elim (x i) c ∘ t.app))
+  have this_ineq :
+    m • t.f (fun i => g (Function.swap (fun i => Sum.elim (x i) c ∘ t.app) i)) ≤
+    Finset.univ.val.summap (fun i : Fin m => t.f (Sum.elim (x i) c ∘ t.app))
+  · apply part_ineq ⟨t.n, t.f⟩ t.inΓ
+  clear part_ineq
+  convert this_ineq with j
+  show (Sum.elim (fun i => g (Function.swap x i)) c ∘ t.app) j = g (Function.swap (fun i => Sum.elim (x i) c ∘ t.app) j)
+  show (Sum.elim (fun i => g (Function.swap x i)) c) (t.app j) = g (Function.swap (fun i => Sum.elim (x i) c) (t.app j))
+  /-
+  show (Sum.elim (fun i => g (Function.swap x i)) c) (t.app j) = g ((fun i => Sum.elim (Function.swap x i) c) (t.app j))
+  simp [Sum.comp_elim]
+  -/
   sorry
 
 
