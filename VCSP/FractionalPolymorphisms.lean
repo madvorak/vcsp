@@ -23,9 +23,9 @@ lemma FractionalOperation.IsValid.contains {ω : FractionalOperation D m} (valid
   Multiset.exists_mem_of_ne_zero valid
 
 /-- TODO description -/
-def FractionalOperation.tt {n : ℕ} (ω : FractionalOperation D m) (x : Fin m → Fin n → D) :
-    Multiset (Fin n → D) :=
-  ω.map (fun (g : (Fin m → D) → D) (i : Fin n) => g ((Function.swap x) i))
+def FractionalOperation.tt {ι : Type*} (ω : FractionalOperation D m) (x : Fin m → ι → D) :
+    Multiset (ι → D) :=
+  ω.map (fun (g : (Fin m → D) → D) (i : ι) => g ((Function.swap x) i))
 -- `Function.swap` notation issue: https://github.com/leanprover/lean4/issues/1629
 
 /-- Cost function admits given fractional operation, i.e., `ω` improves `f` in the `≤` sense. -/
