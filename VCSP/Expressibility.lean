@@ -15,6 +15,7 @@ variable [OrderedAddCommMonoidWithInfima C]
 def ValuedCsp.Instance.evalMinimize {Γ : ValuedCsp D C} {ι μ : Type*}
     (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : C :=
   sInf { I.evalPartial x y | y : μ → D }
+  -- iInf (I.evalPartial x) ??
 
 /-- Function expressed by a `Γ` instance `I` exposing `m` free variables. -/
 def ValuedCsp.Instance.expresses {Γ : ValuedCsp D C} {m : ℕ} {μ : Type*} (I : Γ.Instance (Fin m ⊕ μ)) :

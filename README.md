@@ -2,7 +2,7 @@
 
 This is a playground for experiments preceding my contribution to Mathlib.
 
-My long-term goal is to formalize the dichotomy for fixed-template finite-valued constraint satisfaction problems by Thapper, Živný, and Kolmogorov while exploring potential generalizations (costs in restricted monoids instead of restricted semirings (rationals), infinite domains, partially ordered codomains, ...).
+My long-term goal is to formalize the dichotomy for fixed-template finite-valued constraint satisfaction problems [Thapper, Živný, Kolmogorov] while exploring potential generalizations (infinite domains, partially ordered codomains, and more).
 
 ## Mathlib contributions
 
