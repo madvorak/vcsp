@@ -12,3 +12,6 @@ class OrderedAddCommMonoidWithInfima (C : Type*)
 def OrderedAddCommMonoidWithInfima.toCompleteLattice (C : Type*)
     [OrderedAddCommMonoidWithInfima C] : CompleteLattice C :=
   completeLatticeOfInf C isGLB_sInf
+
+class OrderedCancelAddCommMonoidWithInfima (C : Type*)
+  extends OrderedCancelAddCommMonoid C, OrderedAddCommMonoidWithInfima C

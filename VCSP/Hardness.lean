@@ -431,6 +431,9 @@ def Function.HasMaxCutPropertyAt [OrderedAddCommMonoid C] (f : (Fin 2 → D) →
 def Function.HasMaxCutProperty [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) : Prop :=
   ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
+def ValuedCsp.CanExpressMaxCut [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C} : Prop :=
+  ∃ f : (Fin 2 → D) → C, ⟨2, f⟩ ∈ Γ.expressivePower ∧ f.HasMaxCutProperty
+
 lemma Function.HasMaxCutProperty.forbids_commutative [OrderedCancelAddCommMonoid C]
     {f : (Fin 2 → D) → C} (mcf : f.HasMaxCutProperty)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) (symmega : ω.IsSymmetric) :
@@ -485,3 +488,12 @@ lemma Function.HasMaxCutProperty.forbids_commutative [OrderedCancelAddCommMonoid
   · simp
   rw [rhs_swap, distrib] at impos
   exact ne_of_lt impos rfl
+
+theorem ValuedCsp.CanExpressMaxCut.forbids_commutative [OrderedCancelAddCommMonoidWithInfima C]
+    {Γ : ValuedCsp D C} (expressMC : Γ.CanExpressMaxCut)
+    {ω : FractionalOperation D 2} (valid : ω.IsValid) :
+    ¬ ω.IsSymmetricFractionalPolymorphismFor Γ := by
+  intro sfp
+  rcases expressMC with ⟨f, fin, fmc⟩
+  apply fmc.forbids_commutative valid sfp.right
+  exact sfp.left.expressivePower ⟨2, f⟩ fin
