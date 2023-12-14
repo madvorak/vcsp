@@ -119,6 +119,16 @@ lemma level2 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.
     m • (ω.tt (fun i : Fin m => x i)).summap t.evalSolution ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => t.evalSolution (x i)) := by
   convert level1 t ω x impr
+  show
+    (ω.tt (x ·)).summap (fun xᵢ => t.f (xᵢ ∘ t.app)) =
+    (ω.tt (x · ∘ t.app)).summap t.f
+  convert_to
+    Multiset.sum ((ω.tt (x ·)).map (fun xᵢ => t.f (fun i => xᵢ (t.app i)))) =
+    Multiset.sum ((ω.tt (x · ∘ t.app)).map t.f)
+  apply congr_arg
+  show
+    (ω.tt (x ·)).map (fun xᵢ : ι → D => t.f (fun i : Fin t.n => xᵢ (t.app i))) =
+    (ω.tt (x · ∘ t.app)).map t.f
   sorry
 
 lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.Instance ι)
@@ -434,7 +444,7 @@ def Function.HasMaxCutProperty [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C
 def ValuedCsp.CanExpressMaxCut [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C} : Prop :=
   ∃ f : (Fin 2 → D) → C, ⟨2, f⟩ ∈ Γ.expressivePower ∧ f.HasMaxCutProperty
 
-lemma Function.HasMaxCutProperty.forbids_commutative [OrderedCancelAddCommMonoid C]
+lemma Function.HasMaxCutProperty.forbids_commutativeFP [OrderedCancelAddCommMonoid C]
     {f : (Fin 2 → D) → C} (mcf : f.HasMaxCutProperty)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) (symmega : ω.IsSymmetric) :
     ¬ f.AdmitsFractional ω := by
@@ -489,11 +499,11 @@ lemma Function.HasMaxCutProperty.forbids_commutative [OrderedCancelAddCommMonoid
   rw [rhs_swap, distrib] at impos
   exact ne_of_lt impos rfl
 
-theorem ValuedCsp.CanExpressMaxCut.forbids_commutative [OrderedCancelAddCommMonoidWithInfima C]
+theorem ValuedCsp.CanExpressMaxCut.forbids_commutativeFP [OrderedCancelAddCommMonoidWithInfima C]
     {Γ : ValuedCsp D C} (expressMC : Γ.CanExpressMaxCut)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) :
     ¬ ω.IsSymmetricFractionalPolymorphismFor Γ := by
-  intro sfp
+  rintro ⟨frpol, symme⟩
   rcases expressMC with ⟨f, fin, fmc⟩
-  apply fmc.forbids_commutative valid sfp.right
-  exact sfp.left.expressivePower ⟨2, f⟩ fin
+  apply fmc.forbids_commutativeFP valid symme
+  exact frpol.expressivePower ⟨2, f⟩ fin
