@@ -60,3 +60,43 @@ noncomputable instance : OrderedAddCommMonoidWithInfima (Unit × Bool × ENat ×
   constructor
   · apply sInf_le
   · apply le_sInf
+
+
+-----------------------------------------------------------------------------------------
+
+
+theorem fuck {α : Type*} [OrderedCancelAddCommMonoidWithInfima α] :
+    (∃ x y : α, x < y) → False := by
+
+  rintro ⟨x, y, hxy⟩
+
+  --    ⊥ ≤ ⊥ + x
+  have blebpx : @sInf α _ Set.univ ≤ @sInf α _ Set.univ + x
+  · exact sInf_le trivial
+
+  --    ⊥ + x < ⊥ + y
+  have bpxlbpy : @sInf α _ Set.univ + x < @sInf α _ Set.univ + y
+  · exact add_lt_add_left hxy (sInf Set.univ)
+
+  --    ⊥ < ⊥ + y
+  have blbpy : @sInf α _ Set.univ < @sInf α _ Set.univ + y
+  · exact blebpx.trans_lt bpxlbpy
+
+  --    0 < y
+  have zly : 0 < y
+  · exact pos_of_lt_add_right blbpy
+
+  --    ⊤ + y ≤ ⊤
+  have tpylet : @sInf α _ ∅ + y ≤ @sInf α _ ∅
+  · simp
+
+  --    ⊤ + y < ⊤ + y
+  have tpyltpy : @sInf α _ ∅ + y < @sInf α _ ∅ + y
+  · exact lt_add_of_le_of_pos tpylet zly
+
+  --    contradiction
+  exact tpyltpy.false
+
+
+#check fuck
+#print axioms fuck
