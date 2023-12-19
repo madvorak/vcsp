@@ -141,38 +141,15 @@ lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.
 lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} (x : Fin m → (ι → D)) (z : μ → D)
     {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ) :
-    m • (ω.tt x).summap (I.evalPartial · z) ≤ -- won't work without applying `ω` to `z` as well
+    m • (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun y : (ι ⊕ μ) → D =>
+        I.evalPartial (fun a => y (Sum.inl a)) (fun b => y (Sum.inr b))
+      ) ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalPartial (x i) z) := by
-  let x' : Fin m → ((ι ⊕ μ) → D) := fun i => Sum.elim (x i) z
-  convert level3 I x' frpo
-  show
-    Multiset.sum ((ω.tt x).map (fun yᵢ => I.summap (fun t => t.evalSolution (Sum.elim yᵢ z)))) =
-    Multiset.sum ((ω.tt x').map I.evalSolution)
+  convert level3 I (fun i : Fin m => Sum.elim (x i) z) frpo with s
+  show I.evalSolution (Sum.elim (fun a => s (Sum.inl a)) (fun b => s (Sum.inr b))) = I.evalSolution s
   apply congr_arg
-  show
-    (ω.tt x).map (fun yᵢ => I.summap (·.evalSolution (Sum.elim yᵢ z))) =
-    (ω.tt (fun i => Sum.elim (x i) z)).map (fun xᵢ => I.summap (·.evalSolution xᵢ))
-  unfold FractionalOperation.tt
-  unfold Multiset.summap
-  simp
-  congr
-  ext g
-  apply congr_arg
-  unfold Function.swap
-  simp
-  apply congr_fun
-  ext t
-  unfold ValuedCsp.Term.evalSolution
-  congr
-  ext a
-  apply congr_arg
-  apply congr_arg₂
-  swap; rfl
   ext j
-  show
-    Sum.elim (fun j : ι => g (fun i : Fin m => x i j)) z j =
-    g (fun i : Fin m => Sum.elim (x i) z j)
-  sorry
+  cases j <;> rfl
 
 lemma level5 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
