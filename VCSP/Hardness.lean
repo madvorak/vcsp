@@ -115,17 +115,13 @@ lemma level2 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.
     m • (ω.tt (fun i : Fin m => x i)).summap t.evalSolution ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => t.evalSolution (x i)) := by
   convert level1 t ω x impr
-  show
-    (ω.tt (x ·)).summap (fun xᵢ => t.f (xᵢ ∘ t.app)) =
-    (ω.tt (x · ∘ t.app)).summap t.f
   convert_to
     Multiset.sum ((ω.tt (x ·)).map (fun xᵢ => t.f (fun i => xᵢ (t.app i)))) =
     Multiset.sum ((ω.tt (x · ∘ t.app)).map t.f)
   apply congr_arg
-  show
-    (ω.tt (x ·)).map (fun xᵢ : ι → D => t.f (fun i : Fin t.n => xᵢ (t.app i))) =
-    (ω.tt (x · ∘ t.app)).map t.f
-  sorry
+  unfold FractionalOperation.tt
+  rewrite [Multiset.map_map, Multiset.map_map]
+  rfl
 
 lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.Instance ι)
     {m : ℕ} (ω : FractionalOperation D m) (x : Fin m → (ι → D))

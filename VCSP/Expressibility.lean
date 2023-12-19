@@ -22,10 +22,6 @@ def ValuedCsp.Instance.evalMinimize {Γ : ValuedCsp D C} {ι μ : Type*} [Decida
 def ValuedCsp.expressivePower (Γ : ValuedCsp D C) : ValuedCsp D C :=
   { ⟨n, I.evalMinimize⟩ | (n : ℕ) (m : ℕ) (I : Γ.Instance (Fin n ⊕ Fin m)) }
 
-/-- A new VCSP template made of all functions expressible by `Γ`. -/
-def ValuedCsp.expressivePowerAbstract (Γ : ValuedCsp D C) : ValuedCsp D C :=
-  { ⟨n, I.evalMinimize⟩ | (n : ℕ) (μ : Type) (_ : DecidableEq μ) (_ : Fintype μ) (I : Γ.Instance (Fin n ⊕ μ)) }
-
 /-- Expressive power of a VCSP template subsumes the template. -/
 lemma ValuedCsp.subset_expressivePower (Γ : ValuedCsp D C) :
     Γ ⊆ Γ.expressivePower := by
