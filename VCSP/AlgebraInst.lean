@@ -8,7 +8,7 @@ import VCSP.AlgebraC
 /-
 We provide `OrderedAddCommMonoidWithInfima` instances for
 `Nat`, `ENat`, `Int`, `NNRat`, `Rat`, `NNReal`, `ENNReal`, `Real`, `EReal`, and
-hopefully soon for `Bool` ("upside down") as well.
+hopefully soon for `Bool` (probably "upside down") as well.
 Tuples of above-mentioned types get inferred easily, as exemplified below them.
 -/
 
@@ -23,77 +23,44 @@ instance crispCodomain : OrderedAddCommMonoid Bool where
   add_comm := Bool.or_comm
   add_le_add_left := sorry -- proved in above-mentioned PR
 
+macro (name := infInstTactic) "infInst" : tactic =>
+    `(tactic| (constructor; apply inf_le_left; apply inf_le_right; apply le_inf))
+
 noncomputable instance : OrderedAddCommMonoidWithInfima Bool := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedAddCommMonoidWithInfima Nat := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 noncomputable instance : OrderedAddCommMonoidWithInfima ENat := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedAddCommMonoidWithInfima Int := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedAddCommMonoidWithInfima NNRat := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedAddCommMonoidWithInfima Rat := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 noncomputable instance : OrderedAddCommMonoidWithInfima NNReal := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 noncomputable instance : OrderedAddCommMonoidWithInfima ENNReal := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedAddCommMonoidWithInfima Real := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 noncomputable instance : OrderedAddCommMonoidWithInfima EReal := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 noncomputable instance : OrderedAddCommMonoidWithInfima (EReal × EReal) := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 noncomputable instance : OrderedAddCommMonoidWithInfima (Unit × Bool × ENat × NNReal × EReal) := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 /-
 We provide `OrderedCancelAddCommMonoidWithInfima` instances for
@@ -102,43 +69,22 @@ Tuples of above-mentioned types get inferred easily, as exemplified below them.
 -/
 
 instance : OrderedCancelAddCommMonoidWithInfima Nat := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedCancelAddCommMonoidWithInfima Int := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedCancelAddCommMonoidWithInfima NNRat := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedCancelAddCommMonoidWithInfima Rat := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 noncomputable instance : OrderedCancelAddCommMonoidWithInfima NNReal := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedCancelAddCommMonoidWithInfima Real := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
 
 instance : OrderedCancelAddCommMonoidWithInfima (Nat × NNRat × Real) := by
-  constructor
-  · apply inf_le_left
-  · apply inf_le_right
-  · apply le_inf
+  infInst
