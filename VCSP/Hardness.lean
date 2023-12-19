@@ -143,14 +143,16 @@ lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι μ : Type*} (I : 
     (frpo : ω.IsFractionalPolymorphismFor Γ) :
     m • (ω.tt x).summap (I.evalPartial · z) ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalPartial (x i) z) := by
+  let x' : Fin m → ((ι ⊕ μ) → D) := fun i => Sum.elim (x i) z
   show
     m • (ω.tt x).summap (fun yᵢ => I.summap (fun t => t.evalSolution (Sum.elim yᵢ z))) ≤
     ω.size • Finset.univ.val.summap (fun i => I.summap (fun t => t.evalSolution (Sum.elim (x i) z)))
-  rw [Multiset.summap_summap_swap _ I, Multiset.summap_summap_swap _ I]
-  rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul]
-  apply Multiset.sum_map_le_sum_map
-  intro t _
-  sorry
+  convert_to
+    m • (ω.tt x').summap (fun yᵢ => I.summap (fun t => t.evalSolution yᵢ)) ≤
+    ω.size • Finset.univ.val.summap (fun i => I.summap (fun t => t.evalSolution (x' i)))
+  · sorry
+  apply level3
+  exact frpo
 
 lemma level5 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
@@ -182,6 +184,7 @@ def Function.HasMaxCutPropertyAt [OrderedAddCommMonoid C] (f : (Fin 2 → D) →
 def Function.HasMaxCutProperty [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) : Prop :=
   ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
+/-- VCSP template `Γ` can express Max Cut via summation and minimization. -/
 def ValuedCsp.CanExpressMaxCut [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C]
     {Γ : ValuedCsp D C} : Prop :=
   ∃ f : (Fin 2 → D) → C, ⟨2, f⟩ ∈ Γ.expressivePower ∧ f.HasMaxCutProperty
@@ -193,7 +196,7 @@ lemma Function.HasMaxCutProperty.forbids_commutativeFP [OrderedCancelAddCommMono
   intro contr
   rcases mcf with ⟨a, b, hab, mcfab⟩
   specialize contr ![![a, b], ![b, a]]
-  rw [univ_val_map_2x2, ← mcfab.left, Multiset.sum_ofList_twice] at contr
+  rw [univ_val_map_2x2, ←mcfab.left, Multiset.sum_ofList_twice] at contr
   have sharp :
     2 • ((ω.tt ![![a, b], ![b, a]]).map (fun _ => f ![a, b])).sum <
     2 • ((ω.tt ![![a, b], ![b, a]]).map (fun r => f r)).sum
@@ -211,7 +214,7 @@ lemma Function.HasMaxCutProperty.forbids_commutativeFP [OrderedCancelAddCommMono
         · rw [ha1, hb0] at hab
           exact hab.symm
       apply asymm
-      rw [← eq_r]
+      rw [←eq_r]
       show o (fun j => ![![a, b], ![b, a]] j 0) = o (fun j => ![![a, b], ![b, a]] j 1)
       rw [column_of_2x2_left, column_of_2x2_right]
       exact symmega ![a, b] ![b, a] (List.Perm.swap b a []) o in_omega
