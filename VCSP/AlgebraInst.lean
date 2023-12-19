@@ -1,13 +1,15 @@
 import Mathlib.Data.Fintype.Order
 import Mathlib.Data.ENat.Lattice
+import Mathlib.Data.Rat.NNRat
 import Mathlib.Data.Real.ENNReal
 import Mathlib.Data.Real.EReal
 import VCSP.AlgebraC
 
 /-
-We provide `OrderedAddCommMonoidWithInfima` instances for `ENat`, `ENNReal`, `EReal`, and
+We provide `OrderedAddCommMonoidWithInfima` instances for
+`Nat`, `ENat`, `Int`, `NNRat`, `Rat`, `NNReal`, `ENNReal`, `Real`, `EReal`, and
 hopefully soon for `Bool` ("upside down") as well.
-Tuples of above-mentioned types get inferred easily, as exemplified on the bottom.
+Tuples of above-mentioned types get inferred easily, as exemplified below them.
 -/
 
 instance crispCodomain : OrderedAddCommMonoid Bool where
@@ -23,80 +25,120 @@ instance crispCodomain : OrderedAddCommMonoid Bool where
 
 noncomputable instance : OrderedAddCommMonoidWithInfima Bool := by
   constructor
-  · apply sInf_le
-  · apply le_sInf
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
-noncomputable example : OrderedAddCommMonoidWithInfima Nat := by
+instance : OrderedAddCommMonoidWithInfima Nat := by
   constructor
-  · apply csInf_le'
-  · sorry -- cannot be
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
 noncomputable instance : OrderedAddCommMonoidWithInfima ENat := by
   constructor
-  · apply sInf_le
-  · apply le_sInf
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
-noncomputable example : OrderedAddCommMonoidWithInfima NNReal := by
+instance : OrderedAddCommMonoidWithInfima Int := by
   constructor
-  · apply csInf_le'
-  · sorry -- cannot be
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
+
+instance : OrderedAddCommMonoidWithInfima NNRat := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
+
+instance : OrderedAddCommMonoidWithInfima Rat := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
+
+noncomputable instance : OrderedAddCommMonoidWithInfima NNReal := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
 noncomputable instance : OrderedAddCommMonoidWithInfima ENNReal := by
   constructor
-  · apply sInf_le
-  · apply le_sInf
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
+
+instance : OrderedAddCommMonoidWithInfima Real := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
 noncomputable instance : OrderedAddCommMonoidWithInfima EReal := by
   constructor
-  · apply sInf_le
-  · apply le_sInf
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
 noncomputable instance : OrderedAddCommMonoidWithInfima (EReal × EReal) := by
   constructor
-  · apply sInf_le
-  · apply le_sInf
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
-noncomputable instance : OrderedAddCommMonoidWithInfima (Unit × Bool × ENat × ENNReal × EReal) := by
+noncomputable instance : OrderedAddCommMonoidWithInfima (Unit × Bool × ENat × NNReal × EReal) := by
   constructor
-  · apply sInf_le
-  · apply le_sInf
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
+/-
+We provide `OrderedCancelAddCommMonoidWithInfima` instances for
+`Nat`, `Int`, `NNRat`, `Rat`, `NNReal`, `Real`.
+Tuples of above-mentioned types get inferred easily, as exemplified below them.
+-/
 
------------------------------------------------------------------------------------------
+instance : OrderedCancelAddCommMonoidWithInfima Nat := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
+instance : OrderedCancelAddCommMonoidWithInfima Int := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
-theorem fuck {α : Type*} [OrderedCancelAddCommMonoidWithInfima α] :
-    (∃ x y : α, x < y) → False := by
+instance : OrderedCancelAddCommMonoidWithInfima NNRat := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
-  rintro ⟨x, y, hxy⟩
+instance : OrderedCancelAddCommMonoidWithInfima Rat := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
-  --    ⊥ ≤ ⊥ + x
-  have blebpx : @sInf α _ Set.univ ≤ @sInf α _ Set.univ + x
-  · exact sInf_le trivial
+noncomputable instance : OrderedCancelAddCommMonoidWithInfima NNReal := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
-  --    ⊥ + x < ⊥ + y
-  have bpxlbpy : @sInf α _ Set.univ + x < @sInf α _ Set.univ + y
-  · exact add_lt_add_left hxy (sInf Set.univ)
+instance : OrderedCancelAddCommMonoidWithInfima Real := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf
 
-  --    ⊥ < ⊥ + y
-  have blbpy : @sInf α _ Set.univ < @sInf α _ Set.univ + y
-  · exact blebpx.trans_lt bpxlbpy
-
-  --    0 < y
-  have zly : 0 < y
-  · exact pos_of_lt_add_right blbpy
-
-  --    ⊤ + y ≤ ⊤
-  have tpylet : @sInf α _ ∅ + y ≤ @sInf α _ ∅
-  · simp
-
-  --    ⊤ + y < ⊤ + y
-  have tpyltpy : @sInf α _ ∅ + y < @sInf α _ ∅ + y
-  · exact lt_add_of_le_of_pos tpylet zly
-
-  --    contradiction
-  exact tpyltpy.false
-
-
-#check fuck
-#print axioms fuck
+instance : OrderedCancelAddCommMonoidWithInfima (Nat × NNRat × Real) := by
+  constructor
+  · apply inf_le_left
+  · apply inf_le_right
+  · apply le_inf

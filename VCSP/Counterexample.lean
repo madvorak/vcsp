@@ -1,7 +1,7 @@
 import VCSP.AlgebraInst
 
 
-private lemma broken {C D : Type} [OrderedAddCommMonoidWithInfima C] {T M : Type}
+private lemma broken {C D : Type} [OrderedAddCommMonoid C] [CompleteLattice C] {T M : Type}
     (W : Multiset T) (S : Multiset M) (f : T → D → C) (g : M → D → C)
     (hfg : ∀ d : D,
       (W.map (fun i : T => f i d)).sum ≤
