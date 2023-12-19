@@ -102,19 +102,19 @@ end push_higher
 
 variable {D C : Type*}
 
-lemma level1 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.Term ι)
-    {m : ℕ} (x : Fin m → (ι → D))
-    {ω : FractionalOperation D m} (impr : t.f.AdmitsFractional ω) :
+lemma level1 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} {t : Γ.Term ι}
+    {m : ℕ} {ω : FractionalOperation D m} (impr : t.f.AdmitsFractional ω)
+    (x : Fin m → (ι → D)) :
     m • (ω.tt (fun i : Fin m => x i ∘ t.app)).summap t.f ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => t.f (x i ∘ t.app)) :=
   impr (x · ∘ t.app)
 
 lemma level2 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.Term ι)
-    {m : ℕ} (x : Fin m → (ι → D))
-    {ω : FractionalOperation D m} (impr : t.f.AdmitsFractional ω) :
+    {m : ℕ} {ω : FractionalOperation D m} (impr : t.f.AdmitsFractional ω)
+    (x : Fin m → (ι → D)) :
     m • (ω.tt (fun i : Fin m => x i)).summap t.evalSolution ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => t.evalSolution (x i)) := by
-  convert level1 t x impr
+  convert level1 impr x
   convert_to
     Multiset.sum ((ω.tt (x ·)).map (fun xᵢ => t.f (fun i => xᵢ (t.app i)))) =
     Multiset.sum ((ω.tt (x · ∘ t.app)).map t.f)
@@ -124,8 +124,8 @@ lemma level2 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.
   rfl
 
 lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.Instance ι)
-    {m : ℕ} (x : Fin m → (ι → D))
-    {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ) :
+    {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
+    (x : Fin m → (ι → D)) :
     m • (ω.tt x).summap I.evalSolution ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalSolution (x i)) := by
   show
@@ -139,13 +139,13 @@ lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.
   exact frpo ⟨t.n, t.f⟩ t.inΓ
 
 lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
-    {m : ℕ} (x : Fin m → (ι → D)) (z : μ → D)
-    {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ) :
+    {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
+    (x : Fin m → (ι → D)) (z : μ → D) :
     m • (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun y : (ι ⊕ μ) → D =>
         I.evalPartial (fun a => y (Sum.inl a)) (fun b => y (Sum.inr b))
       ) ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalPartial (x i) z) := by
-  convert level3 I (fun i : Fin m => Sum.elim (x i) z) frpo with s
+  convert level3 I frpo (fun i : Fin m => Sum.elim (x i) z) with s
   show I.evalSolution (Sum.elim (fun a => s (Sum.inl a)) (fun b => s (Sum.inr b))) = I.evalSolution s
   apply congr_arg
   ext j
@@ -153,8 +153,8 @@ lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι μ : Type*} (I : 
 
 lemma level5 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
-    {m : ℕ} (x : Fin m → (ι → D))
-    {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ) :
+    {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
+    (x : Fin m → (ι → D)) :
     m • (ω.tt x).summap I.evalMinimize ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalMinimize (x i)) := by
   sorry
