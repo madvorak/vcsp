@@ -11,13 +11,13 @@ abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f :
 
 section better_notation
 
-/-- Given `n : ℕ` and `l : List α`, print `List.take n l` as `l.take n` in Infoview. -/
+/-- Given `n : ℕ` and `l : List _`, print `List.take n l` as `l.take n` in Infoview. -/
 @[app_unexpander List.take]
 def List.take.unexpander : Lean.PrettyPrinter.Unexpander
   | `($_ $n $l) => `($(l).$(Lean.mkIdent `take) $n)
   | _ => throw ()
 
-/-- Given `n : ℕ` and `l : List α`, print `List.drop n l` as `l.drop n` in Infoview. -/
+/-- Given `n : ℕ` and `l : List _`, print `List.drop n l` as `l.drop n` in Infoview. -/
 @[app_unexpander List.drop]
 def List.drop.unexpander : Lean.PrettyPrinter.Unexpander
   | `($_ $n $l) => `($(l).$(Lean.mkIdent `drop) $n)
@@ -103,10 +103,7 @@ end push_higher
 
 variable {D C : Type*}
 
-lemma Finset.nsmul_inf' [OrderedAddCommMonoidWithInfima C] {s : Finset D}
-    (hs : s.Nonempty) (f : D → C) (n : ℕ) :
-    s.inf' hs (fun a => n • f a) = n • s.inf' hs f :=
-  sorry
+section expressiveness
 
 lemma level1 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} {t : Γ.Term ι}
     {m : ℕ} {ω : FractionalOperation D m} (impr : t.f.AdmitsFractional ω)
@@ -167,25 +164,43 @@ lemma level5 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι μ : Type*} (I : 
   rw [Multiset.summap_nsmul, Multiset.summap_nsmul]
   exact level4 I frpo x z
 
+lemma Finset.nsmul_inf' [OrderedAddCommMonoidWithInfima C] {s : Finset D}
+    (hs : s.Nonempty) (f : D → C) (n : ℕ) :
+    s.inf' hs (fun a => n • f a) = n • s.inf' hs f := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    rw [succ_nsmul]
+    simp_rw [succ_nsmul]
+    sorry
+
 lemma level6 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
+    {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
+    {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
+    (x : Fin m → (ι → D)) :
+    (ω.tt x).summap (fun yᵢ => m • I.evalMinimize yᵢ) ≤
+    Finset.univ.val.summap (fun i : Fin m => ω.size • I.evalMinimize (x i)) := by
+  show
+    (ω.tt x).summap (fun yᵢ => m • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial yᵢ)) ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+      ω.size • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial (x i)))
+  convert_to
+    (ω.tt x).summap (fun yᵢ => Finset.univ.inf' Finset.univ_nonempty (m • I.evalPartial yᵢ)) ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+      Finset.univ.inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i)))
+  · simp [Finset.nsmul_inf']
+  · simp [Finset.nsmul_inf']
+  have ineq_partial := level5 I frpo x
+  sorry
+
+lemma level7 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
     m • (ω.tt x).summap I.evalMinimize ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalMinimize (x i)) := by
   rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul]
-  show
-    (ω.tt x).summap (fun j => m • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial j)) ≤
-    Finset.univ.val.summap (fun i =>
-      ω.size • Finset.inf' Finset.univ Finset.univ_nonempty (I.evalPartial (x i)))
-  convert_to
-    (ω.tt x).summap (fun j => Finset.univ.inf' Finset.univ_nonempty (m • I.evalPartial j)) ≤
-    Finset.univ.val.summap (fun i =>
-      Finset.inf' Finset.univ Finset.univ_nonempty (ω.size • I.evalPartial (x i)))
-  · simp [Finset.nsmul_inf']
-  · simp [Finset.nsmul_inf']
-  have := level5 I frpo x
-  sorry
+  exact level6 I frpo x
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
     [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
@@ -196,8 +211,13 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
   rw [ValuedCsp.expressivePower, Set.mem_setOf_eq] at hf
   rcases hf with ⟨n, μ, I, rfl⟩
   intro x
-  apply level6
+  apply level7
   exact frpo
+
+end expressiveness
+
+
+section max_cut
 
 /-- Function `f` has Max-Cut property at labels `a` and `b` when `argmin f` is exactly:
    `{ ![a, b] , ![b, a] }` -/
@@ -278,3 +298,5 @@ theorem ValuedCsp.CanExpressMaxCut.forbids_commutativeFP
   rcases expressMC with ⟨f, fin, fmc⟩
   apply fmc.forbids_commutativeFP valid symme
   exact frpol.expressivePower ⟨2, f⟩ fin
+
+end max_cut
