@@ -7,7 +7,7 @@ import Mathlib.Data.List.OfFn
 abbrev FractionalOperation (D : Type*) (m : ℕ) : Type _ :=
   Multiset ((Fin m → D) → D)
 
-variable {D C : Type*} [OrderedAddCommMonoid C] {m : ℕ}
+variable {D : Type*} {m : ℕ}
 
 /-- Arity of the "output" of the fractional operation. -/
 @[simp]
@@ -33,6 +33,8 @@ lemma FractionalOperation.tt_singleton {m n : ℕ} {ω : FractionalOperation D m
     ω.tt x = {fun i => g (Function.swap x i)} := by
   unfold FractionalOperation.tt
   rw [singleto, Multiset.map_singleton]
+
+variable {C : Type*} [OrderedAddCommMonoid C]
 
 /-- Cost function admits given fractional operation, i.e., `ω` improves `f` in the `≤` sense. -/
 def Function.AdmitsFractional {n : ℕ} (f : (Fin n → D) → C) (ω : FractionalOperation D m) : Prop :=
