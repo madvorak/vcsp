@@ -1,11 +1,41 @@
 import Mathlib.Order.PFilter
+import Mathlib.Data.Set.Pointwise.Basic
 import VCSP.FractionalPolymorphisms
 
 
 abbrev FilterValuedCsp (D C : Type*) [OrderedAddCommMonoid C] :=
   Set (Σ (n : ℕ), (Fin n → D) → Order.PFilter C)
 
-variable {D C : Type*} [OrderedAddCommMonoid C]
+
+variable {C : Type*} [OrderedAddCommMonoid C]
+
+def addMink_aux (x y : Order.Ideal C) : Order.Ideal C :=
+  let z := { a + b | (a ∈ x) (b ∈ y) }
+  have hz : Order.IsIdeal z := by
+    constructor
+    · sorry -- TODO `IsLowerSet`
+    · obtain ⟨x₁, hx₁⟩ := x.nonempty
+      obtain ⟨y₁, hy₁⟩ := y.nonempty
+      exact ⟨x₁ + y₁, x₁, hx₁, y₁, hy₁, rfl⟩
+    · sorry -- TODO `DirectedOn`
+  hz.toIdeal
+
+def addMink (x y : Order.PFilter C) : Order.PFilter C :=
+  ⟨addMink_aux x.dual y.dual⟩
+
+instance : Zero (Order.PFilter C) where
+  zero := ⟨⟨{0}, sorry⟩, Set.zero_nonempty, directedOn_singleton IsRefl.reflexive 0⟩
+
+def Multiset.sumMink (s : Multiset (Order.PFilter C)) : Order.PFilter C :=
+  s.foldl addMink sorry 0
+
+instance : HSMul ℕ (Order.PFilter C) (Order.PFilter C) where
+  hSMul := fun
+  | .zero => 0
+  | .succ n => fun x => addMink x sorry -- (n • x)
+
+
+variable {D : Type*}
 
 /-- A term in a valued CSP instance over the template `Γ`. -/
 structure FilterValuedCsp.Term (Γ : FilterValuedCsp D C) (ι : Type*) where
@@ -29,21 +59,21 @@ abbrev FilterValuedCsp.Instance (Γ : FilterValuedCsp D C) (ι : Type*) : Type _
 
 /-- Evaluation of a `Γ` instance `I` for given solution `x`. -/
 def FilterValuedCsp.Instance.evalSolution {Γ : FilterValuedCsp D C} {ι : Type*}
-    (I : Γ.Instance ι) (x : ι → D) : Order.PFilter C := sorry
-  -- (I.map (fun t : Γ.Term => t.evalSolution x)).sum -- TODO Minkowski sum
+    (I : Γ.Instance ι) (x : ι → D) : Order.PFilter C :=
+  (I.map (fun t : Γ.Term ι => t.evalSolution x)).sumMink
 
 /-- Condition for `x` being an optimum solution (min) to given `Γ` instance `I`.-/
 def FilterValuedCsp.Instance.IsOptimumSolution {Γ : FilterValuedCsp D C} {ι : Type*}
     (I : Γ.Instance ι) (x : ι → D) : Prop :=
-  -- `≤` means `⊆` which means "larger" (i.e. "less optimal") for us
+  -- `≤` means `⊆` which, ironically, means "larger" (i.e. "less optimal") for us
   ∀ y : ι → D, I.evalSolution y ≤ I.evalSolution x
 
 variable {m : ℕ}
 
 def Function.AdmitsFilterFractional {n : ℕ}
     (f : (Fin n → D) → Order.PFilter C) (ω : FractionalOperation D m) : Prop :=
-  ∀ x : (Fin m → (Fin n → D)), sorry
-  -- ω.size • (Finset.univ.val.map (fun i => f (x i))).sum ≤ m • ((ω.tt x).map f).sum -- TODO Minkowski sum
+  ∀ x : (Fin m → (Fin n → D)),
+    ω.size • (Finset.univ.val.map (fun i => f (x i))).sumMink ≤ m • ((ω.tt x).map f).sumMink
 
 /-- Fractional operation is a fractional polymorphism for given VCSP template. -/
 def FractionalOperation.IsFilterFractionalPolymorphismFor
@@ -54,3 +84,17 @@ def FractionalOperation.IsFilterFractionalPolymorphismFor
 def FractionalOperation.IsFilterSymmetricFractionalPolymorphismFor
     (ω : FractionalOperation D m) (Γ : FilterValuedCsp D C) : Prop :=
   ω.IsFilterFractionalPolymorphismFor Γ ∧ ω.IsSymmetric
+
+/-- Partial evaluation of a `Γ` instance `I` for given partial solution `x` waiting for rest. -/
+def FilterValuedCsp.Instance.evalPartial {Γ : FilterValuedCsp D C} {ι μ : Type*}
+    (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : (μ → D) → Order.PFilter C :=
+  fun r => I.evalSolution (Sum.elim x r)
+
+/-- Evaluation of a `Γ` instance `I` for given partial solution `x`, union over the rest. -/
+def FilterValuedCsp.Instance.evalMinimize {Γ : FilterValuedCsp D C} {ι μ : Type*} [DecidableEq μ] [Fintype μ]
+    (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : Order.PFilter C :=
+  sorry -- Union (I.evalPartial x)
+
+/-- A new VCSP template made of all functions expressible by `Γ`. -/
+def FilterValuedCsp.expressivePower (Γ : FilterValuedCsp D C) : FilterValuedCsp D C :=
+  { ⟨n, I.evalMinimize⟩ | (n : ℕ) (m : ℕ) (I : Γ.Instance (Fin n ⊕ Fin m)) }
