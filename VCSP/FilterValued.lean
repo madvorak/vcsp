@@ -32,7 +32,7 @@ def Multiset.sumMink (s : Multiset (Order.PFilter C)) : Order.PFilter C :=
 instance : HSMul ℕ (Order.PFilter C) (Order.PFilter C) where
   hSMul := fun
   | .zero => 0
-  | .succ n => fun x => addMink x sorry -- (n • x)
+  | .succ n => fun x => addMink x sorry -- add `(n • x)` from induction
 
 
 variable {D : Type*}
@@ -110,5 +110,9 @@ def Set.largestFilterValuedCsp (S : Set (Σ (m : ℕ), FractionalOperation D m))
 def FilterValuedCsp.closure (Γ : FilterValuedCsp D C) : FilterValuedCsp D C :=
   Γ.allFractionalPolymorphisms.largestFilterValuedCsp
 
-theorem conjectureFEP (Γ : FilterValuedCsp D C) : Γ.closure = Γ.expressivePower := by
-  sorry
+lemma FilterValuedCsp.allFractionalPolymorphisms_mem (Γ : FilterValuedCsp D C)
+    (ω : FractionalOperation D m) :
+    ⟨m, ω⟩ ∈ Γ.allFractionalPolymorphisms ↔ ∀ f ∈ Γ, f.snd.AdmitsFilterFractional ω := by
+  unfold FilterValuedCsp.allFractionalPolymorphisms
+  unfold FractionalOperation.IsFilterFractionalPolymorphismFor
+  aesop
