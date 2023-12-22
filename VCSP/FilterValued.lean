@@ -37,7 +37,7 @@ instance : HSMul ℕ (Order.PFilter C) (Order.PFilter C) where
 
 variable {D : Type*}
 
-/-- A term in a valued CSP instance over the template `Γ`. -/
+/-- A term in a filter-valued CSP instance over the template `Γ`. -/
 structure FilterValuedCsp.Term (Γ : FilterValuedCsp D C) (ι : Type*) where
   /-- Arity of the function -/
   n : ℕ
@@ -53,7 +53,7 @@ def FilterValuedCsp.Term.evalSolution {Γ : FilterValuedCsp D C} {ι : Type*}
     (t : Γ.Term ι) (x : ι → D) : Order.PFilter C :=
   t.f (x ∘ t.app)
 
-/-- A valued CSP instance over the template `Γ` with variables indexed by `ι`.-/
+/-- A filter-valued CSP instance over the template `Γ` with variables indexed by `ι`. -/
 abbrev FilterValuedCsp.Instance (Γ : FilterValuedCsp D C) (ι : Type*) : Type _ :=
   Multiset (Γ.Term ι)
 
@@ -62,11 +62,25 @@ def FilterValuedCsp.Instance.evalSolution {Γ : FilterValuedCsp D C} {ι : Type*
     (I : Γ.Instance ι) (x : ι → D) : Order.PFilter C :=
   (I.map (fun t : Γ.Term ι => t.evalSolution x)).sumMink
 
-/-- Condition for `x` being an optimum solution (min) to given `Γ` instance `I`.-/
+/-- Condition for `x` being an optimum solution (min) to given `Γ` instance `I`. -/
 def FilterValuedCsp.Instance.IsOptimumSolution {Γ : FilterValuedCsp D C} {ι : Type*}
     (I : Γ.Instance ι) (x : ι → D) : Prop :=
   -- `≤` means `⊆` which, ironically, means "larger" (i.e. "less optimal") for us
   ∀ y : ι → D, I.evalSolution y ≤ I.evalSolution x
+
+/-- Partial evaluation of a `Γ` instance `I` for given partial solution `x` waiting for rest. -/
+def FilterValuedCsp.Instance.evalPartial {Γ : FilterValuedCsp D C} {ι μ : Type*}
+    (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : (μ → D) → Order.PFilter C :=
+  fun r => I.evalSolution (Sum.elim x r)
+
+/-- Evaluation of a `Γ` instance `I` for given partial solution `x`, union over the rest. -/
+def FilterValuedCsp.Instance.evalMinimize {Γ : FilterValuedCsp D C} {ι μ : Type*}
+    (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : Order.PFilter C :=
+  sorry -- Union (I.evalPartial x)
+
+/-- A new VCSP template made of all functions expressible by `Γ`. -/
+def FilterValuedCsp.expressivePower (Γ : FilterValuedCsp D C) : FilterValuedCsp D C :=
+  { ⟨n, I.evalMinimize⟩ | (n : ℕ) (m : ℕ) (I : Γ.Instance (Fin n ⊕ Fin m)) }
 
 variable {m : ℕ}
 
@@ -85,16 +99,16 @@ def FractionalOperation.IsFilterSymmetricFractionalPolymorphismFor
     (ω : FractionalOperation D m) (Γ : FilterValuedCsp D C) : Prop :=
   ω.IsFilterFractionalPolymorphismFor Γ ∧ ω.IsSymmetric
 
-/-- Partial evaluation of a `Γ` instance `I` for given partial solution `x` waiting for rest. -/
-def FilterValuedCsp.Instance.evalPartial {Γ : FilterValuedCsp D C} {ι μ : Type*}
-    (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : (μ → D) → Order.PFilter C :=
-  fun r => I.evalSolution (Sum.elim x r)
+def FilterValuedCsp.allFractionalPolymorphisms (Γ : FilterValuedCsp D C) :
+    Set (Σ (m : ℕ), FractionalOperation D m) :=
+  { ⟨m, ω⟩ | (m : ℕ) (ω : FractionalOperation D m) (_ : ω.IsFilterFractionalPolymorphismFor Γ) }
 
-/-- Evaluation of a `Γ` instance `I` for given partial solution `x`, union over the rest. -/
-def FilterValuedCsp.Instance.evalMinimize {Γ : FilterValuedCsp D C} {ι μ : Type*} [DecidableEq μ] [Fintype μ]
-    (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : Order.PFilter C :=
-  sorry -- Union (I.evalPartial x)
+def Set.largestFilterValuedCsp (S : Set (Σ (m : ℕ), FractionalOperation D m)) :
+    FilterValuedCsp D C :=
+  { ⟨n, f⟩ | (n : ℕ) (f : (Fin n → D) → Order.PFilter C) (_ : ∀ ω ∈ S, f.AdmitsFilterFractional ω.snd) }
 
-/-- A new VCSP template made of all functions expressible by `Γ`. -/
-def FilterValuedCsp.expressivePower (Γ : FilterValuedCsp D C) : FilterValuedCsp D C :=
-  { ⟨n, I.evalMinimize⟩ | (n : ℕ) (m : ℕ) (I : Γ.Instance (Fin n ⊕ Fin m)) }
+def FilterValuedCsp.closure (Γ : FilterValuedCsp D C) : FilterValuedCsp D C :=
+  Γ.allFractionalPolymorphisms.largestFilterValuedCsp
+
+theorem conjectureFEP (Γ : FilterValuedCsp D C) : Γ.closure = Γ.expressivePower := by
+  sorry
