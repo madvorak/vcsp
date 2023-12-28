@@ -7,7 +7,7 @@ attribute [pp_dot]
   Function.AdmitsFilterFractional FilterValuedCsp.expressivePower FilterValuedCsp.closure
 
 
-variable {D C : Type*} [OrderedAddCommMonoid C]
+variable {D C : Type*} [CanonicallyOrderedAddCancelCommMonoid C]
 
 /-- Expressive power of a filter-valued CSP template subsumes the template. -/
 lemma FilterValuedCsp.subset_expressivePower (Γ : FilterValuedCsp D C) :
@@ -15,9 +15,10 @@ lemma FilterValuedCsp.subset_expressivePower (Γ : FilterValuedCsp D C) :
   rintro ⟨n, f⟩ hfΓ
   unfold FilterValuedCsp.expressivePower
   rw [Set.mem_setOf_eq]
-  use n, 0
-  unfold FilterValuedCsp.Instance
-  use { FilterValuedCsp.Term.mk n f hfΓ Sum.inl }
+  use n, 0, { FilterValuedCsp.Term.mk n f hfΓ Sum.inl }
+  unfold FilterValuedCsp.Instance.evalMinimize
+  unfold FilterValuedCsp.Instance.evalPartial
+  unfold FilterValuedCsp.Instance.evalSolution
   sorry
 
 /-- Expressive power is an idempotent operation on filter-valued CSP templates. -/

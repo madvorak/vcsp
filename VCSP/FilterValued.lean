@@ -1,5 +1,6 @@
 import Mathlib.Order.UpperLower.Basic
 import Mathlib.Data.Set.Pointwise.Basic
+import VCSP.AlgebraC
 import VCSP.FractionalPolymorphisms
 
 
@@ -7,15 +8,26 @@ abbrev FilterValuedCsp (D C : Type*) [OrderedAddCommMonoid C] :=
   Set (Σ (n : ℕ), (Fin n → D) → UpperSet C)
 
 
-variable {C : Type*} [OrderedAddCommMonoid C]
+variable {C : Type*} [CanonicallyOrderedAddCancelCommMonoid C]
 
 def addMink (x y : UpperSet C) : UpperSet C :=
   ⟨{ a + b | (a ∈ x) (b ∈ y) }, by
     intro c d cd hc
     rw [Set.mem_setOf_eq] at hc ⊢
     obtain ⟨a, ha, b, hb, eq_c⟩ := hc
-    -- ??
-    sorry⟩
+    use a, ha
+    have ac : a ≤ c
+    · exact le_of_add_le_left eq_c.le
+    have ad : a ≤ d
+    · exact ac.trans cd
+    obtain ⟨b', d_eq⟩ := exists_add_of_le ad
+    use b'
+    have bb' : b ≤ b'
+    · rwa [←eq_c, d_eq, add_le_add_iff_left] at cd
+    constructor
+    · exact y.upper' bb' hb
+    · exact d_eq.symm
+    ⟩
 
 lemma addMink_right_comm : RightCommutative (@addMink C _) := by
   intro x y z
@@ -29,11 +41,11 @@ lemma addMink_right_comm : RightCommutative (@addMink C _) := by
     exact eq_d
 
 def Multiset.sumMink (s : Multiset (UpperSet C)) : UpperSet C :=
-  s.foldl addMink addMink_right_comm ⊥ -- OK for `CanonicallyOrderedAddCommMonoid`
+  s.foldl addMink addMink_right_comm ⊥
 
 instance : HSMul ℕ (UpperSet C) (UpperSet C) where
   hSMul := fun
-  | .zero => ⊥ -- this is `Set.univ` but we should rather use `{ x | 0 ≤ x }`
+  | .zero => ⊥
   | .succ n => fun x => addMink x sorry -- add `(n • x)` from induction
 
 
@@ -78,7 +90,7 @@ def FilterValuedCsp.Instance.evalPartial {Γ : FilterValuedCsp D C} {ι μ : Typ
 /-- Evaluation of a `Γ` instance `I` for given partial solution `x`, union over the rest. -/
 def FilterValuedCsp.Instance.evalMinimize {Γ : FilterValuedCsp D C} {ι μ : Type*}
     (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : UpperSet C :=
-  sorry -- ⟨Set.iUnion (I.evalPartial x), sorry⟩
+  ⟨Set.iUnion (I.evalPartial x ·), isUpperSet_iUnion (fun y => (evalPartial I x y).upper')⟩
 
 /-- A new VCSP template made of all functions expressible by `Γ`. -/
 def FilterValuedCsp.expressivePower (Γ : FilterValuedCsp D C) : FilterValuedCsp D C :=

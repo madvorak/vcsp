@@ -5,6 +5,7 @@ import Mathlib.Data.Real.ENNReal
 import Mathlib.Data.Real.EReal
 import VCSP.AlgebraC
 
+
 /-
 We provide `OrderedAddCommMonoidWithInfima` instances for
 `Nat`, `ENat`, `Int`, `NNRat`, `Rat`, `NNReal`, `ENNReal`, `Real`, `EReal`, and
@@ -88,3 +89,21 @@ instance : OrderedCancelAddCommMonoidWithInfima Real := by
 
 instance : OrderedCancelAddCommMonoidWithInfima (Nat × NNRat × Real) := by
   infInst
+
+/-
+CanonicallyOrderedAddCancelCommMonoid
+-/
+
+instance : CanonicallyOrderedAddCancelCommMonoid Nat :=
+  { (inferInstance : CanonicallyOrderedAddCommMonoid ℕ), Nat.linearOrderedCommSemiring with }
+/-
+instance : CanonicallyOrderedAddCommMonoid NNRat := inferInstance
+
+instance : OrderedCancelAddCommMonoid NNRat := inferInstance
+
+instance : CanonicallyOrderedAddCancelCommMonoid NNRat := inferInstance
+
+instance : CanonicallyOrderedAddCancelCommMonoid NNReal := inferInstance
+
+instance : CanonicallyOrderedAddCancelCommMonoid (NNReal × NNRat × Nat) := inferInstance
+-/
