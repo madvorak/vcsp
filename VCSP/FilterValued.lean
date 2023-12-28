@@ -49,7 +49,18 @@ instance : HSMul ℕ (UpperSet C) (UpperSet C) where
   | .succ n => fun x => addMink x sorry -- add `(n • x)` from induction
 
 
+def costToSet (c : C) : UpperSet C := upperClosure {c}
+
 variable {D : Type*}
+
+def Function.toSetFunction (n : ℕ) (f : (Fin n → D) → C) : (Fin n → D) → UpperSet C :=
+  costToSet ∘ f
+
+def costFunctionToSetFunction (f : Σ (n : ℕ), (Fin n → D) → C) : Σ (n : ℕ), (Fin n → D) → UpperSet C :=
+  ⟨f.fst, f.snd.toSetFunction⟩
+
+def ValuedCsp.toFilterValuedCsp (Γ : ValuedCsp D C) : FilterValuedCsp D C :=
+  Γ.image costFunctionToSetFunction
 
 /-- A term in a filter-valued CSP instance over the template `Γ`. -/
 structure FilterValuedCsp.Term (Γ : FilterValuedCsp D C) (ι : Type*) where
@@ -62,19 +73,42 @@ structure FilterValuedCsp.Term (Γ : FilterValuedCsp D C) (ι : Type*) where
   /-- Which variables are plugged as arguments to the cost function -/
   app : Fin n → ι
 
+def ValuedCsp.Term.toFilterValuedCspTerm {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.Term ι) :
+    Γ.toFilterValuedCsp.Term ι :=
+  ⟨t.n, t.f.toSetFunction, by use ⟨t.n, t.f⟩; simp [costFunctionToSetFunction, ValuedCsp.Term.inΓ], t.app⟩
+
 /-- Evaluation of a `Γ` term `t` for given solution `x`. -/
 def FilterValuedCsp.Term.evalSolution {Γ : FilterValuedCsp D C} {ι : Type*}
     (t : Γ.Term ι) (x : ι → D) : UpperSet C :=
   t.f (x ∘ t.app)
 
+lemma ValuedCsp.Term.toFilterValuedCspTermEvalEq {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.Term ι) (x : ι → D) :
+    t.toFilterValuedCspTerm.evalSolution x = upperClosure {t.evalSolution x} := by
+  rfl
+
 /-- A filter-valued CSP instance over the template `Γ` with variables indexed by `ι`. -/
 abbrev FilterValuedCsp.Instance (Γ : FilterValuedCsp D C) (ι : Type*) : Type _ :=
   Multiset (Γ.Term ι)
+
+def ValuedCsp.Instance.toFilterValuedCspInstance {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.Instance ι) :
+    Γ.toFilterValuedCsp.Instance ι :=
+  I.map ValuedCsp.Term.toFilterValuedCspTerm
 
 /-- Evaluation of a `Γ` instance `I` for given solution `x`. -/
 def FilterValuedCsp.Instance.evalSolution {Γ : FilterValuedCsp D C} {ι : Type*}
     (I : Γ.Instance ι) (x : ι → D) : UpperSet C :=
   (I.map (fun t : Γ.Term ι => t.evalSolution x)).sumMink
+
+lemma ValuedCsp.Instance.toFilterValuedCspTermEvalEq {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.Instance ι) (x : ι → D) :
+    I.toFilterValuedCspInstance.evalSolution x = upperClosure {I.evalSolution x} := by
+  unfold FilterValuedCsp.Instance.evalSolution
+  unfold ValuedCsp.Instance.evalSolution
+  unfold ValuedCsp.Instance.toFilterValuedCspInstance
+  simp_rw [Multiset.map_map]
+  show
+    (I.map (fun t => upperClosure {t.evalSolution x})).sumMink =
+    upperClosure {(I.map (fun t => t.evalSolution x)).sum}
+  sorry
 
 /-- Condition for `x` being an optimum solution (min) to given `Γ` instance `I`. -/
 def FilterValuedCsp.Instance.IsOptimumSolution {Γ : FilterValuedCsp D C} {ι : Type*}
