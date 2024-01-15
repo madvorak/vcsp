@@ -42,16 +42,16 @@ def Function.AdmitsFractional {n : ℕ} (f : (Fin n → D) → C) (ω : Fraction
     m • ((ω.tt x).map f).sum ≤ ω.size • (Finset.univ.val.map (fun i => f (x i))).sum
 
 /-- Fractional operation is a fractional polymorphism for given VCSP template. -/
-def FractionalOperation.IsFractionalPolymorphismFor (ω : FractionalOperation D m) (Γ : ValuedCsp D C) : Prop :=
+def FractionalOperation.IsFractionalPolymorphismFor (ω : FractionalOperation D m) (Γ : ValuedCSP D C) : Prop :=
   ∀ f ∈ Γ, f.snd.AdmitsFractional ω
 
 /-- Fractional operation is symmetric. -/
 def FractionalOperation.IsSymmetric (ω : FractionalOperation D m) : Prop :=
-  ∀ x y : (Fin m → D), List.ofFn x ~ List.ofFn y → ∀ g ∈ ω, g x = g y
+  ∀ x y : (Fin m → D), List.Perm (List.ofFn x) (List.ofFn y) → ∀ g ∈ ω, g x = g y
 
 /-- Fractional operation is a symmetric fractional polymorphism for given VCSP template. -/
 def FractionalOperation.IsSymmetricFractionalPolymorphismFor
-    (ω : FractionalOperation D m) (Γ : ValuedCsp D C) : Prop :=
+    (ω : FractionalOperation D m) (Γ : ValuedCSP D C) : Prop :=
   ω.IsFractionalPolymorphismFor Γ ∧ ω.IsSymmetric
 
 /-- Operation (n-ary) is idempotent. -/

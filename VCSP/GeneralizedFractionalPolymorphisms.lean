@@ -2,7 +2,7 @@ import VCSP.FractionalPolymorphisms
 import Mathlib.Data.List.FinRange
 
 theorem Equiv.Perm.ofFn_perm_iff {n : ℕ} {α : Type*} (f g : Fin n → α) :
-    List.ofFn f ~ List.ofFn g ↔ ∃ σ : Equiv.Perm (Fin n), f ∘ σ = g := by
+    List.Perm (List.ofFn f) (List.ofFn g) ↔ ∃ σ : Equiv.Perm (Fin n), f ∘ σ = g := by
   constructor
   · intro hyp
     sorry
@@ -19,7 +19,7 @@ abbrev GeneralizedFractionalOperation (D : Type*) (m : ℕ) : Type _ :=
 variable {D : Type*} {m : ℕ}
 
 def GeneralizedOperation.IsSymmetric (G : GeneralizedOperation D m) : Prop :=
-  ∀ x y : (Fin m → D), List.ofFn x ~ List.ofFn y → G x = G y
+  ∀ x y : (Fin m → D), List.Perm (List.ofFn x) (List.ofFn y) → G x = G y
 
 lemma GeneralizedOperation.compose_symmetric (G H : GeneralizedOperation D m) :
     H.IsSymmetric → GeneralizedOperation.IsSymmetric (G ∘ H) := by

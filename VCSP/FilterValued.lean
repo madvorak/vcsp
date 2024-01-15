@@ -4,7 +4,7 @@ import VCSP.AlgebraC
 import VCSP.FractionalPolymorphisms
 
 
-abbrev FilterValuedCsp (D C : Type*) [OrderedAddCommMonoid C] :=
+abbrev FilterValuedCSP (D C : Type*) [OrderedAddCommMonoid C] :=
   Set (Σ (n : ℕ), (Fin n → D) → UpperSet C)
 
 
@@ -59,11 +59,11 @@ def Function.toSetFunction (n : ℕ) (f : (Fin n → D) → C) : (Fin n → D) �
 def costFunctionToSetFunction (f : Σ (n : ℕ), (Fin n → D) → C) : Σ (n : ℕ), (Fin n → D) → UpperSet C :=
   ⟨f.fst, f.snd.toSetFunction⟩
 
-def ValuedCsp.toFilterValuedCsp (Γ : ValuedCsp D C) : FilterValuedCsp D C :=
+def ValuedCSP.toFilterValuedCSP (Γ : ValuedCSP D C) : FilterValuedCSP D C :=
   Γ.image costFunctionToSetFunction
 
 /-- A term in a filter-valued CSP instance over the template `Γ`. -/
-structure FilterValuedCsp.Term (Γ : FilterValuedCsp D C) (ι : Type*) where
+structure FilterValuedCSP.Term (Γ : FilterValuedCSP D C) (ι : Type*) where
   /-- Arity of the function -/
   n : ℕ
   /-- Which cost function is instantiated -/
@@ -73,37 +73,37 @@ structure FilterValuedCsp.Term (Γ : FilterValuedCsp D C) (ι : Type*) where
   /-- Which variables are plugged as arguments to the cost function -/
   app : Fin n → ι
 
-def ValuedCsp.Term.toFilterValuedCspTerm {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.Term ι) :
-    Γ.toFilterValuedCsp.Term ι :=
-  ⟨t.n, t.f.toSetFunction, by use ⟨t.n, t.f⟩; simp [costFunctionToSetFunction, ValuedCsp.Term.inΓ], t.app⟩
+def ValuedCSP.Term.toFilterValuedCSPTerm {Γ : ValuedCSP D C} {ι : Type*} (t : Γ.Term ι) :
+    Γ.toFilterValuedCSP.Term ι :=
+  ⟨t.n, t.f.toSetFunction, by use ⟨t.n, t.f⟩; simp [costFunctionToSetFunction, ValuedCSP.Term.inΓ], t.app⟩
 
 /-- Evaluation of a `Γ` term `t` for given solution `x`. -/
-def FilterValuedCsp.Term.evalSolution {Γ : FilterValuedCsp D C} {ι : Type*}
+def FilterValuedCSP.Term.evalSolution {Γ : FilterValuedCSP D C} {ι : Type*}
     (t : Γ.Term ι) (x : ι → D) : UpperSet C :=
   t.f (x ∘ t.app)
 
-lemma ValuedCsp.Term.toFilterValuedCspTermEvalEq {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.Term ι) (x : ι → D) :
-    t.toFilterValuedCspTerm.evalSolution x = upperClosure {t.evalSolution x} := by
+lemma ValuedCSP.Term.toFilterValuedCSPTermEvalEq {Γ : ValuedCSP D C} {ι : Type*} (t : Γ.Term ι) (x : ι → D) :
+    t.toFilterValuedCSPTerm.evalSolution x = upperClosure {t.evalSolution x} := by
   rfl
 
 /-- A filter-valued CSP instance over the template `Γ` with variables indexed by `ι`. -/
-abbrev FilterValuedCsp.Instance (Γ : FilterValuedCsp D C) (ι : Type*) : Type _ :=
+abbrev FilterValuedCSP.Instance (Γ : FilterValuedCSP D C) (ι : Type*) : Type _ :=
   Multiset (Γ.Term ι)
 
-def ValuedCsp.Instance.toFilterValuedCspInstance {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.Instance ι) :
-    Γ.toFilterValuedCsp.Instance ι :=
-  I.map ValuedCsp.Term.toFilterValuedCspTerm
+def ValuedCSP.Instance.toFilterValuedCSPInstance {Γ : ValuedCSP D C} {ι : Type*} (I : Γ.Instance ι) :
+    Γ.toFilterValuedCSP.Instance ι :=
+  I.map ValuedCSP.Term.toFilterValuedCSPTerm
 
 /-- Evaluation of a `Γ` instance `I` for given solution `x`. -/
-def FilterValuedCsp.Instance.evalSolution {Γ : FilterValuedCsp D C} {ι : Type*}
+def FilterValuedCSP.Instance.evalSolution {Γ : FilterValuedCSP D C} {ι : Type*}
     (I : Γ.Instance ι) (x : ι → D) : UpperSet C :=
   (I.map (fun t : Γ.Term ι => t.evalSolution x)).sumMink
 
-lemma ValuedCsp.Instance.toFilterValuedCspTermEvalEq {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.Instance ι) (x : ι → D) :
-    I.toFilterValuedCspInstance.evalSolution x = upperClosure {I.evalSolution x} := by
-  unfold FilterValuedCsp.Instance.evalSolution
-  unfold ValuedCsp.Instance.evalSolution
-  unfold ValuedCsp.Instance.toFilterValuedCspInstance
+lemma ValuedCSP.Instance.toFilterValuedCSPTermEvalEq {Γ : ValuedCSP D C} {ι : Type*} (I : Γ.Instance ι) (x : ι → D) :
+    I.toFilterValuedCSPInstance.evalSolution x = upperClosure {I.evalSolution x} := by
+  unfold FilterValuedCSP.Instance.evalSolution
+  unfold ValuedCSP.Instance.evalSolution
+  unfold ValuedCSP.Instance.toFilterValuedCSPInstance
   simp_rw [Multiset.map_map]
   show
     (I.map (fun t => upperClosure {t.evalSolution x})).sumMink =
@@ -111,23 +111,23 @@ lemma ValuedCsp.Instance.toFilterValuedCspTermEvalEq {Γ : ValuedCsp D C} {ι : 
   sorry
 
 /-- Condition for `x` being an optimum solution (min) to given `Γ` instance `I`. -/
-def FilterValuedCsp.Instance.IsOptimumSolution {Γ : FilterValuedCsp D C} {ι : Type*}
+def FilterValuedCSP.Instance.IsOptimumSolution {Γ : FilterValuedCSP D C} {ι : Type*}
     (I : Γ.Instance ι) (x : ι → D) : Prop :=
   -- `≤` means `⊆` which, ironically, means "larger" (i.e. "less optimal") for us
   ∀ y : ι → D, I.evalSolution y ≤ I.evalSolution x
 
 /-- Partial evaluation of a `Γ` instance `I` for given partial solution `x` waiting for rest. -/
-def FilterValuedCsp.Instance.evalPartial {Γ : FilterValuedCsp D C} {ι μ : Type*}
+def FilterValuedCSP.Instance.evalPartial {Γ : FilterValuedCSP D C} {ι μ : Type*}
     (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : (μ → D) → UpperSet C :=
   fun r => I.evalSolution (Sum.elim x r)
 
 /-- Evaluation of a `Γ` instance `I` for given partial solution `x`, union over the rest. -/
-def FilterValuedCsp.Instance.evalMinimize {Γ : FilterValuedCsp D C} {ι μ : Type*}
+def FilterValuedCSP.Instance.evalMinimize {Γ : FilterValuedCSP D C} {ι μ : Type*}
     (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : UpperSet C :=
   ⟨Set.iUnion (I.evalPartial x ·), isUpperSet_iUnion (fun y => (evalPartial I x y).upper')⟩
 
 /-- A new VCSP template made of all functions expressible by `Γ`. -/
-def FilterValuedCsp.expressivePower (Γ : FilterValuedCsp D C) : FilterValuedCsp D C :=
+def FilterValuedCSP.expressivePower (Γ : FilterValuedCSP D C) : FilterValuedCSP D C :=
   { ⟨n, I.evalMinimize⟩ | (n : ℕ) (m : ℕ) (I : Γ.Instance (Fin n ⊕ Fin m)) }
 
 
@@ -140,28 +140,28 @@ def Function.AdmitsFilterFractional {n : ℕ}
 
 /-- Fractional operation is a fractional polymorphism for given VCSP template. -/
 def FractionalOperation.IsFilterFractionalPolymorphismFor
-    (ω : FractionalOperation D m) (Γ : FilterValuedCsp D C) : Prop :=
+    (ω : FractionalOperation D m) (Γ : FilterValuedCSP D C) : Prop :=
   ∀ f ∈ Γ, f.snd.AdmitsFilterFractional ω
 
 /-- Fractional operation is a symmetric fractional polymorphism for given VCSP template. -/
 def FractionalOperation.IsFilterSymmetricFractionalPolymorphismFor
-    (ω : FractionalOperation D m) (Γ : FilterValuedCsp D C) : Prop :=
+    (ω : FractionalOperation D m) (Γ : FilterValuedCSP D C) : Prop :=
   ω.IsFilterFractionalPolymorphismFor Γ ∧ ω.IsSymmetric
 
-def FilterValuedCsp.allFractionalPolymorphisms (Γ : FilterValuedCsp D C) :
+def FilterValuedCSP.allFractionalPolymorphisms (Γ : FilterValuedCSP D C) :
     Set (Σ (m : ℕ), FractionalOperation D m) :=
   { ⟨m, ω⟩ | (m : ℕ) (ω : FractionalOperation D m) (_ : ω.IsFilterFractionalPolymorphismFor Γ) }
 
-def Set.largestFilterValuedCsp (S : Set (Σ (m : ℕ), FractionalOperation D m)) :
-    FilterValuedCsp D C :=
+def Set.largestFilterValuedCSP (S : Set (Σ (m : ℕ), FractionalOperation D m)) :
+    FilterValuedCSP D C :=
   { ⟨n, f⟩ | (n : ℕ) (f : (Fin n → D) → UpperSet C) (_ : ∀ ω ∈ S, f.AdmitsFilterFractional ω.snd) }
 
-def FilterValuedCsp.closure (Γ : FilterValuedCsp D C) : FilterValuedCsp D C :=
-  Γ.allFractionalPolymorphisms.largestFilterValuedCsp
+def FilterValuedCSP.closure (Γ : FilterValuedCSP D C) : FilterValuedCSP D C :=
+  Γ.allFractionalPolymorphisms.largestFilterValuedCSP
 
-lemma FilterValuedCsp.allFractionalPolymorphisms_mem (Γ : FilterValuedCsp D C)
+lemma FilterValuedCSP.allFractionalPolymorphisms_mem (Γ : FilterValuedCSP D C)
     (ω : FractionalOperation D m) :
     ⟨m, ω⟩ ∈ Γ.allFractionalPolymorphisms ↔ ∀ f ∈ Γ, f.snd.AdmitsFilterFractional ω := by
-  unfold FilterValuedCsp.allFractionalPolymorphisms
+  unfold FilterValuedCSP.allFractionalPolymorphisms
   unfold FractionalOperation.IsFilterFractionalPolymorphismFor
   aesop

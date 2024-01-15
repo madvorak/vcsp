@@ -1,6 +1,5 @@
 import VCSP.FractionalPolymorphisms
 import VCSP.Expressibility
-import Mathlib.Algebra.Order.SMul
 import Mathlib.Data.Fin.VecNotation
 
 
@@ -49,8 +48,8 @@ def Multiset.map.unexpander : Lean.PrettyPrinter.Unexpander
 
 attribute [pp_dot] List.length List.get List.sum Multiset.sum Multiset.summap
   Sigma.fst Sigma.snd
-  ValuedCsp.Term.f ValuedCsp.Term.n ValuedCsp.Term.app ValuedCsp.Term.evalSolution
-  ValuedCsp.Instance.evalSolution ValuedCsp.Instance.evalPartial ValuedCsp.Instance.evalMinimize
+  ValuedCSP.Term.f ValuedCSP.Term.n ValuedCSP.Term.app ValuedCSP.Term.evalSolution
+  ValuedCSP.Instance.evalSolution ValuedCSP.Instance.evalPartial ValuedCSP.Instance.evalMinimize
   FractionalOperation.size FractionalOperation.tt
 
 macro "change " h:ident " to " t:term : tactic => `(tactic| change $t at $h:ident)
@@ -105,14 +104,14 @@ variable {D C : Type*}
 
 section expressiveness
 
-lemma level1 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} {t : Γ.Term ι}
+lemma level1 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} {t : Γ.Term ι}
     {m : ℕ} {ω : FractionalOperation D m} (impr : t.f.AdmitsFractional ω)
     (x : Fin m → (ι → D)) :
     m • (ω.tt (fun i : Fin m => x i ∘ t.app)).summap t.f ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => t.f (x i ∘ t.app)) :=
   impr (x · ∘ t.app)
 
-lemma level2 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.Term ι)
+lemma level2 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} (t : Γ.Term ι)
     {m : ℕ} {ω : FractionalOperation D m} (impr : t.f.AdmitsFractional ω)
     (x : Fin m → (ι → D)) :
     m • (ω.tt (fun i : Fin m => x i)).summap t.evalSolution ≤
@@ -126,7 +125,7 @@ lemma level2 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (t : Γ.
   rewrite [Multiset.map_map, Multiset.map_map]
   rfl
 
-lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.Instance ι)
+lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} (I : Γ.Instance ι)
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
     m • (ω.tt x).summap I.evalSolution ≤
@@ -141,7 +140,7 @@ lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι : Type*} (I : Γ.
   apply level2
   exact frpo ⟨t.n, t.f⟩ t.inΓ
 
-lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
+lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) (z : μ → D) :
     m • (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun y : (ι ⊕ μ) → D =>
@@ -154,7 +153,7 @@ lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι μ : Type*} (I : 
   ext j
   cases j <;> rfl
 
-lemma level5 [OrderedAddCommMonoid C] {Γ : ValuedCsp D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
+lemma level5 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) (z : μ → D) :
     (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun y : (ι ⊕ μ) → D =>
@@ -174,7 +173,7 @@ lemma Finset.nsmul_inf' [OrderedAddCommMonoidWithInfima C] {s : Finset D}
     simp_rw [succ_nsmul]
     sorry
 
-lemma level6 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
+lemma level6 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCSP D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
@@ -193,7 +192,7 @@ lemma level6 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : V
   have ineq_partial := level5 I frpo x
   sorry
 
-lemma level7 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
+lemma level7 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCSP D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
@@ -203,12 +202,12 @@ lemma level7 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : V
   exact level6 I frpo x
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
-    [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCsp D C}
+    [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCSP D C}
     {m : ℕ} {ω : FractionalOperation D m}
     (frpo : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
   intro f hf
-  rw [ValuedCsp.expressivePower, Set.mem_setOf_eq] at hf
+  rw [ValuedCSP.expressivePower, Set.mem_setOf_eq] at hf
   rcases hf with ⟨n, μ, I, rfl⟩
   intro x
   apply level7
@@ -230,8 +229,8 @@ def Function.HasMaxCutProperty [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C
   ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
 /-- VCSP template `Γ` can express Max Cut via summation and minimization. -/
-def ValuedCsp.CanExpressMaxCut [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C]
-    {Γ : ValuedCsp D C} : Prop :=
+def ValuedCSP.CanExpressMaxCut [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C]
+    {Γ : ValuedCSP D C} : Prop :=
   ∃ f : (Fin 2 → D) → C, ⟨2, f⟩ ∈ Γ.expressivePower ∧ f.HasMaxCutProperty
 
 lemma Function.HasMaxCutProperty.forbids_commutativeFP [OrderedCancelAddCommMonoid C]
@@ -289,9 +288,9 @@ lemma Function.HasMaxCutProperty.forbids_commutativeFP [OrderedCancelAddCommMono
   rw [rhs_swap, distrib] at impos
   exact ne_of_lt impos rfl
 
-theorem ValuedCsp.CanExpressMaxCut.forbids_commutativeFP
+theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFP
     [Nonempty D] [Fintype D] [OrderedCancelAddCommMonoidWithInfima C]
-    {Γ : ValuedCsp D C} (expressMC : Γ.CanExpressMaxCut)
+    {Γ : ValuedCSP D C} (expressMC : Γ.CanExpressMaxCut)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) :
     ¬ ω.IsSymmetricFractionalPolymorphismFor Γ := by
   rintro ⟨frpol, symme⟩
