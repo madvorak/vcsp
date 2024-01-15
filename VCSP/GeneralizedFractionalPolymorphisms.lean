@@ -19,9 +19,12 @@ abbrev GeneralizedFractionalOperation (D : Type*) (m : ℕ) : Type _ :=
 variable {D : Type*} {m : ℕ}
 
 def GeneralizedOperation.IsSymmetric (G : GeneralizedOperation D m) : Prop :=
-  ∀ x y : (Fin m → D), List.ofFn x ~ List.ofFn y → List.ofFn (G x) ~ List.ofFn (G y)
+  ∀ x y : (Fin m → D), List.ofFn x ~ List.ofFn y → G x = G y
 
 lemma GeneralizedOperation.compose_symmetric (G H : GeneralizedOperation D m) :
     H.IsSymmetric → GeneralizedOperation.IsSymmetric (G ∘ H) := by
   intro sym x y ass
-  sorry
+  show G (H x) = G (H y)
+  apply congr_arg
+  apply sym
+  exact ass
