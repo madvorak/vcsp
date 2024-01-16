@@ -163,7 +163,7 @@ lemma level5 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : 
   rw [Multiset.summap_nsmul, Multiset.summap_nsmul]
   exact level4 I frpo x z
 
-lemma Finset.nsmul_inf' [OrderedAddCommMonoidWithInfima C] {s : Finset D}
+lemma Finset.nsmul_inf' [LinearOrderedAddCommMonoid C] {s : Finset D}
     (hs : s.Nonempty) (f : D → C) (n : ℕ) :
     s.inf' hs (fun a => n • f a) = n • s.inf' hs f := by
   induction n with
@@ -179,7 +179,7 @@ lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : Value
     (x : Fin m → (ι → D)) :
     (ω.tt x).summap (fun yᵢ => m • I.evalMinimize yᵢ) ≤
     Finset.univ.val.summap (fun i : Fin m => ω.size • I.evalMinimize (x i)) := by
-  /-show
+  show
     (ω.tt x).summap (fun yᵢ => m • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial yᵢ)) ≤
     Finset.univ.val.summap (fun i : Fin m =>
       ω.size • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial (x i)))
@@ -189,7 +189,7 @@ lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : Value
       Finset.univ.inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i)))
   · simp [Finset.nsmul_inf']
   · simp [Finset.nsmul_inf']
-  have ineq_partial := level5 I frpo x-/
+  have ineq_partial := level5 I frpo x
   sorry
 
 lemma level7 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}

@@ -16,7 +16,7 @@ variable [Dne : Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C]
 /-- Evaluation of a `Γ` instance `I` for given partial solution `x`, minimizing over the rest. -/
 def ValuedCSP.Instance.evalMinimize {Γ : ValuedCSP D C} {ι μ : Type*} [DecidableEq μ] [Fintype μ]
     (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : C :=
-  Finset.min' (Finset.univ.val.map (I.evalPartial x)).toFinset ⟨I.evalPartial x (fun _ => Classical.choice Dne), by simp_all⟩
+  Finset.univ.inf' Finset.univ_nonempty (I.evalPartial x)
 
 /-- A new VCSP template made of all functions expressible by `Γ`. -/
 def ValuedCSP.expressivePower (Γ : ValuedCSP D C) : ValuedCSP D C :=
