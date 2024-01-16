@@ -173,13 +173,13 @@ lemma Finset.nsmul_inf' [OrderedAddCommMonoidWithInfima C] {s : Finset D}
     simp_rw [succ_nsmul]
     sorry
 
-lemma level6 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCSP D C}
+lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
     (ω.tt x).summap (fun yᵢ => m • I.evalMinimize yᵢ) ≤
     Finset.univ.val.summap (fun i : Fin m => ω.size • I.evalMinimize (x i)) := by
-  show
+  /-show
     (ω.tt x).summap (fun yᵢ => m • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial yᵢ)) ≤
     Finset.univ.val.summap (fun i : Fin m =>
       ω.size • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial (x i)))
@@ -189,10 +189,10 @@ lemma level6 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : V
       Finset.univ.inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i)))
   · simp [Finset.nsmul_inf']
   · simp [Finset.nsmul_inf']
-  have ineq_partial := level5 I frpo x
+  have ineq_partial := level5 I frpo x-/
   sorry
 
-lemma level7 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCSP D C}
+lemma level7 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
@@ -202,7 +202,7 @@ lemma level7 [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : V
   exact level6 I frpo x
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
-    [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C] {Γ : ValuedCSP D C}
+    [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
     {m : ℕ} {ω : FractionalOperation D m}
     (frpo : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
@@ -229,7 +229,7 @@ def Function.HasMaxCutProperty [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C
   ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
 /-- VCSP template `Γ` can express Max Cut via summation and minimization. -/
-def ValuedCSP.CanExpressMaxCut [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C]
+def ValuedCSP.CanExpressMaxCut [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C]
     {Γ : ValuedCSP D C} : Prop :=
   ∃ f : (Fin 2 → D) → C, ⟨2, f⟩ ∈ Γ.expressivePower ∧ f.HasMaxCutProperty
 
@@ -289,7 +289,7 @@ lemma Function.HasMaxCutProperty.forbids_commutativeFP [OrderedCancelAddCommMono
   exact ne_of_lt impos rfl
 
 theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFP
-    [Nonempty D] [Fintype D] [OrderedCancelAddCommMonoidWithInfima C]
+    [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C]
     {Γ : ValuedCSP D C} (expressMC : Γ.CanExpressMaxCut)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) :
     ¬ ω.IsSymmetricFractionalPolymorphismFor Γ := by

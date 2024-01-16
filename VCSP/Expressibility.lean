@@ -11,12 +11,12 @@ def ValuedCSP.Instance.evalPartial [OrderedAddCommMonoid C] {Γ : ValuedCSP D C}
     (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : (μ → D) → C :=
   fun r => I.evalSolution (Sum.elim x r)
 
-variable [Nonempty D] [Fintype D] [OrderedAddCommMonoidWithInfima C]
+variable [Dne : Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C]
 
 /-- Evaluation of a `Γ` instance `I` for given partial solution `x`, minimizing over the rest. -/
 def ValuedCSP.Instance.evalMinimize {Γ : ValuedCSP D C} {ι μ : Type*} [DecidableEq μ] [Fintype μ]
     (I : Γ.Instance (ι ⊕ μ)) (x : ι → D) : C :=
-  Finset.univ.inf' Finset.univ_nonempty (I.evalPartial x)
+  Finset.min' (Finset.univ.val.map (I.evalPartial x)).toFinset ⟨I.evalPartial x (fun _ => Classical.choice Dne), by simp_all⟩
 
 /-- A new VCSP template made of all functions expressible by `Γ`. -/
 def ValuedCSP.expressivePower (Γ : ValuedCSP D C) : ValuedCSP D C :=
