@@ -167,6 +167,7 @@ lemma Finset.nsmul_inf' [LinearOrderedAddCommMonoid C] {s : Finset D}
   | succ n ih =>
     rw [succ_nsmul]
     simp_rw [succ_nsmul]
+    rw [←ih]
     sorry
 
 lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
@@ -179,22 +180,32 @@ lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : Value
     (ω.tt x).summap (fun yᵢ => m • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial yᵢ)) ≤
     Finset.univ.val.summap (fun i : Fin m =>
       ω.size • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial (x i)))
-  have ineq_partial : ∀ (z : μ → D),
-    ((ω.tt (fun i => Sum.elim (x i) z)).summap (fun yᵢ : ι ⊕ μ → D =>
-      m • I.evalPartial (yᵢ ∘ Sum.inl) (yᵢ ∘ Sum.inr))) ≤
-    Finset.univ.val.summap (fun i : Fin m =>
-      ω.size • I.evalPartial (x i) z)
-  · exact level5 I frpo x
   convert_to
     (ω.tt x).summap (fun yᵢ : ι → D =>
       Finset.univ.inf' Finset.univ_nonempty (m • I.evalPartial yᵢ)) ≤
     Finset.univ.val.summap (fun i : Fin m => -- here (RHS) every `xᵢ` can be minimized separately
       Finset.univ.inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i)))
       -- argmin for each row translates to different `z`
-      -- by `ineq_partial` the inequality will hold for those `yᵢ` that bundle these `z`
+      -- by `ineq_for_z` the inequality will hold for those `yᵢ` that bundle these `z`
       -- even more so for the minima then
   · simp [Finset.nsmul_inf']
   · simp [Finset.nsmul_inf']
+  have ineq_for_z : ∀ (z : μ → D),
+    (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun yᵢ : (ι ⊕ μ) → D =>
+      m • I.evalPartial (yᵢ ∘ Sum.inl) (yᵢ ∘ Sum.inr)) ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+      ω.size • I.evalPartial (x i) z)
+  · exact level5 I frpo x
+  let z' := fun i : Fin m =>
+    (Finset.exists_mem_eq_inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i))).choose
+  convert_to
+    (ω.tt x).summap (fun yᵢ : ι → D =>
+      Finset.univ.inf' Finset.univ_nonempty (m • I.evalPartial yᵢ)) ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+      (ω.size • I.evalPartial (x i) (z' i)))
+  · congr
+    ext i
+    exact (Finset.exists_mem_eq_inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i))).choose_spec.right
   sorry
 
 lemma level7 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
