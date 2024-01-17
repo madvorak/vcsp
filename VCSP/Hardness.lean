@@ -144,21 +144,17 @@ lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : 
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) (z : μ → D) :
     m • (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun y : (ι ⊕ μ) → D =>
-        I.evalPartial (fun a => y (Sum.inl a)) (fun b => y (Sum.inr b))
-      ) ≤
+      I.evalPartial (y ∘ Sum.inl) (y ∘ Sum.inr)) ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalPartial (x i) z) := by
   convert level3 I frpo (fun i : Fin m => Sum.elim (x i) z) with s
-  show I.evalSolution (Sum.elim (fun a => s (Sum.inl a)) (fun b => s (Sum.inr b))) = I.evalSolution s
-  apply congr_arg
-  ext j
-  cases j <;> rfl
+  show I.evalSolution (Sum.elim (s ∘ Sum.inl) (s ∘ Sum.inr)) = I.evalSolution s
+  rw [Sum.elim_comp_inl_inr]
 
 lemma level5 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) (z : μ → D) :
     (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun y : (ι ⊕ μ) → D =>
-        m • I.evalPartial (fun a => y (Sum.inl a)) (fun b => y (Sum.inr b))
-      ) ≤
+      m • I.evalPartial (y ∘ Sum.inl) (y ∘ Sum.inr)) ≤
     Finset.univ.val.summap (fun i : Fin m => ω.size • I.evalPartial (x i) z) := by
   rw [Multiset.summap_nsmul, Multiset.summap_nsmul]
   exact level4 I frpo x z
@@ -183,13 +179,22 @@ lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : Value
     (ω.tt x).summap (fun yᵢ => m • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial yᵢ)) ≤
     Finset.univ.val.summap (fun i : Fin m =>
       ω.size • Finset.univ.inf' Finset.univ_nonempty (I.evalPartial (x i)))
-  convert_to
-    (ω.tt x).summap (fun yᵢ => Finset.univ.inf' Finset.univ_nonempty (m • I.evalPartial yᵢ)) ≤
+  have ineq_partial : ∀ (z : μ → D),
+    ((ω.tt (fun i => Sum.elim (x i) z)).summap (fun yᵢ : ι ⊕ μ → D =>
+      m • I.evalPartial (yᵢ ∘ Sum.inl) (yᵢ ∘ Sum.inr))) ≤
     Finset.univ.val.summap (fun i : Fin m =>
+      ω.size • I.evalPartial (x i) z)
+  · exact level5 I frpo x
+  convert_to
+    (ω.tt x).summap (fun yᵢ : ι → D =>
+      Finset.univ.inf' Finset.univ_nonempty (m • I.evalPartial yᵢ)) ≤
+    Finset.univ.val.summap (fun i : Fin m => -- here (RHS) every `xᵢ` can be minimized separately
       Finset.univ.inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i)))
+      -- argmin for each row translates to different `z`
+      -- by `ineq_partial` the inequality will hold for those `yᵢ` that bundle these `z`
+      -- even more so for the minima then
   · simp [Finset.nsmul_inf']
   · simp [Finset.nsmul_inf']
-  have ineq_partial := level5 I frpo x
   sorry
 
 lemma level7 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
