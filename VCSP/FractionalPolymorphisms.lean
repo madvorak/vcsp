@@ -22,7 +22,7 @@ lemma FractionalOperation.IsValid.contains {ω : FractionalOperation D m} (valid
     ∃ g : (Fin m → D) → D, g ∈ ω :=
   Multiset.exists_mem_of_ne_zero valid
 
-/-- TODO description -/
+/-- Fractional operation applied to a transposed table of values. -/
 def FractionalOperation.tt {ι : Type*} (ω : FractionalOperation D m) (x : Fin m → ι → D) :
     Multiset (ι → D) :=
   ω.map (fun (g : (Fin m → D) → D) (i : ι) => g ((Function.swap x) i))
