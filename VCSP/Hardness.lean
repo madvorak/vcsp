@@ -3,11 +3,6 @@ import VCSP.Expressibility
 import Mathlib.Data.Fin.VecNotation
 
 
-@[simp]
-abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
-  (s.map f).sum
-
-
 section better_notation
 
 /-- Given `n : ℕ` and `l : List _`, print `List.take n l` as `l.take n` in Infoview. -/
@@ -46,6 +41,10 @@ def Multiset.map.unexpander : Lean.PrettyPrinter.Unexpander
   | `($_ $f $s) => `($(s).$(Lean.mkIdent `map) $f)
   | _ => throw ()
 
+@[simp]
+abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
+  (s.map f).sum
+
 attribute [pp_dot] List.length List.get List.sum Multiset.sum Multiset.summap
   Sigma.fst Sigma.snd
   ValuedCSP.Term.f ValuedCSP.Term.n ValuedCSP.Term.app ValuedCSP.Term.evalSolution
@@ -57,7 +56,7 @@ macro "change " h:ident " to " t:term : tactic => `(tactic| change $t at $h:iden
 end better_notation
 
 
-section push_higher
+section notVCSPspecific
 
 lemma univ_val_map_2x2 {α β : Type*} {f : (Fin 2 → α) → β} {a b c d : α} :
     Finset.univ.val.map (fun i => f (![![a, b], ![c, d]] i)) = [f ![a, b], f ![c, d]] :=
@@ -94,10 +93,36 @@ lemma Multiset.summap_nsmul {α β : Type*} [AddCommMonoid β] (s : Multiset α)
 lemma Multiset.summap_summap_swap {α β γ : Type*} [AddCommMonoid γ]
     (A : Multiset α) (B : Multiset β) (f : α → β → γ) :
     A.summap (fun a => B.summap (fun b => f a b)) =
-    B.summap (fun b => A.summap (fun a => f a b)) := by
-  apply Multiset.sum_map_sum_map
+    B.summap (fun b => A.summap (fun a => f a b)) :=
+  Multiset.sum_map_sum_map A B
 
-end push_higher
+lemma Multiset.summap_le_summap {α β : Type*} [OrderedAddCommMonoid β] {s : Multiset α}
+    {f g : α → β} (hfg : ∀ i ∈ s, f i ≤ g i) :
+    s.summap f ≤ s.summap g :=
+  Multiset.sum_map_le_sum_map f g hfg
+
+lemma Finset.nsmul_inf' {α β : Type*} [LinearOrderedCancelAddCommMonoid β] {s : Finset α}
+    (hs : s.Nonempty) (f : α → β) (n : ℕ) :
+    s.inf' hs (fun a => n • f a) = n • s.inf' hs f := by
+  if nz : n = 0 then
+    rw [nz]
+    simp_rw [zero_smul]
+    apply Finset.inf'_const
+  else
+    obtain ⟨d, din, eq_fd⟩ := Finset.exists_mem_eq_inf' hs f
+    obtain ⟨dₙ, dinₙ, eq_fdₙ⟩ := Finset.exists_mem_eq_inf' hs (fun a => n • f a)
+    rw [eq_fd, eq_fdₙ]
+    have key : f dₙ = f d
+    · apply eq_of_ge_of_not_gt
+      · rw [← eq_fd]
+        exact Finset.inf'_le f dinₙ
+      · rw [not_lt]
+        apply le_of_nsmul_le_nsmul_right nz
+        rw [← eq_fdₙ]
+        exact Finset.inf'_le (fun a => n • f a) din
+    rw [key]
+
+end notVCSPspecific
 
 
 variable {D C : Type*}
@@ -135,42 +160,31 @@ lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} (I : Γ.
     ω.size • Finset.univ.val.summap (fun i => I.summap (fun t => t.evalSolution (x i)))
   rw [Multiset.summap_summap_swap _ I, Multiset.summap_summap_swap _ I]
   rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul]
-  apply Multiset.sum_map_le_sum_map
+  apply Multiset.summap_le_summap
   intro t _
   apply level2
   exact frpo ⟨t.n, t.f⟩ t.inΓ
 
 lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
-    (x : Fin m → (ι → D)) (z : μ → D) :
-    m • (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun y : (ι ⊕ μ) → D =>
+    (x : Fin m → (ι → D)) (z : Fin m → (μ → D)) :
+    m • (ω.tt (fun i : Fin m => Sum.elim (x i) (z i))).summap (fun y : (ι ⊕ μ) → D =>
       I.evalPartial (y ∘ Sum.inl) (y ∘ Sum.inr)) ≤
-    ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalPartial (x i) z) := by
-  convert level3 I frpo (fun i : Fin m => Sum.elim (x i) z) with s
+    ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalPartial (x i) (z i)) := by
+  convert level3 I frpo (fun i : Fin m => Sum.elim (x i) (z i)) with s
   show I.evalSolution (Sum.elim (s ∘ Sum.inl) (s ∘ Sum.inr)) = I.evalSolution s
   rw [Sum.elim_comp_inl_inr]
 
 lemma level5 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
-    (x : Fin m → (ι → D)) (z : μ → D) :
-    (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun y : (ι ⊕ μ) → D =>
+    (x : Fin m → (ι → D)) (z : Fin m → (μ → D)) :
+    (ω.tt (fun i : Fin m => Sum.elim (x i) (z i))).summap (fun y : (ι ⊕ μ) → D =>
       m • I.evalPartial (y ∘ Sum.inl) (y ∘ Sum.inr)) ≤
-    Finset.univ.val.summap (fun i : Fin m => ω.size • I.evalPartial (x i) z) := by
+    Finset.univ.val.summap (fun i : Fin m => ω.size • I.evalPartial (x i) (z i)) := by
   rw [Multiset.summap_nsmul, Multiset.summap_nsmul]
   exact level4 I frpo x z
 
-lemma Finset.nsmul_inf' [LinearOrderedAddCommMonoid C] {s : Finset D}
-    (hs : s.Nonempty) (f : D → C) (n : ℕ) :
-    s.inf' hs (fun a => n • f a) = n • s.inf' hs f := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-    rw [succ_nsmul]
-    simp_rw [succ_nsmul]
-    rw [←ih]
-    sorry
-
-lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
+lemma level6 [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C] {Γ : ValuedCSP D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
@@ -183,32 +197,43 @@ lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : Value
   convert_to
     (ω.tt x).summap (fun yᵢ : ι → D =>
       Finset.univ.inf' Finset.univ_nonempty (m • I.evalPartial yᵢ)) ≤
-    Finset.univ.val.summap (fun i : Fin m => -- here (RHS) every `xᵢ` can be minimized separately
-      Finset.univ.inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i)))
-      -- argmin for each row translates to different `z`
-      -- by `ineq_for_z` the inequality will hold for those `yᵢ` that bundle these `z`
-      -- even more so for the minima then
-  · simp [Finset.nsmul_inf']
-  · simp [Finset.nsmul_inf']
-  have ineq_for_z : ∀ (z : μ → D),
-    (ω.tt (fun i : Fin m => Sum.elim (x i) z)).summap (fun yᵢ : (ι ⊕ μ) → D =>
-      m • I.evalPartial (yᵢ ∘ Sum.inl) (yᵢ ∘ Sum.inr)) ≤
     Finset.univ.val.summap (fun i : Fin m =>
-      ω.size • I.evalPartial (x i) z)
-  · exact level5 I frpo x
-  let z' := fun i : Fin m =>
+      Finset.univ.inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i)))
+  · simp [Finset.nsmul_inf']
+  · simp [Finset.nsmul_inf']
+  let z := fun i : Fin m =>
     (Finset.exists_mem_eq_inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i))).choose
   convert_to
     (ω.tt x).summap (fun yᵢ : ι → D =>
       Finset.univ.inf' Finset.univ_nonempty (m • I.evalPartial yᵢ)) ≤
     Finset.univ.val.summap (fun i : Fin m =>
-      (ω.size • I.evalPartial (x i) (z' i)))
+      (ω.size • I.evalPartial (x i) (z i)))
   · congr
     ext i
     exact (Finset.exists_mem_eq_inf' Finset.univ_nonempty (ω.size • I.evalPartial (x i))).choose_spec.right
-  sorry
+  have ineq_for_z :
+    (ω.tt (fun i : Fin m => Sum.elim (x i) (z i))).summap (fun yᵢ : (ι ⊕ μ) → D =>
+      m • I.evalPartial (yᵢ ∘ Sum.inl) (yᵢ ∘ Sum.inr)) ≤
+    Finset.univ.val.summap (fun i : Fin m =>
+      ω.size • I.evalPartial (x i) (z i))
+  · exact level5 I frpo x z
+  refine LE.le.trans ?_ ineq_for_z
+  show
+    (ω.tt x).summap (fun y₁ : ι → D =>
+      Finset.univ.inf' Finset.univ_nonempty (m • I.evalPartial y₁)) ≤
+    (ω.tt (fun i : Fin m => Sum.elim (x i) (z i))).summap (fun y₂ : (ι ⊕ μ) → D =>
+      m • I.evalPartial (y₂ ∘ Sum.inl) (y₂ ∘ Sum.inr))
+  simp [FractionalOperation.tt, Multiset.map_map]
+  apply Multiset.summap_le_summap
+  intro g _
+  simp only [Finset.inf'_le_iff, Finset.mem_univ, true_and]
+  show
+    ∃ zᵢ : μ → D,
+      m • I.evalPartial (fun j : ι => g (Function.swap x j)) zᵢ ≤
+      m • I.evalPartial (fun j : ι => g (Function.swap x j)) (fun i : μ => g _)
+  exact ⟨_, le_of_eq rfl⟩
 
-lemma level7 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
+lemma level7 [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C] {Γ : ValuedCSP D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
@@ -218,7 +243,7 @@ lemma level7 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : Value
   exact level6 I frpo x
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
-    [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
+    [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C] {Γ : ValuedCSP D C}
     {m : ℕ} {ω : FractionalOperation D m}
     (frpo : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
@@ -315,3 +340,5 @@ theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFP
   exact frpol.expressivePower ⟨2, f⟩ fin
 
 end max_cut
+
+#print axioms ValuedCSP.CanExpressMaxCut.forbids_commutativeFP
