@@ -101,7 +101,7 @@ lemma Multiset.summap_le_summap {α β : Type*} [OrderedAddCommMonoid β] {s : M
     s.summap f ≤ s.summap g :=
   Multiset.sum_map_le_sum_map f g hfg
 
-lemma Finset.nsmul_inf' {α β : Type*} [LinearOrderedCancelAddCommMonoid β] {s : Finset α}
+lemma Finset.nsmul_inf' {α β : Type*} [LinearOrderedAddCommMonoid β] {s : Finset α}
     (hs : s.Nonempty) (f : α → β) (n : ℕ) :
     s.inf' hs (fun a => n • f a) = n • s.inf' hs f := by
   if nz : n = 0 then
@@ -109,18 +109,15 @@ lemma Finset.nsmul_inf' {α β : Type*} [LinearOrderedCancelAddCommMonoid β] {s
     simp_rw [zero_smul]
     apply Finset.inf'_const
   else
-    obtain ⟨d, din, eq_fd⟩ := Finset.exists_mem_eq_inf' hs f
-    obtain ⟨dₙ, dinₙ, eq_fdₙ⟩ := Finset.exists_mem_eq_inf' hs (fun a => n • f a)
-    rw [eq_fd, eq_fdₙ]
-    have key : f dₙ = f d
+    obtain ⟨d, hd, hfd⟩ := Finset.exists_mem_eq_inf' hs f
+    obtain ⟨dₙ, hnₙ, hfdₙ⟩ := Finset.exists_mem_eq_inf' hs (fun a => n • f a)
+    have key : n • f dₙ = n • f d
     · apply eq_of_ge_of_not_gt
-      · rw [← eq_fd]
-        exact Finset.inf'_le f dinₙ
-      · rw [not_lt]
-        apply le_of_nsmul_le_nsmul_right nz
-        rw [← eq_fdₙ]
-        exact Finset.inf'_le (fun a => n • f a) din
-    rw [key]
+      · rw [← hfd]
+        exact nsmul_le_nsmul_right (Finset.inf'_le f hnₙ) n
+      · rw [not_lt, ← hfdₙ]
+        exact Finset.inf'_le (fun a => n • f a) hd
+    rw [hfd, hfdₙ, key]
 
 end notVCSPspecific
 
@@ -184,7 +181,7 @@ lemma level5 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : 
   rw [Multiset.summap_nsmul, Multiset.summap_nsmul]
   exact level4 I frpo x z
 
-lemma level6 [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C] {Γ : ValuedCSP D C}
+lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
@@ -233,7 +230,7 @@ lemma level6 [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C] {Γ :
       m • I.evalPartial (fun j : ι => g (Function.swap x j)) (fun i : μ => g _)
   exact ⟨_, le_of_eq rfl⟩
 
-lemma level7 [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C] {Γ : ValuedCSP D C}
+lemma level7 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
     {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
     {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
     (x : Fin m → (ι → D)) :
@@ -243,7 +240,7 @@ lemma level7 [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C] {Γ :
   exact level6 I frpo x
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
-    [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C] {Γ : ValuedCSP D C}
+    [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
     {m : ℕ} {ω : FractionalOperation D m}
     (frpo : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
