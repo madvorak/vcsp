@@ -6,7 +6,7 @@ My long-term goal is to formalize the dichotomy for fixed-template finite-valued
 
 ## Results
 
-If a VCSP template can express MaxCut, it cannot have any commutative fractional polymorphism.
+[If a VCSP template can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/61cacff2ba620f00657091a21fddbd4495a0c746/VCSP/Hardness.lean#L335)
 
 ## Mathlib contributions
 
