@@ -29,13 +29,13 @@ def List.dropWhile.unexpander : Lean.PrettyPrinter.Unexpander
   | `($_ $p $l) => `($(l).$(Lean.mkIdent `dropWhile) $p)
   | _ => throw ()
 
-/-- Given `f : α → β` and `l : List α`, print `List.map f l` as `l.map f` in Infoview. -/
+/-- Given `f : α → _` and `l : List α`, print `List.map f l` as `l.map f` in Infoview. -/
 @[app_unexpander List.map]
 def List.map.unexpander : Lean.PrettyPrinter.Unexpander
   | `($_ $f $l) => `($(l).$(Lean.mkIdent `map) $f)
   | _ => throw ()
 
-/-- Given `f : α → β` and `s : Multiset α`, print `Multiset.map f s` as `s.map f` in Infoview. -/
+/-- Given `f : α → _` and `s : Multiset α`, print `Multiset.map f s` as `s.map f` in Infoview. -/
 @[app_unexpander Multiset.map]
 def Multiset.map.unexpander : Lean.PrettyPrinter.Unexpander
   | `($_ $f $s) => `($(s).$(Lean.mkIdent `map) $f)
@@ -56,52 +56,54 @@ macro "change " h:ident " to " t:term : tactic => `(tactic| change $t at $h:iden
 end better_notation
 
 
-section notVCSPspecific
+section not_VCSP_specific
 
-lemma univ_val_map_2x2 {α β : Type*} {f : (Fin 2 → α) → β} {a b c d : α} :
+variable {α β γ : Type*}
+
+lemma univ_val_map_2x2 {f : (Fin 2 → α) → β} {a b c d : α} :
     Finset.univ.val.map (fun i => f (![![a, b], ![c, d]] i)) = [f ![a, b], f ![c, d]] :=
   rfl
 
-lemma Multiset.sum_ofList_twice {M : Type*} [AddCommMonoid M] (x : M) :
+lemma Multiset.sum_ofList_twice [AddCommMonoid α] (x : α) :
     Multiset.sum ↑[x, x] = 2 • x := by
   simp [two_nsmul]
 
-lemma column_of_2x2_left {α : Type*} (a b c d : α) :
+lemma column_of_2x2_left (a b c d : α) :
     (fun i => ![![a, b], ![c, d]] i 0) = (fun i => ![a, c] i) := by
   ext i
   match i with
   | 0 => rfl
   | 1 => rfl
 
-lemma column_of_2x2_right {α : Type*} (a b c d : α) :
+lemma column_of_2x2_right (a b c d : α) :
     (fun i => ![![a, b], ![c, d]] i 1) = (fun i => ![b, d] i) := by
   ext i
   match i with
   | 0 => rfl
   | 1 => rfl
 
-lemma Multiset.summap_singleton {α β : Type*} [AddCommMonoid β] (a : α) (f : α → β) :
+lemma Multiset.summap_singleton [AddCommMonoid β] (a : α) (f : α → β) :
     Multiset.summap {a} f = f a := by
   simp
 
-lemma Multiset.summap_nsmul {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) (n : ℕ) :
+lemma Multiset.summap_nsmul [AddCommMonoid β] (s : Multiset α) (f : α → β) (n : ℕ) :
     s.summap (fun a => n • f a) = n • s.summap f := by
   induction n with
   | zero => simp
   | succ n ih => simp [succ_nsmul, Multiset.sum_map_add, ih]
 
-lemma Multiset.summap_summap_swap {α β γ : Type*} [AddCommMonoid γ]
+lemma Multiset.summap_summap_swap [AddCommMonoid γ]
     (A : Multiset α) (B : Multiset β) (f : α → β → γ) :
     A.summap (fun a => B.summap (fun b => f a b)) =
     B.summap (fun b => A.summap (fun a => f a b)) :=
   Multiset.sum_map_sum_map A B
 
-lemma Multiset.summap_le_summap {α β : Type*} [OrderedAddCommMonoid β] {s : Multiset α}
+lemma Multiset.summap_le_summap [OrderedAddCommMonoid β] {s : Multiset α}
     {f g : α → β} (hfg : ∀ i ∈ s, f i ≤ g i) :
     s.summap f ≤ s.summap g :=
   Multiset.sum_map_le_sum_map f g hfg
 
-lemma Finset.nsmul_inf' {α β : Type*} [LinearOrderedAddCommMonoid β] {s : Finset α}
+lemma Finset.nsmul_inf' [LinearOrderedAddCommMonoid β] {s : Finset α}
     (hs : s.Nonempty) (f : α → β) (n : ℕ) :
     s.inf' hs (fun a => n • f a) = n • s.inf' hs f := by
   if nz : n = 0 then
@@ -119,26 +121,28 @@ lemma Finset.nsmul_inf' {α β : Type*} [LinearOrderedAddCommMonoid β] {s : Fin
         exact Finset.inf'_le (fun a => n • f a) hd
     rw [hfd, hfdₙ, key]
 
-end notVCSPspecific
+end not_VCSP_specific
 
 
 variable {D C : Type*}
 
 section expressiveness
 
-lemma level1 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} {t : Γ.Term ι}
-    {m : ℕ} {ω : FractionalOperation D m} (impr : t.f.AdmitsFractional ω)
-    (x : Fin m → (ι → D)) :
-    m • (ω.tt (fun i : Fin m => x i ∘ t.app)).summap t.f ≤
-    ω.size • Finset.univ.val.summap (fun i : Fin m => t.f (x i ∘ t.app)) :=
-  impr (x · ∘ t.app)
+section partial_order
 
-lemma level2 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} (t : Γ.Term ι)
-    {m : ℕ} {ω : FractionalOperation D m} (impr : t.f.AdmitsFractional ω)
-    (x : Fin m → (ι → D)) :
+variable [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
+
+lemma Function.AdmitsFractional.evalTerm_le_evalTerm {t : Γ.Term ι}
+    (impr : t.f.AdmitsFractional ω) (x : Fin m → (ι → D)) :
+    m • (ω.tt (fun i : Fin m => x i ∘ t.app)).summap t.f ≤
+    ω.size • Finset.univ.val.summap (fun i : Fin m => t.f (x i ∘ t.app)) := by
+  apply impr
+
+lemma Function.AdmitsFractional.evalSolution_le_evalSolution {t : Γ.Term ι}
+    (impr : t.f.AdmitsFractional ω) (x : Fin m → (ι → D)) :
     m • (ω.tt (fun i : Fin m => x i)).summap t.evalSolution ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => t.evalSolution (x i)) := by
-  convert level1 impr x
+  convert impr.evalTerm_le_evalTerm x
   convert_to
     Multiset.sum ((ω.tt (x ·)).map (fun xᵢ => t.f (fun i => xᵢ (t.app i)))) =
     Multiset.sum ((ω.tt (x · ∘ t.app)).map t.f)
@@ -147,44 +151,48 @@ lemma level2 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} (t : Γ.
   rewrite [Multiset.map_map, Multiset.map_map]
   rfl
 
-lemma level3 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} (I : Γ.Instance ι)
-    {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
-    (x : Fin m → (ι → D)) :
+lemma FractionalOperation.IsFractionalPolymorphismFor.evalSolution_le_evalSolution
+    (frpo : ω.IsFractionalPolymorphismFor Γ) (I : Γ.Instance ι) (x : Fin m → (ι → D)) :
     m • (ω.tt x).summap I.evalSolution ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalSolution (x i)) := by
   show
     m • (ω.tt x).summap (fun yᵢ => I.summap (fun t => t.evalSolution yᵢ)) ≤
     ω.size • Finset.univ.val.summap (fun i => I.summap (fun t => t.evalSolution (x i)))
-  rw [Multiset.summap_summap_swap _ I, Multiset.summap_summap_swap _ I]
-  rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul]
+  iterate 2
+    rw [Multiset.summap_summap_swap _ I, ←Multiset.summap_nsmul]
   apply Multiset.summap_le_summap
   intro t _
-  apply level2
-  exact frpo ⟨t.n, t.f⟩ t.inΓ
+  apply (frpo ⟨t.n, t.f⟩ t.inΓ).evalSolution_le_evalSolution
 
-lemma level4 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
-    {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
+lemma FractionalOperation.IsFractionalPolymorphismFor.evalPartial_le_evalPartial
+    (frpo : ω.IsFractionalPolymorphismFor Γ) {μ : Type*} (I : Γ.Instance (ι ⊕ μ))
     (x : Fin m → (ι → D)) (z : Fin m → (μ → D)) :
     m • (ω.tt (fun i : Fin m => Sum.elim (x i) (z i))).summap (fun y : (ι ⊕ μ) → D =>
       I.evalPartial (y ∘ Sum.inl) (y ∘ Sum.inr)) ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalPartial (x i) (z i)) := by
-  convert level3 I frpo (fun i : Fin m => Sum.elim (x i) (z i)) with s
+  convert frpo.evalSolution_le_evalSolution I (fun i : Fin m => Sum.elim (x i) (z i)) with s
   show I.evalSolution (Sum.elim (s ∘ Sum.inl) (s ∘ Sum.inr)) = I.evalSolution s
   rw [Sum.elim_comp_inl_inr]
 
-lemma level5 [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι μ : Type*} (I : Γ.Instance (ι ⊕ μ))
-    {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
+lemma FractionalOperation.IsFractionalPolymorphismFor.evalPartial_le_evalPartial_with_nsmul_inside
+    (frpo : ω.IsFractionalPolymorphismFor Γ) {μ : Type*} (I : Γ.Instance (ι ⊕ μ))
     (x : Fin m → (ι → D)) (z : Fin m → (μ → D)) :
     (ω.tt (fun i : Fin m => Sum.elim (x i) (z i))).summap (fun y : (ι ⊕ μ) → D =>
       m • I.evalPartial (y ∘ Sum.inl) (y ∘ Sum.inr)) ≤
     Finset.univ.val.summap (fun i : Fin m => ω.size • I.evalPartial (x i) (z i)) := by
   rw [Multiset.summap_nsmul, Multiset.summap_nsmul]
-  exact level4 I frpo x z
+  exact frpo.evalPartial_le_evalPartial I x z
 
-lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
-    {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
-    {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
-    (x : Fin m → (ι → D)) :
+end partial_order
+
+section total_order
+
+variable [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C]
+         {Γ : ValuedCSP D C} {m : ℕ} {ω : FractionalOperation D m}
+
+lemma FractionalOperation.IsFractionalPolymorphismFor.evalMinimize_le_evalMinimize_with_nsmul_inside
+    (frpo : ω.IsFractionalPolymorphismFor Γ) {ι μ : Type*} [DecidableEq μ] [Fintype μ]
+    (I : Γ.Instance (ι ⊕ μ)) (x : Fin m → (ι → D)) :
     (ω.tt x).summap (fun yᵢ => m • I.evalMinimize yᵢ) ≤
     Finset.univ.val.summap (fun i : Fin m => ω.size • I.evalMinimize (x i)) := by
   show
@@ -213,7 +221,7 @@ lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : Value
       m • I.evalPartial (yᵢ ∘ Sum.inl) (yᵢ ∘ Sum.inr)) ≤
     Finset.univ.val.summap (fun i : Fin m =>
       ω.size • I.evalPartial (x i) (z i))
-  · exact level5 I frpo x z
+  · exact frpo.evalPartial_le_evalPartial_with_nsmul_inside I x z
   refine LE.le.trans ?_ ineq_for_z
   show
     (ω.tt x).summap (fun y₁ : ι → D =>
@@ -230,26 +238,24 @@ lemma level6 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : Value
       m • I.evalPartial (fun j : ι => g (Function.swap x j)) (fun i : μ => g _)
   exact ⟨_, le_of_eq rfl⟩
 
-lemma level7 [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
-    {ι μ : Type*} [DecidableEq μ] [Fintype μ] (I : Γ.Instance (ι ⊕ μ))
-    {m : ℕ} {ω : FractionalOperation D m} (frpo : ω.IsFractionalPolymorphismFor Γ)
-    (x : Fin m → (ι → D)) :
+lemma FractionalOperation.IsFractionalPolymorphismFor.evalMinimize_le_evalMinimize
+    (frpo : ω.IsFractionalPolymorphismFor Γ) {ι μ : Type*} [DecidableEq μ] [Fintype μ]
+    (I : Γ.Instance (ι ⊕ μ)) (x : Fin m → (ι → D)) :
     m • (ω.tt x).summap I.evalMinimize ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalMinimize (x i)) := by
   rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul]
-  exact level6 I frpo x
+  exact frpo.evalMinimize_le_evalMinimize_with_nsmul_inside I x
 
-lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePower
-    [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C] {Γ : ValuedCSP D C}
-    {m : ℕ} {ω : FractionalOperation D m}
+lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePowerVCSP
     (frpo : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
   intro f hf
   rw [ValuedCSP.expressivePower, Set.mem_setOf_eq] at hf
   rcases hf with ⟨n, μ, I, rfl⟩
   intro x
-  apply level7
-  exact frpo
+  apply frpo.evalMinimize_le_evalMinimize
+
+end total_order
 
 end expressiveness
 
@@ -271,7 +277,7 @@ def ValuedCSP.CanExpressMaxCut [Nonempty D] [Fintype D] [LinearOrderedAddCommMon
     {Γ : ValuedCSP D C} : Prop :=
   ∃ f : (Fin 2 → D) → C, ⟨2, f⟩ ∈ Γ.expressivePower ∧ f.HasMaxCutProperty
 
-lemma Function.HasMaxCutProperty.forbids_commutativeFP [OrderedCancelAddCommMonoid C]
+lemma Function.HasMaxCutProperty.forbids_commutativeFractionalPolymorphism [OrderedCancelAddCommMonoid C]
     {f : (Fin 2 → D) → C} (mcf : f.HasMaxCutProperty)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) (symmega : ω.IsSymmetric) :
     ¬ f.AdmitsFractional ω := by
@@ -326,16 +332,14 @@ lemma Function.HasMaxCutProperty.forbids_commutativeFP [OrderedCancelAddCommMono
   rw [rhs_swap, distrib] at impos
   exact ne_of_lt impos rfl
 
-theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFP
+theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFractionalPolymorphism
     [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C]
     {Γ : ValuedCSP D C} (expressMC : Γ.CanExpressMaxCut)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) :
     ¬ ω.IsSymmetricFractionalPolymorphismFor Γ := by
   rintro ⟨frpol, symme⟩
   rcases expressMC with ⟨f, fin, fmc⟩
-  apply fmc.forbids_commutativeFP valid symme
-  exact frpol.expressivePower ⟨2, f⟩ fin
+  apply fmc.forbids_commutativeFractionalPolymorphism valid symme
+  exact frpol.expressivePowerVCSP ⟨2, f⟩ fin
 
 end max_cut
-
-#print axioms ValuedCSP.CanExpressMaxCut.forbids_commutativeFP
