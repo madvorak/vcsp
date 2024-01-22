@@ -342,4 +342,12 @@ theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFractionalPolymorphism
   apply fmc.forbids_commutativeFractionalPolymorphism valid symme
   exact frpol.expressivePowerVCSP ⟨2, f⟩ fin
 
+example [Nonempty D] [Fintype D] (ζ : Type) [Nonempty ζ] [Fintype ζ]
+    (A : Multiset (Σ α : Type, Σ _ : Fintype α, D × α × ζ → ℚ)) :
+  ∃ β : Type, ∃ _ : Fintype β, ∃ B : Multiset (D × β → ℚ), ∀ d : D,
+    Finset.univ.inf' Finset.univ_nonempty (fun z : ζ =>
+      A.summap (fun ⟨α, _, f⟩ => Finset.univ.inf' sorry (fun a : α => f (d, a, z)))) =
+    Finset.univ.inf' sorry (fun b : β => B.summap (· (d, b))) :=
+  sorry
+
 end max_cut
