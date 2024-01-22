@@ -1,6 +1,7 @@
 import Mathlib.Combinatorics.Optimization.ValuedCSP
 import Mathlib.Data.Finset.Lattice
 import Mathlib.Data.Fintype.Pi
+import Mathlib.Data.Prod.TProd
 
 
 variable {D C : Type*}
@@ -51,4 +52,30 @@ lemma ValuedCSP.expressivePower_expressivePower (Γ : ValuedCSP D C) :
   clear hI₁ f
   -- `I₁` is of type `{ ⟨n, I.evalMinimize⟩ | (n' : ℕ) (μ' : Type) [...] (I : Instance Γ (Fin n' ⊕ μ')) }.Instance (Fin n ⊕ μ₁)`
   -- where `n = n'` must hold?
+  let types : Multiset Type := I₁.map (fun t => by
+      obtain ⟨t_n, t_f, t_inΓ, t_app⟩ := t
+      rw [Set.mem_setOf_eq] at t_inΓ
+      simp_rw [Sigma.mk.inj_iff] at t_inΓ
+      simp_rw [exists_and_left] at t_inΓ
+      rw [exists_eq_left] at t_inΓ
+      exact Classical.choose t_inΓ
+    )
+  use types.toList.TProd id, Classical.decEq (types.toList.TProd id), sorry
+  use Multiset.join (I₁.map (fun t => by
+    let _n := t.n
+    let _f := t.f
+    let _G := t.inΓ
+    let _a := t.app
+    simp at _G
+    let _μ := Classical.choose _G
+    let _μDecEq := Classical.choose <| Classical.choose_spec _G
+    let _μFintype := Classical.choose <| Classical.choose_spec <| Classical.choose_spec _G
+    let _I := Classical.choose <| Classical.choose_spec <| Classical.choose_spec <| Classical.choose_spec _G
+    let _ht := Classical.choose_spec <| Classical.choose_spec <| Classical.choose_spec <| Classical.choose_spec _G
+    refine _I.map ?_
+    intro __t
+    constructor
+    · exact __t.inΓ
+    refine ?_ ∘ __t.app
+    sorry))
   sorry
