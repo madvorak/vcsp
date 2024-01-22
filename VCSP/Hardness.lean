@@ -251,7 +251,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePowerVCSP
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
   intro f hf
   rw [ValuedCSP.expressivePower, Set.mem_setOf_eq] at hf
-  rcases hf with ⟨n, μ, I, rfl⟩
+  rcases hf with ⟨n, μ, I, -, -, rfl⟩
   intro x
   apply frpo.evalMinimize_le_evalMinimize
 

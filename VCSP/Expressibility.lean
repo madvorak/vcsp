@@ -25,7 +25,7 @@ def ValuedCSP.Instance.evalMinimize_def {Γ : ValuedCSP D C} {ι μ : Type*} [De
 
 /-- A new VCSP template made of all functions expressible by `Γ`. -/
 def ValuedCSP.expressivePower (Γ : ValuedCSP D C) : ValuedCSP D C :=
-  { ⟨n, I.evalMinimize⟩ | (n : ℕ) (m : ℕ) (I : Γ.Instance (Fin n ⊕ Fin m)) }
+  { ⟨n, I.evalMinimize⟩ | (n : ℕ) (μ : Type) (_ : DecidableEq μ) (_ : Fintype μ) (I : Γ.Instance (Fin n ⊕ μ)) }
 
 /-- Expressive power of a VCSP template subsumes the template. -/
 lemma ValuedCSP.subset_expressivePower (Γ : ValuedCSP D C) :
@@ -33,9 +33,7 @@ lemma ValuedCSP.subset_expressivePower (Γ : ValuedCSP D C) :
   rintro ⟨n, f⟩ hfΓ
   unfold ValuedCSP.expressivePower
   rw [Set.mem_setOf_eq]
-  use n, 0
-  unfold ValuedCSP.Instance
-  use { ValuedCSP.Term.mk n f hfΓ Sum.inl }
+  use n, Empty, inferInstance, inferInstance, { ValuedCSP.Term.mk n f hfΓ Sum.inl }
   simp [ValuedCSP.Instance.evalMinimize_def, ValuedCSP.Instance.evalSolution, Term.evalSolution]
 
 /-- Expressive power is an idempotent operation on VCSP templates. -/
@@ -44,4 +42,13 @@ lemma ValuedCSP.expressivePower_expressivePower (Γ : ValuedCSP D C) :
   apply Set.eq_of_subset_of_subset
   · apply ValuedCSP.subset_expressivePower
   rintro ⟨n, f⟩ hnf
+  simp [ValuedCSP.expressivePower] at *
+  obtain ⟨μ₁, μ₁DecEq, μ₁Fintype, I₁, hI₁⟩ := hnf
+  convert_to
+    ∃ μ₀ : Type, ∃ μ₀DecEq : DecidableEq μ₀, ∃ μ₀Fintype : Fintype μ₀, ∃ I₀ : Instance Γ (Fin n ⊕ μ₀),
+      I₀.evalMinimize = I₁.evalMinimize
+  · rw [hI₁]
+  clear hI₁ f
+  -- `I₁` is of type `{ ⟨n, I.evalMinimize⟩ | (n' : ℕ) (μ' : Type) [...] (I : Instance Γ (Fin n' ⊕ μ')) }.Instance (Fin n ⊕ μ₁)`
+  -- where `n = n'` must hold?
   sorry
