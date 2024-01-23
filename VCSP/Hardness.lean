@@ -352,12 +352,7 @@ example [Nonempty D] [Fintype D] (ζ : Type) [Nonempty ζ] [Fintype ζ]
     Finset.univ.inf' sorry (fun b : β => B.summap (· (d, b))) := by
   classical
   use (A.map Sigma.fst).toList.TProd id × ζ, sorry
-  use A.map (fun t x =>
-    have alpha : t.fst ∈ (A.map Sigma.fst).toList := by
-      have tin : t ∈ A
-      · sorry -- different version of `Multiset.map` must be used?
-      aesop
-    t.snd.snd ⟨x.fst, x.snd.fst.elim alpha, x.snd.snd⟩)
+  use A.attach.map (fun t x => t.val.snd.snd ⟨x.fst, x.snd.fst.elim (by aesop), x.snd.snd⟩)
   intro d
   apply le_antisymm
   · rw [Finset.inf'_le_iff]
