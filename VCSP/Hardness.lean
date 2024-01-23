@@ -352,19 +352,22 @@ example [Nonempty D] [Fintype D] (ζ : Type) [Nonempty ζ] [Fintype ζ]
     Finset.univ.inf' sorry (fun b : β => B.summap (· (d, b))) := by
   classical
   use (A.map Sigma.fst).toList.TProd id × ζ, sorry
-  use A.map (fun t => by
-    intro ⟨d, a, z⟩
-    have alpha : t.fst ∈ (A.map Sigma.fst).toList
-    · have tin : t ∈ A
-      · sorry
+  use A.map (fun t x =>
+    have alpha : t.fst ∈ (A.map Sigma.fst).toList := by
+      have tin : t ∈ A
+      · sorry -- different version of `Multiset.map` must be used?
       aesop
-    exact t.snd.snd ⟨d, a.elim alpha, z⟩)
+    t.snd.snd ⟨x.fst, x.snd.fst.elim alpha, x.snd.snd⟩)
   intro d
   apply le_antisymm
   · rw [Finset.inf'_le_iff]
     sorry
-  · rw [Finset.inf'_le_iff]
-    obtain ⟨i, -, hi⟩ := Finset.exists_mem_eq_inf' Finset.univ_nonempty (fun z : ζ =>
+  · obtain ⟨i, -, hi⟩ := Finset.exists_mem_eq_inf' Finset.univ_nonempty (fun z : ζ =>
         A.summap (fun ⟨α, _, f⟩ => Finset.univ.inf' sorry (fun a : α => f (d, a, z))))
-    rw [hi]
+    rw [hi, Finset.inf'_le_iff, Prod.exists, exists_comm]
+    use i
+    -- now (1) unfold `summap` (2) compose `map_map` (3) fold `summap` (4) `summap_le_summap`
+    -- then the inner `Finset.inf'` will reveal what `a : (A.map Sigma.fst).toList.TProd id` works
+    -- through `Finset.inf'_le_iff` for concrete `f`
+    -- finally, the left conjunct is trivial and the right conjunct is by reflexivity
     sorry
