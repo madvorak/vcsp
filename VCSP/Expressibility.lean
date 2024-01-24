@@ -1,7 +1,7 @@
 import Mathlib.Combinatorics.Optimization.ValuedCSP
 import Mathlib.Data.Finset.Lattice
 import Mathlib.Data.Fintype.Pi
-import Mathlib.Data.Prod.TProd
+import Mathlib.Data.Matrix.Notation
 
 
 variable {D C : Type*}
@@ -28,6 +28,33 @@ def ValuedCSP.Instance.evalMinimize_def {Γ : ValuedCSP D C} {ι μ : Type*} [De
 def ValuedCSP.expressivePower (Γ : ValuedCSP D C) : ValuedCSP D C :=
   { ⟨n, I.evalMinimize⟩ | (n : ℕ) (μ : Type) (_ : DecidableEq μ) (_ : Fintype μ) (I : Γ.Instance (Fin n ⊕ μ)) }
 
+inductive ValuedCSP.expresses (Γ : ValuedCSP D C) : (Σ (n : ℕ), (Fin n → D) → C) → Prop
+| single (f : Σ (n : ℕ), (Fin n → D) → C) (hf : f ∈ Γ) : Γ.expresses f
+| double (n : ℕ) (f g : (Fin n → D) → C) (hf : Γ.expresses ⟨n, f⟩) (hg : Γ.expresses ⟨n, g⟩) :
+    Γ.expresses ⟨n, (fun x => f x + g x)⟩
+| minimi (n : ℕ) (f : (Fin n.succ → D) → C) (hf : Γ.expresses ⟨n.succ, f⟩) :
+    Γ.expresses ⟨n, (fun x : Fin n → D => Finset.univ.inf' Finset.univ_nonempty (fun z : D => f (Matrix.vecCons z x)))⟩
+
+def ValuedCSP.expressesPower (Γ : ValuedCSP D C) : ValuedCSP D C := Γ.expresses
+
+/-- Expressive power of a VCSP template subsumes the template. NEW! -/
+lemma ValuedCSP.subset_expressesPower (Γ : ValuedCSP D C) :
+    Γ ⊆ Γ.expressesPower := by
+  rintro ⟨n, f⟩ hfΓ
+  apply ValuedCSP.expresses.single
+  exact hfΓ
+
+/-- Expressive power is an idempotent operation on VCSP templates. NEW! -/
+lemma ValuedCSP.expressesPower_expressesPower (Γ : ValuedCSP D C) :
+    Γ.expressesPower = Γ.expressesPower.expressesPower := by
+  apply Set.eq_of_subset_of_subset
+  · apply ValuedCSP.subset_expressesPower
+  rintro ⟨n, f⟩ hnf
+  cases hnf with
+  | single f hf => exact hf
+  | double n f g hf hg => sorry
+  | minimi n f hf => sorry
+
 /-- Expressive power of a VCSP template subsumes the template. -/
 lemma ValuedCSP.subset_expressivePower (Γ : ValuedCSP D C) :
     Γ ⊆ Γ.expressivePower := by
@@ -52,30 +79,4 @@ lemma ValuedCSP.expressivePower_expressivePower (Γ : ValuedCSP D C) :
   clear hI₁ f
   -- `I₁` is of type `{ ⟨n, I.evalMinimize⟩ | (n' : ℕ) (μ' : Type) [...] (I : Instance Γ (Fin n' ⊕ μ')) }.Instance (Fin n ⊕ μ₁)`
   -- where `n = n'` must hold?
-  let types : Multiset Type := I₁.map (fun t => by
-      obtain ⟨t_n, t_f, t_inΓ, t_app⟩ := t
-      rw [Set.mem_setOf_eq] at t_inΓ
-      simp_rw [Sigma.mk.inj_iff] at t_inΓ
-      simp_rw [exists_and_left] at t_inΓ
-      rw [exists_eq_left] at t_inΓ
-      exact Classical.choose t_inΓ
-    )
-  use types.toList.TProd id, Classical.decEq (types.toList.TProd id), sorry
-  use Multiset.join (I₁.map (fun t => by
-    let _n := t.n
-    let _f := t.f
-    let _G := t.inΓ
-    let _a := t.app
-    simp at _G
-    let _μ := Classical.choose _G
-    let _μDecEq := Classical.choose <| Classical.choose_spec _G
-    let _μFintype := Classical.choose <| Classical.choose_spec <| Classical.choose_spec _G
-    let _I := Classical.choose <| Classical.choose_spec <| Classical.choose_spec <| Classical.choose_spec _G
-    let _ht := Classical.choose_spec <| Classical.choose_spec <| Classical.choose_spec <| Classical.choose_spec _G
-    refine _I.map ?_
-    intro __t
-    constructor
-    · exact __t.inΓ
-    refine ?_ ∘ __t.app
-    sorry))
   sorry

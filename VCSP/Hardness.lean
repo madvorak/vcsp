@@ -1,6 +1,7 @@
 import VCSP.FractionalPolymorphisms
 import VCSP.Expressibility
 import Mathlib.Data.Fin.VecNotation
+import Mathlib.Data.Prod.TProd
 
 
 section better_notation
