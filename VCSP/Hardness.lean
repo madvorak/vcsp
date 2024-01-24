@@ -256,6 +256,46 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePowerVCSP
   intro x
   apply frpo.evalMinimize_le_evalMinimize
 
+lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP
+    (frpo : ω.IsFractionalPolymorphismFor Γ) :
+    ω.IsFractionalPolymorphismFor Γ.expresses := by
+  intro F hF
+  induction hF with
+  | single n f hf =>
+    apply frpo
+    exact hf
+  | double n f g hf hg ihf ihg =>
+    intro x
+    specialize ihf x
+    specialize ihg x
+    rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul] at ihf ihg ⊢
+    convert add_le_add ihf ihg
+    · simp
+    · simp [Finset.sum_add_distrib]
+  | minimiz n f hf ih =>
+    intro x
+    -- `x`: `Fin m → Fin n → D`
+    rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul]
+    simp_rw [←Finset.nsmul_inf']
+    let z :=
+      fun i : Fin m =>
+        (Finset.exists_mem_eq_inf' Finset.univ_nonempty
+          (fun d : D => ω.size • f (Matrix.vecCons d (x i)))
+        ).choose
+    specialize ih (fun i j => Matrix.vecCons (z i) (x i) j)
+    rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul] at ih
+    sorry
+  | remap n k f hf τ ih =>
+    intro x
+    -- `τ`: `Fin n → Fin k`
+    -- `x`: `Fin m → Fin k → D`
+    specialize ih (fun i j => x i (τ j))
+    -- inner `x`: `Fin k → D`
+    convert ih using 3
+    unfold FractionalOperation.tt
+    rewrite [Multiset.map_map, Multiset.map_map]
+    rfl
+
 end total_order
 
 end expressiveness
