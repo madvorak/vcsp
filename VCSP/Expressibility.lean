@@ -28,14 +28,17 @@ def ValuedCSP.Instance.evalMinimize_def {Γ : ValuedCSP D C} {ι μ : Type*} [De
 def ValuedCSP.expressivePower (Γ : ValuedCSP D C) : ValuedCSP D C :=
   { ⟨n, I.evalMinimize⟩ | (n : ℕ) (μ : Type) (_ : DecidableEq μ) (_ : Fintype μ) (I : Γ.Instance (Fin n ⊕ μ)) }
 
-inductive ValuedCSP.expresses (Γ : ValuedCSP D C) : (Σ (n : ℕ), (Fin n → D) → C) → Prop
-| single (f : Σ (n : ℕ), (Fin n → D) → C) (hf : f ∈ Γ) : Γ.expresses f
-| double (n : ℕ) (f g : (Fin n → D) → C) (hf : Γ.expresses ⟨n, f⟩) (hg : Γ.expresses ⟨n, g⟩) :
-    Γ.expresses ⟨n, (fun x => f x + g x)⟩
-| minimi (n : ℕ) (f : (Fin n.succ → D) → C) (hf : Γ.expresses ⟨n.succ, f⟩) :
-    Γ.expresses ⟨n, (fun x : Fin n → D => Finset.univ.inf' Finset.univ_nonempty (fun z : D => f (Matrix.vecCons z x)))⟩
+inductive ValuedCSP.expresses (Γ : ValuedCSP D C) : (Σ α : Type, (α → D) → C) → Prop
+| single (n : ℕ) (f : (Fin n → D) → C) (hf : ⟨n, f⟩ ∈ Γ) : Γ.expresses ⟨Fin n, f⟩
+| double (α : Type) (f g : (α → D) → C) (hf : Γ.expresses ⟨α, f⟩) (hg : Γ.expresses ⟨α, g⟩) :
+    Γ.expresses ⟨α, f + g⟩
+| minimi (α β : Type) [Fintype β] [DecidableEq β] (f : (α ⊕ β → D) → C) (hf : Γ.expresses ⟨α ⊕ β, f⟩) :
+    Γ.expresses ⟨α, fun x : α → D => Finset.univ.inf' Finset.univ_nonempty (fun z : β → D => f (Sum.elim x z))⟩
+| remap (α ι : Type) (f : (α → D) → C) (hf : Γ.expresses ⟨α, f⟩) (τ : α → ι) :
+    Γ.expresses ⟨ι, fun x : ι → D => f (x ∘ τ)⟩
 
-def ValuedCSP.expressesPower (Γ : ValuedCSP D C) : ValuedCSP D C := Γ.expresses
+def ValuedCSP.expressesPower (Γ : ValuedCSP D C) : ValuedCSP D C :=
+  { f : Σ (n : ℕ), (Fin n → D) → C | Γ.expresses ⟨Fin f.fst, f.snd⟩ }
 
 /-- Expressive power of a VCSP template subsumes the template. NEW! -/
 lemma ValuedCSP.subset_expressesPower (Γ : ValuedCSP D C) :
@@ -50,10 +53,14 @@ lemma ValuedCSP.expressesPower_expressesPower (Γ : ValuedCSP D C) :
   apply Set.eq_of_subset_of_subset
   · apply ValuedCSP.subset_expressesPower
   rintro ⟨n, f⟩ hnf
-  cases hnf with
-  | single f hf => exact hf
-  | double n f g hf hg => sorry
-  | minimi n f hf => sorry
+  sorry  /-
+  simp only [ValuedCSP.expressesPower, Set.mem_setOf_eq] at hnf
+  induction hnf with
+  | single n f hf => sorry
+  | double α f g hf hg hf_ih hg_ih => sorry
+  | minimi α β f hf ih => sorry
+  | remap α ι f hf τ ih => sorry
+  -/
 
 /-- Expressive power of a VCSP template subsumes the template. -/
 lemma ValuedCSP.subset_expressivePower (Γ : ValuedCSP D C) :
