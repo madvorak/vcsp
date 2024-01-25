@@ -65,23 +65,17 @@ lemma univ_val_map_2x2 {f : (Fin 2 → α) → β} {a b c d : α} :
     Finset.univ.val.map (fun i => f (![![a, b], ![c, d]] i)) = [f ![a, b], f ![c, d]] :=
   rfl
 
+lemma column_of_2x2_left (a b c d : α) :
+    (fun i => ![![a, b], ![c, d]] i 0) = (fun i => ![a, c] i) :=
+  List.ofFn_inj.mp rfl
+
+lemma column_of_2x2_right (a b c d : α) :
+    (fun i => ![![a, b], ![c, d]] i 1) = (fun i => ![b, d] i) :=
+  List.ofFn_inj.mp rfl
+
 lemma Multiset.sum_ofList_twice [AddCommMonoid α] (x : α) :
     Multiset.sum ↑[x, x] = 2 • x := by
   simp [two_nsmul]
-
-lemma column_of_2x2_left (a b c d : α) :
-    (fun i => ![![a, b], ![c, d]] i 0) = (fun i => ![a, c] i) := by
-  ext i
-  match i with
-  | 0 => rfl
-  | 1 => rfl
-
-lemma column_of_2x2_right (a b c d : α) :
-    (fun i => ![![a, b], ![c, d]] i 1) = (fun i => ![b, d] i) := by
-  ext i
-  match i with
-  | 0 => rfl
-  | 1 => rfl
 
 lemma Multiset.summap_singleton [AddCommMonoid β] (a : α) (f : α → β) :
     Multiset.summap {a} f = f a := by
@@ -237,7 +231,9 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.evalMinimize_le_evalMinimi
     ∃ zᵢ : μ → D,
       m • I.evalPartial (fun j : ι => g (Function.swap x j)) zᵢ ≤
       m • I.evalPartial (fun j : ι => g (Function.swap x j)) (fun i : μ => g _)
-  exact ⟨_, le_of_eq rfl⟩
+  use fun i => g (Function.swap z i)
+  simp
+  rfl
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.evalMinimize_le_evalMinimize
     (frpo : ω.IsFractionalPolymorphismFor Γ) {ι μ : Type*} [DecidableEq μ] [Fintype μ]
@@ -256,15 +252,16 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePowerVCSP
   intro x
   apply frpo.evalMinimize_le_evalMinimize
 
+-- NEW!
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP
     (frpo : ω.IsFractionalPolymorphismFor Γ) :
     ω.IsFractionalPolymorphismFor Γ.expresses := by
   intro F hF
   induction hF with
-  | single n f hf =>
+  | single hf =>
     apply frpo
     exact hf
-  | double n f g hf hg ihf ihg =>
+  | double _ _ ihf ihg =>
     intro x
     specialize ihf x
     specialize ihg x
@@ -272,9 +269,8 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP
     convert add_le_add ihf ihg
     · simp
     · simp [Finset.sum_add_distrib]
-  | minimiz n f hf ih =>
+  | @minimize n f _ ih =>
     intro x
-    -- `x`: `Fin m → Fin n → D`
     rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul]
     simp_rw [←Finset.nsmul_inf']
     let z :=
@@ -284,13 +280,41 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP
         ).choose
     specialize ih (fun i j => Matrix.vecCons (z i) (x i) j)
     rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul] at ih
-    sorry
-  | remap n k f hf τ ih =>
+    convert_to
+      (ω.tt x).summap (fun yᵢ : Fin n → D =>
+        Finset.univ.inf' Finset.univ_nonempty (fun zᵢ : D => m • f (Matrix.vecCons zᵢ yᵢ))) ≤
+      Finset.univ.val.summap (fun i : Fin m =>
+        ω.size • f (fun j : Fin n.succ => Matrix.vecCons (z i) (x i) j))
+    · congr
+      ext i
+      exact (Finset.exists_mem_eq_inf' Finset.univ_nonempty _).choose_spec.right
+    refine LE.le.trans ?_ ih
+    simp [FractionalOperation.tt, Multiset.map_map]
+    apply Multiset.summap_le_summap
+    intro g _
+    rw [Finset.nsmul_inf']
+    apply nsmul_le_nsmul_right
+    simp only [Finset.inf'_le_iff, Finset.mem_univ, true_and]
+    convert_to
+      ∃ d : D,
+        f (Matrix.vecCons d (fun i : Fin n => g (Function.swap x i))) ≤
+        f (fun i : Fin n.succ => g (Function.swap
+            (fun j : Fin m => Matrix.vecCons (z j) (x j))
+            i))
+    · simp
+    use g z
+    apply le_of_eq
+    apply congr_arg
+    ext i
+    show
+      (Matrix.vecCons (g z) (fun i₁ : Fin n => g (Function.swap x i₁))) i =
+      g (Function.swap (fun j : Fin m => Matrix.vecCons (z j) (x j)) i)
+    match i with
+    | 0 => rfl
+    | ⟨Nat.succ i', _⟩ => rfl
+  | remap _ τ ih =>
     intro x
-    -- `τ`: `Fin n → Fin k`
-    -- `x`: `Fin m → Fin k → D`
     specialize ih (fun i j => x i (τ j))
-    -- inner `x`: `Fin k → D`
     convert ih using 3
     unfold FractionalOperation.tt
     rewrite [Multiset.map_map, Multiset.map_map]

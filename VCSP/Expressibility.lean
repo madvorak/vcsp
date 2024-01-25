@@ -29,12 +29,13 @@ def ValuedCSP.expressivePower (Γ : ValuedCSP D C) : ValuedCSP D C :=
   { ⟨n, I.evalMinimize⟩ | (n : ℕ) (μ : Type) (_ : DecidableEq μ) (_ : Fintype μ) (I : Γ.Instance (Fin n ⊕ μ)) }
 
 inductive ValuedCSP.expresses (Γ : ValuedCSP D C) : ValuedCSP D C
-| single (n : ℕ) (f : (Fin n → D) → C) (hf : ⟨n, f⟩ ∈ Γ) : Γ.expresses ⟨n, f⟩
-| double (n : ℕ) (f g : (Fin n → D) → C) (hf : Γ.expresses ⟨n, f⟩) (hg : Γ.expresses ⟨n, g⟩) :
+| single {n : ℕ} {f : (Fin n → D) → C} (hf : ⟨n, f⟩ ∈ Γ) :
+    Γ.expresses ⟨n, f⟩
+| double {n : ℕ} {f g : (Fin n → D) → C} (hf : Γ.expresses ⟨n, f⟩) (hg : Γ.expresses ⟨n, g⟩) :
     Γ.expresses ⟨n, f+g⟩
-| minimiz (n : ℕ) (f : (Fin n.succ → D) → C) (hf : Γ.expresses ⟨n.succ, f⟩) :
+| minimize {n : ℕ} {f : (Fin n.succ → D) → C} (hf : Γ.expresses ⟨n.succ, f⟩) :
     Γ.expresses ⟨n, fun x : Fin n → D => Finset.univ.inf' Finset.univ_nonempty (fun z : D => f (Matrix.vecCons z x))⟩
-| remap (n m : ℕ) (f : (Fin n → D) → C) (hf : Γ.expresses ⟨n, f⟩) (τ : Fin n → Fin m) :
+| remap {n m : ℕ} {f : (Fin n → D) → C} (hf : Γ.expresses ⟨n, f⟩) (τ : Fin n → Fin m) :
     Γ.expresses ⟨m, fun x : Fin m → D => f (x ∘ τ)⟩
 
 /-- Expressive power of a VCSP template subsumes the template. NEW! -/
@@ -51,18 +52,10 @@ lemma ValuedCSP.expresses_expresses (Γ : ValuedCSP D C) :
   · apply ValuedCSP.subset_expresses
   intro F hF
   induction hF with
-  | single n f hf =>
-    exact hf
-  | double n f g hf hg ihf ihg =>
-    apply ValuedCSP.expresses.double
-    · exact ihf
-    · exact ihg
-  | minimiz n f hf ih =>
-    apply ValuedCSP.expresses.minimiz
-    exact ih
-  | remap n m f hf τ ih =>
-    apply ValuedCSP.expresses.remap
-    exact ih
+  | single hf => exact hf
+  | double _ _ ihf ihg => exact ValuedCSP.expresses.double ihf ihg
+  | minimize _ ih => exact ValuedCSP.expresses.minimize ih
+  | remap _ τ ih => exact ValuedCSP.expresses.remap ih τ
 
 /-- Expressive power of a VCSP template subsumes the template. -/
 lemma ValuedCSP.subset_expressivePower (Γ : ValuedCSP D C) :
