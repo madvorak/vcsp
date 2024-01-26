@@ -38,12 +38,47 @@ inductive ValuedCSP.expresses (Γ : ValuedCSP D C) : ValuedCSP D C
 | remap {n m : ℕ} {f : (Fin n → D) → C} (hf : Γ.expresses ⟨n, f⟩) (τ : Fin n → Fin m) :
     Γ.expresses ⟨m, fun x : Fin m → D => f (x ∘ τ)⟩
 
+/-- Conversion from the new definition to the old definition. -/
+lemma ValuedCSP.expresses_to_expressivePower (Γ : ValuedCSP D C) {F : Σ (n : ℕ), (Fin n → D) → C}
+    (hyp : F ∈ Γ.expresses) : F ∈ Γ.expressivePower := by
+  induction hyp with
+  | @single n f hf =>
+    use n, Empty, inferInstance, inferInstance, { ⟨n, f, hf, Sum.inl⟩ }
+    simp [ValuedCSP.Instance.evalMinimize_def, ValuedCSP.Instance.evalSolution, Term.evalSolution]
+  | @double n f g hf hg ihf ihg =>
+    sorry
+  | @minimize n f hf ih =>
+    obtain ⟨n₀, μ₀, μ₀DecEq, μ₀Fintype, I₀, eq_snf⟩ := ih
+    simp at eq_snf
+    use n, Unit, inferInstance, inferInstance, { ⟨n.succ, f, sorry, fun i =>
+        match i with
+        | 0 => Sum.inr ()
+        | ⟨Nat.succ i', _⟩ => Sum.inl ⟨i', sorry⟩
+      ⟩}
+    sorry
+  | @remap n m f hf τ ih =>
+    clear F
+    obtain ⟨n₀, μ₀, μ₀DecEq, μ₀Fintype, I₀, eq_snf⟩ := ih
+    rw [Sigma.mk.inj_iff] at eq_snf
+    obtain ⟨eqn₀, eqI₀⟩ := eq_snf
+    let I : Instance Γ (Fin m ⊕ μ₀) :=
+      I₀.map (fun t₀ : Term Γ (Fin n₀ ⊕ μ₀) =>
+        ⟨t₀.n, t₀.f, t₀.inΓ,
+          (fun i => match i with
+            | .inl a => Sum.inl (τ (cast (congr_arg Fin eqn₀) a))
+            | .inr b => Sum.inr b
+          ) ∘ t₀.app⟩)
+    use m, μ₀, inferInstance, inferInstance, I
+    simp only [Sigma.mk.inj_iff, heq_eq_eq, true_and]
+    ext x
+    --rw [←eqI₀]
+    sorry
+
 /-- Expressive power of a VCSP template subsumes the template. NEW! -/
 lemma ValuedCSP.subset_expresses (Γ : ValuedCSP D C) :
     Γ ⊆ Γ.expresses := by
   intro F hF
-  apply ValuedCSP.expresses.single
-  exact hF
+  exact ValuedCSP.expresses.single hF
 
 /-- Expressive power is an idempotent operation on VCSP templates. NEW! -/
 lemma ValuedCSP.expresses_expresses (Γ : ValuedCSP D C) :
