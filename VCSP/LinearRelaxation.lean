@@ -32,14 +32,14 @@ def ValuedCSP.Instance.LPrelax {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [
   have _ : DecidableEq (I.LPvars) := instDecidableEqSum
   StandardLP.mk (
     fun
-    | .inl ⟨cₜ, cᵢ, cₐ⟩ => fun
-      | .inl ⟨t, x⟩ =>
-        if ht : cₜ.val = t.val then
+    | .inl ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun
+      | .inl ⟨⟨t, _⟩, x⟩ =>
+        if ht : cₜ = t then
           if x (cast (congr_arg (Fin ∘ Term.n) ht) cᵢ) = cₐ
           then 1
           else 0
         else 0
-      | .inr ⟨i, a⟩ => if cₜ.val.app cᵢ = i ∧ cₐ = a then -1 else 0
+      | .inr ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0
     | .inr (.inl cᵢ) => fun
       | .inl _ => 0
       | .inr ⟨i, _⟩ => if cᵢ = i then 1 else 0
@@ -51,6 +51,6 @@ def ValuedCSP.Instance.LPrelax {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [
     | .inr _ => 1
   ) (
     fun
-    | .inl ⟨t, x⟩ => t.val.f x
+    | .inl ⟨⟨⟨_, f, _, _⟩, _⟩, x⟩ => f x
     | .inr _ => 0
   )
