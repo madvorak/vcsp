@@ -2,13 +2,13 @@ import VCSP.Hardness
 import VCSP.LinearProgramming
 
 
-variable {D C : Type} [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C]
+variable {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
 
-def ValuedCSP.Instance.LPvars {Γ : ValuedCSP D C} {ι : Type*} [Fintype ι] (I : Γ.Instance ι) : Type _ :=
-  (Π t ∈ I, Fin t.n → D) ⊕ (ι × D)
+def ValuedCSP.Instance.LPvars {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] (I : Γ.Instance ι) : Type :=
+  (Σ t : {_t : Γ.Term ι // _t ∈ I}, (Fin t.val.n → D)) ⊕ (ι × D)
 
-def ValuedCSP.Instance.LPcons {Γ : ValuedCSP D C} {ι : Type*} [Fintype ι] (I : Γ.Instance ι) : Type _ :=
-  (Π t ∈ I, Fin t.n × D) ⊕ ι ⊕ LPvars I
+def ValuedCSP.Instance.LPcons {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] (I : Γ.Instance ι) : Type :=
+  (Σ t : {_t : Γ.Term ι // _t ∈ I}, (Fin t.val.n × D)) ⊕ ι ⊕ LPvars I
 
 /-
 For all `⟨t, j, a⟩` in `(Π t ∈ I, Fin t.n × D)`, the sum of all |D| ^ (t.n - 1)
@@ -25,7 +25,35 @@ For all `⟨t, j⟩` in `(Π t ∈ I, Fin t.n)`:
     `Sum.inl ⟨t, x⟩` is `1` and all other `Sum.inl ⟨t, (x : Fin t.n → D | x j = a)⟩` are `0`.
 -/
 
-def ValuedCSP.Instance.LPrelax {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] (I : Γ.Instance ι)
+def ValuedCSP.Instance.LPrelax {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [DecidableEq ι] [DecidableEq (Γ.Term ι)]
+    (I : Γ.Instance ι)
     [Fintype I.LPcons] [Fintype I.LPvars] : -- TODO these two must be inferred automatically!!
     StandardLP I.LPcons I.LPvars ℚ :=
-  StandardLP.mk sorry sorry sorry
+  StandardLP.mk (
+    fun
+    | .inl ⟨cₜ, cᵢ, cₐ⟩ => fun
+      | .inl ⟨t, x⟩ =>
+        if ht : cₜ = t then
+          if x (cast (congr_arg (Fin ∘ Term.n ∘ Subtype.val) ht) cᵢ) = cₐ
+          then 1
+          else 0
+        else 0
+      | .inr ⟨i, a⟩ => if cₜ.val.app cᵢ = i ∧ cₐ = a then -1 else 0
+    | .inr (.inl cᵢ) => fun
+      | .inl _ => 0
+      | .inr ⟨i, _⟩ => if cᵢ = i then 1 else 0
+    | .inr (.inr (.inl c)) => fun
+      | .inl v => if c = v then 1 else 0
+      | .inr _ => 0
+    | .inr (.inr (.inr ⟨cᵢ, cₐ⟩)) => fun
+      | .inl _ => 0
+      | .inr ⟨i, a⟩ => if cᵢ = i ∧ cₐ = a then 1 else 0
+  ) (
+    fun
+    | .inl _ => 0
+    | .inr _ => 1
+  ) (
+    fun
+    | .inl ⟨t, x⟩ => t.val.f x
+    | .inr _ => 0
+  )
