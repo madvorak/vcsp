@@ -1,6 +1,8 @@
 import VCSP.Hardness
+import VCSP.LinearProgramming
 
-variable {D C : Type*} [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C]
+
+variable {D C : Type} [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C]
 
 def ValuedCSP.Instance.LPvars {Γ : ValuedCSP D C} {ι : Type*} [Fintype ι] (I : Γ.Instance ι) : Type _ :=
   (Π t ∈ I, Fin t.n → D) ⊕ (ι × D)
@@ -22,3 +24,8 @@ For all `⟨t, j⟩` in `(Π t ∈ I, Fin t.n)`:
   · If `Sum.inr (t.app j, a)` is `1` then there is exactly one `x : Fin t.n → D | x j = a` where
     `Sum.inl ⟨t, x⟩` is `1` and all other `Sum.inl ⟨t, (x : Fin t.n → D | x j = a)⟩` are `0`.
 -/
+
+def ValuedCSP.Instance.LPrelax {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] (I : Γ.Instance ι)
+    [Fintype I.LPcons] [Fintype I.LPvars] : -- TODO these two must be inferred automatically!!
+    StandardLP I.LPcons I.LPvars ℚ :=
+  StandardLP.mk sorry sorry sorry
