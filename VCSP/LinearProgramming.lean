@@ -7,7 +7,8 @@ import Mathlib.LinearAlgebra.Matrix.DotProduct
 We define linear programs over a `LinearOrderedField K` in the standard matrix form.
 
 ## Main definitions
- * `StandardLP` defines a linear program in the standard form $ \max cᵀx, A x ≤ b, x ≥ 0 $.
+ * `StandardLP` defines a linear program in the standard form
+    (maximize `cᵀx` such that `A x ≤ b` and `x ≥ 0`).
  * `StandardLP.IsSolution` tells if given vector is a solution satisfying given standard LP.
  * `StandardLP.IsFeasible` tells if given standard LP has any solution.
  * `StandardLP.Reaches` tells if given value can be obtained as a cost of any solution of given

@@ -54,3 +54,14 @@ def ValuedCSP.Instance.LPrelax {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [
     | .inl ⟨⟨⟨_, f, _, _⟩, _⟩, x⟩ => f x
     | .inr _ => 0
   )
+
+theorem ValuedCSP.Instance.LPrelax_solution {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [DecidableEq ι] [DecidableEq (Γ.Term ι)]
+    (I : Γ.Instance ι) [Fintype I.LPcons] [Fintype I.LPvars] (x : ι → D) :
+    I.LPrelax.Reaches (I.evalSolution x) := by
+  let s : I.LPvars → ℚ := fun
+    | .inl ⟨⟨t, tin⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0
+    | .inr ⟨i, d⟩ => if x i = d then 1 else 0
+  use s
+  constructor
+  · sorry
+  · sorry
