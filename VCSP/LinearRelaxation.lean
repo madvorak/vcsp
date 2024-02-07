@@ -1,14 +1,17 @@
 import VCSP.Hardness
 import VCSP.LinearProgramming
+import Mathlib.Data.Multiset.Fintype
 
 
 variable {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
 
-def ValuedCSP.Instance.LPvars {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] (I : Γ.Instance ι) : Type :=
-  (Σ t : {_t : Γ.Term ι // _t ∈ I}, (Fin t.val.n → D)) ⊕ (ι × D)
+def ValuedCSP.Instance.LPvars {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [DecidableEq (Γ.Term ι)]
+    (I : Γ.Instance ι) : Type :=
+  (Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)
 
-def ValuedCSP.Instance.LPcons {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] (I : Γ.Instance ι) : Type :=
-  (Σ t : {_t : Γ.Term ι // _t ∈ I}, (Fin t.val.n × D)) ⊕ ι ⊕ LPvars I
+def ValuedCSP.Instance.LPcons {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [DecidableEq (Γ.Term ι)]
+    (I : Γ.Instance ι) : Type :=
+  (Σ t : I, (Fin t.fst.n × D)) ⊕ ι ⊕ LPvars I
 
 /-
 For all `⟨t, j, a⟩` in `(Σ t ∈ I, Fin t.n × D)`, the sum of all |D| ^ (t.n - 1)
@@ -29,7 +32,7 @@ def ValuedCSP.Instance.LPrelax {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [
     (I : Γ.Instance ι)
     [Fintype I.LPcons] [Fintype I.LPvars] : -- TODO these two must be inferred automatically!!
     StandardLP I.LPcons I.LPvars ℚ :=
-  have _ : DecidableEq (I.LPvars) := instDecidableEqSum
+  have _ : DecidableEq (I.LPvars) := sorry
   StandardLP.mk (
     fun
     | .inl ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun
