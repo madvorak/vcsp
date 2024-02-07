@@ -3,14 +3,15 @@ import VCSP.LinearProgramming
 import Mathlib.Data.Multiset.Fintype
 
 
-variable {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
+variable
+  {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
+  {ι : Type} [Nonempty ι] [Fintype ι] [DecidableEq ι]
+  {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
 
-def ValuedCSP.Instance.LPvars {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [DecidableEq (Γ.Term ι)]
-    (I : Γ.Instance ι) : Type :=
+def ValuedCSP.Instance.LPvars (I : Γ.Instance ι) : Type :=
   (Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)
 
-def ValuedCSP.Instance.LPcons {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [DecidableEq (Γ.Term ι)]
-    (I : Γ.Instance ι) : Type :=
+def ValuedCSP.Instance.LPcons (I : Γ.Instance ι) : Type :=
   (Σ t : I, (Fin t.fst.n × D)) ⊕ ι ⊕ LPvars I
 
 /-
@@ -28,11 +29,10 @@ For all `⟨t, j⟩` in `(Σ t ∈ I, Fin t.n)`:
     `Sum.inl ⟨t, x⟩` is `1` and all other `Sum.inl ⟨t, (x : Fin t.n → D | x j = a)⟩` are `0`.
 -/
 
-def ValuedCSP.Instance.LPrelax {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [DecidableEq ι] [DecidableEq (Γ.Term ι)]
-    (I : Γ.Instance ι)
-    [Fintype I.LPcons] [Fintype I.LPvars] : -- TODO these two must be inferred automatically!!
+def ValuedCSP.Instance.LPrelax (I : Γ.Instance ι)
+     -- TODO the following three must be inferred automatically!!
+    [Fintype I.LPvars] [DecidableEq (I.LPvars)] [Fintype I.LPcons] :
     StandardLP I.LPcons I.LPvars ℚ :=
-  have _ : DecidableEq (I.LPvars) := sorry
   StandardLP.mk (
     fun
     | .inl ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun
@@ -58,8 +58,10 @@ def ValuedCSP.Instance.LPrelax {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [
     | .inr _ => 0
   )
 
-theorem ValuedCSP.Instance.LPrelax_solution {Γ : ValuedCSP D ℚ} {ι : Type} [Fintype ι] [DecidableEq ι] [DecidableEq (Γ.Term ι)]
-    (I : Γ.Instance ι) [Fintype I.LPcons] [Fintype I.LPvars] (x : ι → D) :
+theorem ValuedCSP.Instance.LPrelax_solution (I : Γ.Instance ι)
+     -- TODO the following three must be inferred automatically!!
+    [Fintype I.LPvars] [DecidableEq (I.LPvars)] [Fintype I.LPcons]
+    (x : ι → D) :
     I.LPrelax.Reaches (I.evalSolution x) := by
   let s : I.LPvars → ℚ := fun
     | .inl ⟨⟨t, tin⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0
