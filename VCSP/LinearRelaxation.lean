@@ -33,72 +33,70 @@ def ValuedCSP.Instance.LPrelax (I : Γ.Instance ι)
      -- TODO the following three must be inferred automatically !!!
     [Fintype I.LPvars] [DecidableEq (I.LPvars)] [Fintype I.LPcons] :
     StandardLP I.LPcons I.LPvars ℚ :=
-  StandardLP.mk (
-    fun
-    | .inl ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun
-      | .inl ⟨⟨t, _⟩, x⟩ =>
-        if ht : cₜ.n = t.n then
-          if x (Fin.cast ht cᵢ) = cₐ
-          then 1
-          else 0
-        else 0
-      | .inr ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0
-    | .inr (.inl cᵢ) => fun
-      | .inl _ => 0
-      | .inr ⟨i, _⟩ => if cᵢ = i then 1 else 0
-    | .inr (.inr cᵥ) => fun
-      | v => if cᵥ = v then 1 else 0
-  ) (
-    fun
-    | .inl _ => 0
-    | .inr _ => 1
-  ) (
-    fun
-    | .inl ⟨⟨⟨_, f, _, _⟩, _⟩, x⟩ => f x
-    | .inr _ => 0
-  )
-
+  StandardLP.mk
+    (Sum.elim
+      (fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => Sum.elim
+        (fun ⟨⟨t, _⟩, x⟩ =>
+          if ht : cₜ.n = t.n
+          then if x (Fin.cast ht cᵢ) = cₐ then 1 else 0
+          else 0)
+        (fun ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0))
+      (Sum.elim
+        (fun cᵢ => Sum.elim
+          (fun _ => 0)
+          (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0))
+        (fun cᵥ => fun v => if cᵥ = v then 1 else 0)))
+    (Sum.elim
+      (fun _ => 0)
+      (fun _ => 1))
+    (Sum.elim
+      (fun ⟨⟨t, _⟩, x⟩ => t.f x)
+      (fun _ => 0))
 
 open Matrix
 
-lemma sumtype_zero_dotProduct {α β : Type} [Fintype α] [Fintype β]
-    (f g : α → ℚ) (g' : β → ℚ) :
-    (fun i : α ⊕ β => match i with | .inl a => f a | .inr b => 0) ⬝ᵥ
-    (fun j : α ⊕ β => match j with | .inl a => g a | .inr b => g' b) =
-    f ⬝ᵥ g := by
-  sorry
+lemma sumType_zeroFun_dotProduct {α β : Type} [Fintype α] [Fintype β]
+    {f g : α → ℚ} {g' : β → ℚ} :
+    (Sum.elim f 0) ⬝ᵥ (Sum.elim g g') = f ⬝ᵥ g := by
+  rw [Matrix.sum_elim_dotProduct_sum_elim, zero_dotProduct, add_zero]
 
 theorem ValuedCSP.Instance.LPrelax_solution (I : Γ.Instance ι)
      -- TODO the following three must be inferred automatically !!!
     [Fintype I.LPvars] [DecidableEq (I.LPvars)] [Fintype I.LPcons]
     (x : ι → D) :
     I.LPrelax.Reaches (I.evalSolution x) := by
-  let s : I.LPvars → ℚ := fun
-    | .inl ⟨⟨t, tin⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0
-    | .inr ⟨i, d⟩ => if x i = d then 1 else 0
+  let s : I.LPvars → ℚ :=
+    Sum.elim
+      (fun ⟨⟨t, _⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0)
+      (fun ⟨i, d⟩ => if x i = d then 1 else 0)
   use s
   constructor
   · simp [StandardLP.IsSolution, ValuedCSP.Instance.LPrelax]
     constructor
     · intro c
-      match c with
-      | .inl ⟨⟨⟨n, f, _, ξ⟩, _⟩, cᵢ, cₐ⟩ =>
+      cases c with
+      | inl val =>
+        obtain ⟨⟨⟨n, f, _, ξ⟩, _⟩, cᵢ, cₐ⟩ := val
         show _ ≤ 0
         sorry
-      | .inr (.inl i) =>
+      | inr val =>
         show _ ≤ 1
-        sorry
-      | .inr (.inr (.inl ⟨cₜ, cᵥ⟩)) =>
-        show _ ≤ 1
-        sorry
-      | .inr (.inr (.inr ⟨cᵢ, cₐ⟩)) =>
-        show _ ≤ 1
-        sorry
+        cases val with
+        | inl cᵢ =>
+          sorry
+        | inr val =>
+          cases val with
+          | inl val =>
+            obtain ⟨cₜ, cᵥ⟩ := val
+            sorry
+          | inr val =>
+            obtain ⟨cᵢ, cₐ⟩ := val
+            sorry
     · intro v
-      match v with
-      | .inl _ => aesop
-      | .inr _ => aesop
+      cases v with
+      | inl => aesop
+      | inr => aesop
   · simp [ValuedCSP.Instance.LPrelax, ValuedCSP.Instance.evalSolution]
-    --rw [Matrix.sum_elim_dotProduct_sum_elim]
-    --rw [sumtype_zero_dotProduct]
+    trans
+    · convert sumType_zeroFun_dotProduct <;> exact inferInstance
     sorry
