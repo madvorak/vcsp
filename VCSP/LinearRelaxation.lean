@@ -30,15 +30,15 @@ For all `⟨t, j⟩` in `(Σ t ∈ I, Fin t.n)`:
 -/
 
 def ValuedCSP.Instance.LPrelax (I : Γ.Instance ι)
-     -- TODO the following three must be inferred automatically!!
+     -- TODO the following three must be inferred automatically !!!
     [Fintype I.LPvars] [DecidableEq (I.LPvars)] [Fintype I.LPcons] :
     StandardLP I.LPcons I.LPvars ℚ :=
   StandardLP.mk (
     fun
     | .inl ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun
       | .inl ⟨⟨t, _⟩, x⟩ =>
-        if ht : cₜ = t then
-          if x (cast (congr_arg (Fin ∘ Term.n) ht) cᵢ) = cₐ
+        if ht : cₜ.n = t.n then
+          if x (Fin.cast ht cᵢ) = cₐ
           then 1
           else 0
         else 0
@@ -47,7 +47,7 @@ def ValuedCSP.Instance.LPrelax (I : Γ.Instance ι)
       | .inl _ => 0
       | .inr ⟨i, _⟩ => if cᵢ = i then 1 else 0
     | .inr (.inr cᵥ) => fun
-        v => if cᵥ = v then 1 else 0
+      | v => if cᵥ = v then 1 else 0
   ) (
     fun
     | .inl _ => 0
@@ -59,7 +59,7 @@ def ValuedCSP.Instance.LPrelax (I : Γ.Instance ι)
   )
 
 theorem ValuedCSP.Instance.LPrelax_solution (I : Γ.Instance ι)
-     -- TODO the following three must be inferred automatically!!
+     -- TODO the following three must be inferred automatically !!!
     [Fintype I.LPvars] [DecidableEq (I.LPvars)] [Fintype I.LPcons]
     (x : ι → D) :
     I.LPrelax.Reaches (I.evalSolution x) := by
@@ -68,5 +68,7 @@ theorem ValuedCSP.Instance.LPrelax_solution (I : Γ.Instance ι)
     | .inr ⟨i, d⟩ => if x i = d then 1 else 0
   use s
   constructor
-  · sorry
-  · sorry
+  · simp [StandardLP.IsSolution, ValuedCSP.Instance.LPrelax]
+    sorry
+  · simp [ValuedCSP.Instance.LPrelax, ValuedCSP.Instance.evalSolution, Matrix.dotProduct]
+    sorry
