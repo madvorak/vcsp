@@ -58,6 +58,16 @@ def ValuedCSP.Instance.LPrelax (I : Γ.Instance ι)
     | .inr _ => 0
   )
 
+
+open Matrix
+
+lemma sumtype_zero_dotProduct {α β : Type} [Fintype α] [Fintype β]
+    (f g : α → ℚ) (g' : β → ℚ) :
+    (fun i : α ⊕ β => match i with | .inl a => f a | .inr b => 0) ⬝ᵥ
+    (fun j : α ⊕ β => match j with | .inl a => g a | .inr b => g' b) =
+    f ⬝ᵥ g := by
+  sorry
+
 theorem ValuedCSP.Instance.LPrelax_solution (I : Γ.Instance ι)
      -- TODO the following three must be inferred automatically !!!
     [Fintype I.LPvars] [DecidableEq (I.LPvars)] [Fintype I.LPcons]
@@ -69,6 +79,26 @@ theorem ValuedCSP.Instance.LPrelax_solution (I : Γ.Instance ι)
   use s
   constructor
   · simp [StandardLP.IsSolution, ValuedCSP.Instance.LPrelax]
-    sorry
-  · simp [ValuedCSP.Instance.LPrelax, ValuedCSP.Instance.evalSolution, Matrix.dotProduct]
+    constructor
+    · intro c
+      match c with
+      | .inl ⟨⟨⟨n, f, _, ξ⟩, _⟩, cᵢ, cₐ⟩ =>
+        show _ ≤ 0
+        sorry
+      | .inr (.inl i) =>
+        show _ ≤ 1
+        sorry
+      | .inr (.inr (.inl ⟨cₜ, cᵥ⟩)) =>
+        show _ ≤ 1
+        sorry
+      | .inr (.inr (.inr ⟨cᵢ, cₐ⟩)) =>
+        show _ ≤ 1
+        sorry
+    · intro v
+      match v with
+      | .inl _ => aesop
+      | .inr _ => aesop
+  · simp [ValuedCSP.Instance.LPrelax, ValuedCSP.Instance.evalSolution]
+    --rw [Matrix.sum_elim_dotProduct_sum_elim]
+    --rw [sumtype_zero_dotProduct]
     sorry
