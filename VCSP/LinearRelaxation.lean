@@ -8,50 +8,61 @@ variable
   {ι : Type} [Nonempty ι] [Fintype ι] [DecidableEq ι]
   {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
 
+@[pp_dot]
 def ValuedCSP.Instance.LPvars (I : Γ.Instance ι) : Type :=
   (Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)
 
-def ValuedCSP.Instance.LPcons (I : Γ.Instance ι) : Type :=
+@[pp_dot]
+def ValuedCSP.Instance.LPconds (I : Γ.Instance ι) : Type :=
   (Σ t : I, (Fin t.fst.n × D)) ⊕ ι ⊕ LPvars I
 
-/-
-For all `⟨t, j, a⟩` in `(Σ t ∈ I, Fin t.n × D)`, the sum of all |D| ^ (t.n - 1)
-  `Sum.inl ⟨t, (x : Fin t.n → D | x j = a)⟩` must be equal to `Sum.inr (t.app j, a)`.
-For all `i` in `ι`, the sum of all |D| `Sum.inr (i, _)` must be `1`.
-Each `v` in `LPvars I` must be between `0` and `1`.
+@[pp_dot]
+def ValuedCSP.Instance.LPrelaxT (I : Γ.Instance ι) (cₜ : Γ.Term ι) (cᵢ : Fin cₜ.n) (cₐ : D) : I.LPvars → ℚ :=
+  Sum.elim
+    (fun ⟨⟨t, _⟩, x⟩ =>
+      if ht : cₜ.n = t.n
+      then if x (Fin.cast ht cᵢ) = cₐ then 1 else 0
+      else 0)
+    (fun ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0)
 
-Ideally (--> tight relaxation)...
-For each `i` in `ι`, there is exactly one `a` in `D` where
-  `Sum.inr (i, a)` is `1` and all other `Sum.inr (i, _)` are `0`.
-For all `⟨t, j⟩` in `(Σ t ∈ I, Fin t.n)`:
-  · If `Sum.inr (t.app j, a)` is `0` then all `Sum.inl ⟨t, (x : Fin t.n → D | x j = a)⟩` are `0`.
-  · If `Sum.inr (t.app j, a)` is `1` then there is exactly one `x : Fin t.n → D | x j = a` where
-    `Sum.inl ⟨t, x⟩` is `1` and all other `Sum.inl ⟨t, (x : Fin t.n → D | x j = a)⟩` are `0`.
--/
+@[pp_dot]
+def ValuedCSP.Instance.LPrelaxJ (I : Γ.Instance ι) (cᵢ : ι) : I.LPvars → ℚ :=
+  Sum.elim
+    (fun _ => 0)
+    (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0)
 
-def ValuedCSP.Instance.LPrelax (I : Γ.Instance ι)
+@[pp_dot]
+def ValuedCSP.Instance.LPrelaxV (I : Γ.Instance ι) [DecidableEq (I.LPvars)] (cᵥ v : I.LPvars) : ℚ :=
+  if cᵥ = v then 1 else 0
+
+@[pp_dot]
+def ValuedCSP.Instance.LPrelaxM (I : Γ.Instance ι) [DecidableEq (I.LPvars)] : Matrix I.LPconds I.LPvars ℚ :=
+  Sum.elim
+    (fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => I.LPrelaxT cₜ cᵢ cₐ)
+    (Sum.elim
+      (fun cᵢ : ι => I.LPrelaxJ cᵢ)
+      (fun cᵥ : I.LPvars => I.LPrelaxV cᵥ)
+    )
+
+@[pp_dot]
+def ValuedCSP.Instance.LPrelaxR (I : Γ.Instance ι) : I.LPconds → ℚ :=
+  Sum.elim
+    (fun _ : (Σ t : I, (Fin t.fst.n × D)) => 0)
+    (fun _ : (ι ⊕ I.LPvars) => 1)
+
+@[pp_dot]
+def ValuedCSP.Instance.LPrelaxC (I : Γ.Instance ι) : I.LPvars → ℚ :=
+  Sum.elim
+    (fun ⟨⟨t, _⟩, x⟩ => t.f x)
+    (fun _ => 0)
+
+@[pp_dot]
+def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι)
      -- TODO the following three must be inferred automatically !!!
-    [Fintype I.LPvars] [DecidableEq (I.LPvars)] [Fintype I.LPcons] :
-    StandardLP I.LPcons I.LPvars ℚ :=
-  StandardLP.mk
-    (Sum.elim
-      (fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => Sum.elim
-        (fun ⟨⟨t, _⟩, x⟩ =>
-          if ht : cₜ.n = t.n
-          then if x (Fin.cast ht cᵢ) = cₐ then 1 else 0
-          else 0)
-        (fun ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0))
-      (Sum.elim
-        (fun cᵢ => Sum.elim
-          (fun _ => 0)
-          (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0))
-        (fun cᵥ => fun v => if cᵥ = v then 1 else 0)))
-    (Sum.elim
-      (fun _ => 0)
-      (fun _ => 1))
-    (Sum.elim
-      (fun ⟨⟨t, _⟩, x⟩ => t.f x)
-      (fun _ => 0))
+    [Fintype I.LPvars] [Fintype I.LPconds] [DecidableEq (I.LPvars)] :
+    StandardLP I.LPconds I.LPvars ℚ :=
+  StandardLP.mk I.LPrelaxM I.LPrelaxR I.LPrelaxC
+
 
 open Matrix
 
@@ -60,43 +71,54 @@ lemma sumType_zeroFun_dotProduct {α β : Type} [Fintype α] [Fintype β]
     (Sum.elim f 0) ⬝ᵥ (Sum.elim g g') = f ⬝ᵥ g := by
   rw [Matrix.sum_elim_dotProduct_sum_elim, zero_dotProduct, add_zero]
 
-theorem ValuedCSP.Instance.LPrelax_solution (I : Γ.Instance ι)
+@[pp_dot]
+abbrev ValuedCSP.Instance.solutionVCSPtoLP (I : Γ.Instance ι) (x : ι → D) :
+    I.LPvars → ℚ :=
+  Sum.elim
+    (fun ⟨⟨t, _⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0)
+    (fun ⟨i, d⟩ => if x i = d then 1 else 0)
+
+@[pp_dot]
+lemma ValuedCSP.Instance.solutionVCSPtoLP_IsSolution (I : Γ.Instance ι)
      -- TODO the following three must be inferred automatically !!!
-    [Fintype I.LPvars] [DecidableEq (I.LPvars)] [Fintype I.LPcons]
+    [Fintype I.LPvars] [Fintype I.LPconds] [DecidableEq (I.LPvars)]
     (x : ι → D) :
-    I.LPrelax.Reaches (I.evalSolution x) := by
-  let s : I.LPvars → ℚ :=
-    Sum.elim
-      (fun ⟨⟨t, _⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0)
-      (fun ⟨i, d⟩ => if x i = d then 1 else 0)
-  use s
+    StandardLP.IsSolution I.LPrelaxation (I.solutionVCSPtoLP x) := by
+  simp [StandardLP.IsSolution, ValuedCSP.Instance.LPrelaxation]
   constructor
-  · simp [StandardLP.IsSolution, ValuedCSP.Instance.LPrelax]
-    constructor
-    · intro c
-      cases c with
-      | inl val =>
-        obtain ⟨⟨⟨n, f, _, ξ⟩, _⟩, cᵢ, cₐ⟩ := val
-        show _ ≤ 0
+  · intro c
+    cases c with
+    | inl val =>
+      obtain ⟨⟨⟨n, f, _, ξ⟩, _⟩, cᵢ, cₐ⟩ := val
+      show _ ≤ 0
+      sorry
+    | inr val =>
+      cases val with
+      | inl cᵢ =>
+        show _ ≤ 1
         sorry
       | inr val =>
-        show _ ≤ 1
         cases val with
-        | inl cᵢ =>
+        | inl val =>
+          obtain ⟨cₜ, cᵥ⟩ := val
+          show _ ≤ 1
           sorry
         | inr val =>
-          cases val with
-          | inl val =>
-            obtain ⟨cₜ, cᵥ⟩ := val
-            sorry
-          | inr val =>
-            obtain ⟨cᵢ, cₐ⟩ := val
-            sorry
-    · intro v
-      cases v with
-      | inl => aesop
-      | inr => aesop
-  · simp [ValuedCSP.Instance.LPrelax, ValuedCSP.Instance.evalSolution]
+          obtain ⟨cᵢ, cₐ⟩ := val
+          show _ ≤ 1
+          sorry
+  · intro v
+    cases v <;> aesop
+
+theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι)
+     -- TODO the following three must be inferred automatically !!!
+    [Fintype I.LPvars] [Fintype I.LPconds] [DecidableEq (I.LPvars)]
+    (x : ι → D) :
+    I.LPrelaxation.Reaches (I.evalSolution x) := by
+  use I.solutionVCSPtoLP x
+  constructor
+  · apply I.solutionVCSPtoLP_IsSolution
+  · simp [ValuedCSP.Instance.LPrelaxation, ValuedCSP.Instance.evalSolution]
     trans
-    · convert sumType_zeroFun_dotProduct <;> exact inferInstance
+    · convert sumType_zeroFun_dotProduct <;> infer_instance
     sorry

@@ -19,7 +19,7 @@ def ValuedCSP.Instance.evalMinimize {Γ : ValuedCSP D C} {ι μ : Type*} [Decida
   Finset.univ.inf' Finset.univ_nonempty (I.evalPartial x)
 
 /-- Unfolding `ValuedCSP.Instance.evalMinimize` and `ValuedCSP.Instance.evalPartial` in a single step. -/
-def ValuedCSP.Instance.evalMinimize_def {Γ : ValuedCSP D C} {ι μ : Type*} [DecidableEq μ] [Fintype μ]
+lemma ValuedCSP.Instance.evalMinimize_def {Γ : ValuedCSP D C} {ι μ : Type*} [DecidableEq μ] [Fintype μ]
     (I : Γ.Instance (ι ⊕ μ)):
     I.evalMinimize = (fun x => Finset.univ.inf' Finset.univ_nonempty (fun r => I.evalSolution (Sum.elim x r))) :=
   rfl
@@ -71,7 +71,6 @@ lemma ValuedCSP.expresses_to_expressivePower (Γ : ValuedCSP D C) {F : Σ (n : �
     use m, μ₀, inferInstance, inferInstance, I
     simp only [Sigma.mk.inj_iff, heq_eq_eq, true_and]
     ext x
-    --rw [←eqI₀]
     sorry
 
 /-- Expressive power of a VCSP template subsumes the template. NEW! -/
