@@ -27,17 +27,11 @@ def ValuedCSP.Instance.LPrelaxT (I : Γ.Instance ι) (cₜ : Γ.Term ι) (cᵢ :
     (fun ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0)
 
 @[pp_dot]
-def ValuedCSP.Instance.LPrelaxJ (I : Γ.Instance ι) (cᵢ : ι) : I.LPvars → ℚ :=
-  Sum.elim
-    (fun _ => 0)
-    (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0)
-
-@[pp_dot]
 def ValuedCSP.Instance.LPrelaxM (I : Γ.Instance ι) [DecidableEq (I.LPvars)] : Matrix I.LPconds I.LPvars ℚ :=
   Matrix.fromRows
     (Matrix.of fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => I.LPrelaxT cₜ cᵢ cₐ)
     (Matrix.fromRows
-      (Matrix.of fun cᵢ : ι => I.LPrelaxJ cᵢ)
+      (Matrix.fromColumns 0 (Matrix.of fun cᵢ : ι => fun ⟨i, _⟩ => if cᵢ = i then 1 else 0))
       1)
 
 @[pp_dot]
@@ -67,6 +61,11 @@ lemma sumType_zeroFun_dotProduct {α β : Type} [Fintype α] [Fintype β]
     (Sum.elim u 0) ⬝ᵥ (Sum.elim v v') = u ⬝ᵥ v := by
   rw [Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct, add_zero]
 
+lemma zeroMat_sumType_mulVec {α β γ : Type} [Fintype α] [Fintype β] [Fintype γ]
+    (A₂ : Matrix α γ ℚ) (v₁ : β → ℚ) (v₂ : γ → ℚ) :
+    Matrix.fromColumns 0 A₂ *ᵥ Sum.elim v₁ v₂ = A₂ *ᵥ v₂ := by
+  simp
+
 @[pp_dot]
 abbrev ValuedCSP.Instance.solutionVCSPtoLP (I : Γ.Instance ι) (x : ι → D) :
     I.LPvars → ℚ :=
@@ -94,7 +93,17 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_IsSolution_aux (I : Γ.Instance ι)
       simp only [LPrelaxM, solutionVCSPtoLP]
       rw [Matrix.fromRows_mulVec, Sum.elim_inr]
       rw [Matrix.fromRows_mulVec, Sum.elim_inl]
-      simp only [ValuedCSP.Instance.LPrelaxJ]
+      --rw [Matrix.fromColumns_mulVec_sum_elim]
+      have Fintype_ι : Fintype ι := inferInstance
+      have Fintype_IvD : Fintype ((t : Multiset.ToType I) × (Fin t.fst.n → D)) := inferInstance
+      have Fintype_ιD : Fintype (ι × D) := inferInstance
+      have wtf {α β γ : Type} (_ : Fintype α) (_ : Fintype β) (_ : Fintype γ)
+          {A₂ : Matrix α γ ℚ} {v₁ : β → ℚ} {v₂ : γ → ℚ} {a : α}
+          (todo : (A₂ *ᵥ v₂) a ≤ 1) :
+          (Matrix.fromColumns 0 A₂ *ᵥ Sum.elim v₁ v₂) a ≤ 1 := by
+        rw [zeroMat_sumType_mulVec]
+        exact todo
+      convert wtf Fintype_ι Fintype_IvD Fintype_ιD _
       sorry
     | inr cᵥ =>
       show _ ≤ 1
