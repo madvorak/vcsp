@@ -93,7 +93,6 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_IsSolution_aux (I : Γ.Instance ι)
       simp only [LPrelaxM, solutionVCSPtoLP]
       rw [Matrix.fromRows_mulVec, Sum.elim_inr]
       rw [Matrix.fromRows_mulVec, Sum.elim_inl]
-      --rw [Matrix.fromColumns_mulVec_sum_elim]
       have Fintype_ι : Fintype ι := inferInstance
       have Fintype_IvD : Fintype ((t : Multiset.ToType I) × (Fin t.fst.n → D)) := inferInstance
       have Fintype_ιD : Fintype (ι × D) := inferInstance
@@ -104,7 +103,16 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_IsSolution_aux (I : Γ.Instance ι)
         rw [zeroMat_sumType_mulVec]
         exact todo
       convert wtf Fintype_ι Fintype_IvD Fintype_ιD _
-      sorry
+      simp_rw [Matrix.mulVec, Matrix.dotProduct, Matrix.of_apply, mul_ite, mul_one, mul_zero, ←ite_and]
+      rw [Finset.sum_boole, Nat.cast_le_one, Finset.card_le_one]
+      intro p pin q qin
+      clear * - pin qin
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at pin qin
+      have pqfst : p.fst = q.fst
+      · simp_all
+      ext
+      · exact pqfst
+      simp_all
     | inr cᵥ =>
       show _ ≤ 1
       simp only [LPrelaxM, solutionVCSPtoLP]
