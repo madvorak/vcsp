@@ -60,12 +60,12 @@ def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι)
   StandardLP.mk I.LPrelaxM I.LPrelaxR I.LPrelaxC
 
 
-open Matrix
+open scoped Matrix
 
 lemma sumType_zeroFun_dotProduct {α β : Type} [Fintype α] [Fintype β]
     {u v : α → ℚ} {v' : β → ℚ} :
     (Sum.elim u 0) ⬝ᵥ (Sum.elim v v') = u ⬝ᵥ v := by
-  rw [Matrix.sum_elim_dotProduct_sum_elim, zero_dotProduct, add_zero]
+  rw [Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct, add_zero]
 
 @[pp_dot]
 abbrev ValuedCSP.Instance.solutionVCSPtoLP (I : Γ.Instance ι) (x : ι → D) :
@@ -94,13 +94,14 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_IsSolution_aux (I : Γ.Instance ι)
       simp only [LPrelaxM, solutionVCSPtoLP]
       rw [Matrix.fromRows_mulVec, Sum.elim_inr]
       rw [Matrix.fromRows_mulVec, Sum.elim_inl]
+      simp only [ValuedCSP.Instance.LPrelaxJ]
       sorry
     | inr cᵥ =>
       show _ ≤ 1
-      simp [LPrelaxM, solutionVCSPtoLP]
+      simp only [LPrelaxM, solutionVCSPtoLP]
       rw [Matrix.fromRows_mulVec, Sum.elim_inr]
       rw [Matrix.fromRows_mulVec, Sum.elim_inr]
-      rw [one_mulVec]
+      rw [Matrix.one_mulVec]
       cases cᵥ <;> aesop
 
 lemma ValuedCSP.Instance.solutionVCSPtoLP_IsSolution (I : Γ.Instance ι)
