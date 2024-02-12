@@ -39,7 +39,7 @@ variable {m n K : Type} [Fintype m] [Fintype n] [LinearOrderedField K]
 multiplication by matrix `A` from the left yields a vector whose all entries are less or equal to
 corresponding entries of the vector `b`. -/
 def StandardLP.IsSolution (P : StandardLP m n K) (x : n → K) : Prop :=
-  P.A.mulVec x ≤ P.b ∧ 0 ≤ x
+  P.A *ᵥ x ≤ P.b ∧ 0 ≤ x
 
 /-- Linear program `P` is feasible iff there is a vector `x` that is a solution to `P`. -/
 def StandardLP.IsFeasible (P : StandardLP m n K) : Prop :=
@@ -66,12 +66,12 @@ theorem StandardLP.weakDuality {P : StandardLP m n K}
   obtain ⟨x, ⟨hxb, h0x⟩, rfl⟩ := hP
   obtain ⟨y, ⟨hyc, h0y⟩, rfl⟩ := hD
   dsimp only [StandardLP.dual] at hyc ⊢
-  have hxyb : P.A.mulVec x ⬝ᵥ y ≤ P.b ⬝ᵥ y
-  · sorry -- exact dotProduct_le_dotProduct_of_nonneg_right hxb h0y
-  have hcxy : P.c ⬝ᵥ x ≤ P.Aᵀ.mulVec y ⬝ᵥ x
+  have hxyb : P.A *ᵥ x ⬝ᵥ y ≤ P.b ⬝ᵥ y
+  · exact dotProduct_le_dotProduct_of_nonneg_right hxb h0y
+  have hcxy : P.c ⬝ᵥ x ≤ P.Aᵀ *ᵥ y ⬝ᵥ x
   · rw [← neg_le_neg_iff, ← neg_dotProduct, ← neg_dotProduct, ← neg_mulVec]
-    sorry -- exact dotProduct_le_dotProduct_of_nonneg_right hyc h0x
-  rw [dotProduct_comm (P.Aᵀ.mulVec y), dotProduct_mulVec, vecMul_transpose] at hcxy
+    exact dotProduct_le_dotProduct_of_nonneg_right hyc h0x
+  rw [dotProduct_comm (P.Aᵀ *ᵥ y), dotProduct_mulVec, vecMul_transpose] at hcxy
   exact hcxy.trans hxyb
 
 theorem StandardLP.strongDuality {P : StandardLP m n K}

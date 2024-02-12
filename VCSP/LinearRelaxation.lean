@@ -72,27 +72,6 @@ lemma sumType_zeroFun_dotProduct {α β : Type} [Fintype α] [Fintype β]
     (Sum.elim f 0) ⬝ᵥ (Sum.elim g g') = f ⬝ᵥ g := by
   rw [Matrix.sum_elim_dotProduct_sum_elim, zero_dotProduct, add_zero]
 
-section toMathlib
-
-variable {R : Type*} [Semiring R]
-variable {m m₁ m₂ n n₁ n₂ : Type*}
-variable [Fintype m] [Fintype m₁] [Fintype m₂]
-variable [Fintype n] [Fintype n₁] [Fintype n₂]
-variable [DecidableEq m] [DecidableEq m₁] [DecidableEq m₂]
-variable [DecidableEq n] [DecidableEq n₁] [DecidableEq n₂]
-
-@[simp]
-lemma Matrix.fromRows_mulVec (A₁ : Matrix m₁ n R) (A₂ : Matrix m₂ n R) (v : n → R) :
-    (fromRows A₁ A₂).mulVec v = Sum.elim (A₁.mulVec v) (A₂.mulVec v) := by
-  ext (_ | _) <;> rfl
-
-@[simp]
-lemma Matrix.vecMul_fromColumns (B₁ : Matrix m n₁ R) (B₂ : Matrix m n₂ R) (v : m → R) :
-    Matrix.vecMul v (Matrix.fromColumns B₁ B₂) = Sum.elim (Matrix.vecMul v B₁) (Matrix.vecMul v B₂) := by
-  ext (_ | _) <;> rfl
-
-end toMathlib
-
 @[pp_dot]
 abbrev ValuedCSP.Instance.solutionVCSPtoLP (I : Γ.Instance ι) (x : ι → D) :
     I.LPvars → ℚ :=
@@ -105,7 +84,7 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_IsSolution_aux (I : Γ.Instance ι)
     -- TODO the following three must be inferred automatically !!!
     [Fintype I.LPvars] [Fintype I.LPconds] [DecidableEq (I.LPvars)]
     (x : ι → D) :
-    mulVec I.LPrelaxM (I.solutionVCSPtoLP x) ≤ I.LPrelaxR := by
+    I.LPrelaxM *ᵥ (I.solutionVCSPtoLP x) ≤ I.LPrelaxR := by
   intro c
   cases c with
   | inl val =>
