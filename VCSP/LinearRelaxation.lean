@@ -15,10 +15,12 @@ instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
 def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι) :
     BothieLP
       ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- variables
-      ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι) -- inequalities
-      ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- equalities
+      ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- inequalities
+      ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι) -- equalities
       ℚ :=
   BothieLP.mk
+    1 -- the identity matrix
+    1 -- the all ones vector
     (Matrix.fromRows
       (Matrix.fromColumns
         (Matrix.of fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun ⟨⟨t, _⟩, x⟩ =>
@@ -30,8 +32,6 @@ def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι) :
     (Sum.elim
       (fun _ : (Σ t : I, (Fin t.fst.n × D)) => 0)
       (fun _ : ι => 1))
-    1 -- the identity matrix
-    1 -- the all ones vector
     (Sum.elim
       (fun ⟨⟨t, _⟩, x⟩ => t.f x)
       (fun _ => 0))
