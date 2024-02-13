@@ -1,4 +1,5 @@
 import Mathlib.LinearAlgebra.Matrix.DotProduct
+import Mathlib.Data.Matrix.ColumnRowPartitioned
 
 /-!
 
@@ -22,10 +23,34 @@ We define linear programs over a `LinearOrderedField K` in the standard matrix f
 
 -/
 
+
+lemma sumElim_le_sumElim_iff {α β γ : Type} [LE γ] (u u' : α → γ) (v v' : β → γ) :
+    Sum.elim u v ≤ Sum.elim u' v' ↔ u ≤ u' ∧ v ≤ v' := by
+  constructor <;> intro hyp
+  · constructor
+    · intro a
+      have hypa := hyp (Sum.inl a)
+      rwa [Sum.elim_inl, Sum.elim_inl] at hypa
+    · intro b
+      have hypb := hyp (Sum.inr b)
+      rwa [Sum.elim_inr, Sum.elim_inr] at hypb
+  · intro i
+    cases i with
+    | inl a =>
+      rw [Sum.elim_inl, Sum.elim_inl]
+      exact hyp.left a
+    | inr b =>
+      rw [Sum.elim_inr, Sum.elim_inr]
+      exact hyp.right b
+
+
 open Matrix
 
-/-- Linear program in the standard form. -/
-structure StandardLP (m n K : Type) [Fintype m] [Fintype n] [LinearOrderedField K] where
+
+section standard_inequalities
+
+/-- Linear program in the standard form. Variables are of type `n`. Conditions are indexed by type `m`. -/
+structure StandardLP (n m K : Type) [Fintype n] [Fintype m] [LinearOrderedField K] where
   /-- Matrix of coefficients -/
   A : Matrix m n K
   /-- Right-hand side -/
@@ -33,22 +58,22 @@ structure StandardLP (m n K : Type) [Fintype m] [Fintype n] [LinearOrderedField 
   /-- Objective function coefficients -/
   c : n → K
 
-variable {m n K : Type} [Fintype m] [Fintype n] [LinearOrderedField K]
+variable {n m K : Type} [Fintype n] [Fintype m] [LinearOrderedField K]
 
 /-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and its
 multiplication by matrix `A` from the left yields a vector whose all entries are less or equal to
 corresponding entries of the vector `b`. -/
-def StandardLP.IsSolution (P : StandardLP m n K) (x : n → K) : Prop :=
+def StandardLP.IsSolution (P : StandardLP n m K) (x : n → K) : Prop :=
   P.A *ᵥ x ≤ P.b ∧ 0 ≤ x
 
 /-- Linear program `P` is feasible iff there is a vector `x` that is a solution to `P`. -/
-def StandardLP.IsFeasible (P : StandardLP m n K) : Prop :=
+def StandardLP.IsFeasible (P : StandardLP n m K) : Prop :=
   ∃ x : n → K, P.IsSolution x
 
 /-- Linear program `P` reaches objective value `v` iff there is a solution `x` such that,
 when its entries are elementwise multiplied by the costs (given by the vector `c`) and summed up,
 the result is the value `v`. -/
-def StandardLP.Reaches (P : StandardLP m n K) (v : K) : Prop :=
+def StandardLP.Reaches (P : StandardLP n m K) (v : K) : Prop :=
   ∃ x : n → K, P.IsSolution x ∧ P.c ⬝ᵥ x = v
 
 /-- Dual linear program to given linear program `P` in the standard form.
@@ -60,7 +85,7 @@ def StandardLP.dual (P : StandardLP m n K) : StandardLP n m K :=
 
 /-- Objective values reached by linear program `P` are all less or equal to all objective values
 reached by the dual of `P`. -/
-theorem StandardLP.weakDuality {P : StandardLP m n K}
+theorem StandardLP.weakDuality {P : StandardLP n m K}
     {v : K} (hP : P.Reaches v) {w : K} (hD : P.dual.Reaches w) :
     v ≤ w := by
   obtain ⟨x, ⟨hxb, h0x⟩, rfl⟩ := hP
@@ -74,7 +99,80 @@ theorem StandardLP.weakDuality {P : StandardLP m n K}
   rw [dotProduct_comm (P.Aᵀ *ᵥ y), dotProduct_mulVec, vecMul_transpose] at hcxy
   exact hcxy.trans hxyb
 
-theorem StandardLP.strongDuality {P : StandardLP m n K}
+theorem StandardLP.strongDuality {P : StandardLP n m K}
     (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
     ∃ v : K, P.Reaches v ∧ P.dual.Reaches v :=
   sorry -- will be challenging to prove
+
+end standard_inequalities
+
+
+section both_inequalities_equalities
+
+/-- Linear program (where variables are of type `n`) with
+both inequalities (indexed by `m`) and equalities (indexed by `m'`). -/
+structure BothieLP (n m m' K : Type) [Fintype n] [Fintype m] [Fintype m'] [LinearOrderedField K] where
+  /-- Matrix of coefficients for inequalities -/
+  A : Matrix m n K
+  /-- Right-hand side for inequalities -/
+  b : m → K
+  /-- Matrix of coefficients for equalities -/
+  A' : Matrix m' n K
+  /-- Right-hand side for equalities -/
+  b' : m' → K
+  /-- Objective function coefficients -/
+  c : n → K
+
+variable {n m m' K : Type} [Fintype n] [Fintype m] [Fintype m'] [LinearOrderedField K]
+
+def BothieLP.IsSolution (P : BothieLP n m m' K) (x : n → K) : Prop :=
+  P.A *ᵥ x ≤ P.b ∧ P.A' *ᵥ x = P.b' ∧ 0 ≤ x
+
+def BothieLP.IsFeasible (P : BothieLP n m m' K) : Prop :=
+  ∃ x : n → K, P.IsSolution x
+
+def BothieLP.Reaches (P : BothieLP n m m' K) (v : K) : Prop :=
+  ∃ x : n → K, P.IsSolution x ∧ P.c ⬝ᵥ x = v
+
+def BothieLP.toStandardLP (P : BothieLP n m m' K) : StandardLP n (m ⊕ m' ⊕ m') K :=
+  StandardLP.mk
+    (Matrix.fromRows P.A (Matrix.fromRows P.A' (-P.A')))
+    (Sum.elim P.b (Sum.elim P.b' (-P.b')))
+    P.c
+
+lemma BothieLP.toStandardLP_isSolution_iff (P : BothieLP n m m' ℚ) (x : n → ℚ) :
+    P.toStandardLP.IsSolution x ↔ P.IsSolution x := by
+  constructor
+  · intro hyp
+    simp only [StandardLP.IsSolution, BothieLP.toStandardLP, Matrix.fromRows_mulVec] at hyp
+    rw [sumElim_le_sumElim_iff, sumElim_le_sumElim_iff] at hyp
+    obtain ⟨⟨ineqA, ineqA', ineqA''⟩, nonneg⟩ := hyp
+    constructor
+    · exact ineqA
+    constructor
+    · apply le_antisymm ineqA'
+      intro i
+      have almost : - ((P.A' *ᵥ x) i) ≤ - (P.b' i)
+      · specialize ineqA'' i
+        rwa [Matrix.neg_mulVec] at ineqA''
+      rwa [neg_le_neg_iff] at almost
+    · exact nonneg
+  · intro hyp
+    unfold BothieLP.IsSolution at hyp
+    unfold BothieLP.toStandardLP
+    unfold StandardLP.IsSolution
+    obtain ⟨ineq, equ, nonneg⟩ := hyp
+    constructor
+    · rw [Matrix.fromRows_mulVec, sumElim_le_sumElim_iff, Matrix.fromRows_mulVec, sumElim_le_sumElim_iff]
+      constructor
+      · exact ineq
+      constructor
+      · exact equ.le
+      · rw [Matrix.neg_mulVec]
+        intro i
+        show - ((P.A' *ᵥ x) i) ≤ - (P.b' i)
+        rw [neg_le_neg_iff]
+        exact equ.symm.le i
+    · exact nonneg
+
+end both_inequalities_equalities

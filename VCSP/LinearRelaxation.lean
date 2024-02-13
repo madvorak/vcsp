@@ -1,7 +1,6 @@
 import VCSP.Hardness
 import VCSP.LinearProgramming
 import Mathlib.Data.Multiset.Fintype
-import Mathlib.Data.Matrix.ColumnRowPartitioned
 
 
 variable
@@ -14,29 +13,6 @@ def ValuedCSP.Instance.LPvars (I : Γ.Instance ι) : Type :=
   (Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)
 
 @[pp_dot]
-def ValuedCSP.Instance.LPconds (I : Γ.Instance ι) : Type :=
-  (Σ t : I, (Fin t.fst.n × D)) ⊕ ι ⊕ LPvars I
-
-@[pp_dot]
-def ValuedCSP.Instance.LPrelaxM (I : Γ.Instance ι) [DecidableEq I.LPvars] : Matrix I.LPconds I.LPvars ℚ :=
-  Matrix.fromRows
-    (Matrix.fromColumns
-      (Matrix.of fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun ⟨⟨t, _⟩, x⟩ =>
-        if ht : cₜ.n = t.n
-        then if x (Fin.cast ht cᵢ) = cₐ then 1 else 0
-        else 0)
-      (Matrix.of fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0))
-    (Matrix.fromRows
-      (Matrix.fromColumns 0 (Matrix.of fun cᵢ : ι => fun ⟨i, _⟩ => if cᵢ = i then 1 else 0))
-      1)
-
-@[pp_dot]
-def ValuedCSP.Instance.LPrelaxR (I : Γ.Instance ι) : I.LPconds → ℚ :=
-  Sum.elim
-    (fun _ : (Σ t : I, (Fin t.fst.n × D)) => 0)
-    (fun _ : (ι ⊕ I.LPvars) => 1)
-
-@[pp_dot]
 def ValuedCSP.Instance.LPrelaxC (I : Γ.Instance ι) : I.LPvars → ℚ :=
   Sum.elim
     (fun ⟨⟨t, _⟩, x⟩ => t.f x)
@@ -45,9 +21,23 @@ def ValuedCSP.Instance.LPrelaxC (I : Γ.Instance ι) : I.LPvars → ℚ :=
 @[pp_dot]
 def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι)
      -- TODO the following three must be inferred automatically !!!
-    [Fintype I.LPvars] [Fintype I.LPconds] [DecidableEq I.LPvars] :
-    StandardLP I.LPconds I.LPvars ℚ :=
-  StandardLP.mk I.LPrelaxM I.LPrelaxR I.LPrelaxC
+    [Fintype I.LPvars] [DecidableEq I.LPvars] :
+    BothieLP I.LPvars ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι) I.LPvars ℚ :=
+  BothieLP.mk
+    (Matrix.fromRows
+      (Matrix.fromColumns
+        (Matrix.of fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun ⟨⟨t, _⟩, x⟩ =>
+          if ht : cₜ.n = t.n
+          then if x (Fin.cast ht cᵢ) = cₐ then 1 else 0
+          else 0)
+        (Matrix.of fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0))
+      (Matrix.fromColumns 0 (Matrix.of fun cᵢ : ι => fun ⟨i, _⟩ => if cᵢ = i then 1 else 0)))
+    (Sum.elim
+      (fun _ : (Σ t : I, (Fin t.fst.n × D)) => 0)
+      (fun _ : ι => 1))
+    1
+    1
+    I.LPrelaxC
 
 
 open scoped Matrix
@@ -60,7 +50,7 @@ lemma sumType_zeroFun_dotProduct {α β : Type} [Fintype α] [Fintype β]
 lemma zeroMat_fromColumns_mulVec {α β γ : Type} [Fintype α] [Fintype β] [Fintype γ]
     (A₂ : Matrix α γ ℚ) (v₁ : β → ℚ) (v₂ : γ → ℚ) :
     Matrix.fromColumns 0 A₂ *ᵥ Sum.elim v₁ v₂ = A₂ *ᵥ v₂ := by
-  simp
+  rw [Matrix.fromColumns_mulVec_sum_elim, Matrix.zero_mulVec, zero_add]
 
 private lemma zeroMat_fromColumns_mulVec_sumElim_index_le_one {α β γ : Type}
     (_ : Fintype α) (_ : Fintype β) (_ : Fintype γ)
@@ -77,67 +67,14 @@ abbrev ValuedCSP.Instance.solutionVCSPtoLP (I : Γ.Instance ι) (x : ι → D) :
     (fun ⟨⟨t, _⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0)
     (fun ⟨i, d⟩ => if x i = d then 1 else 0)
 
-lemma ValuedCSP.Instance.solutionVCSPtoLP_IsSolution_aux (I : Γ.Instance ι)
-    -- TODO the following two must be inferred automatically !!!
-    [Fintype I.LPvars] [DecidableEq I.LPvars]
-    (x : ι → D) :
-    I.LPrelaxM *ᵥ I.solutionVCSPtoLP x ≤ I.LPrelaxR := by
-  intro c
-  cases c with
-  | inl val =>
-    obtain ⟨⟨⟨n, f, _, ξ⟩, _⟩, (cᵢ : Fin n), cₐ⟩ := val
-    show _ ≤ 0
-    simp only [LPrelaxM, solutionVCSPtoLP]
-    rw [Matrix.fromRows_mulVec, Sum.elim_inl]
-    sorry
-  | inr val =>
-    cases val with
-    | inl cᵢ =>
-      show _ ≤ 1
-      simp only [LPrelaxM, solutionVCSPtoLP]
-      rw [Matrix.fromRows_mulVec, Sum.elim_inr]
-      rw [Matrix.fromRows_mulVec, Sum.elim_inl]
-      have Fintype_ι : Fintype ι := inferInstance
-      have Fintype_IvD : Fintype (Σ t : I, Fin t.fst.n → D) := inferInstance
-      have Fintype_ιD : Fintype (ι × D) := inferInstance
-      convert zeroMat_fromColumns_mulVec_sumElim_index_le_one Fintype_ι Fintype_IvD Fintype_ιD _
-      simp_rw [Matrix.mulVec, Matrix.dotProduct, Matrix.of_apply, mul_ite, mul_one, mul_zero, ←ite_and]
-      rw [Finset.sum_boole, Nat.cast_le_one, Finset.card_le_one]
-      intro p pin q qin
-      clear * - pin qin
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and] at pin qin
-      have pqfst : p.fst = q.fst
-      · simp_all
-      ext
-      · exact pqfst
-      simp_all
-    | inr cᵥ =>
-      show _ ≤ 1
-      simp only [LPrelaxM, solutionVCSPtoLP]
-      rw [Matrix.fromRows_mulVec, Sum.elim_inr]
-      rw [Matrix.fromRows_mulVec, Sum.elim_inr]
-      rw [Matrix.one_mulVec]
-      cases cᵥ <;> aesop
-
-lemma ValuedCSP.Instance.solutionVCSPtoLP_IsSolution (I : Γ.Instance ι)
-     -- TODO the following three must be inferred automatically !!!
-    [Fintype I.LPvars] [Fintype I.LPconds] [DecidableEq I.LPvars]
-    (x : ι → D) :
-    StandardLP.IsSolution I.LPrelaxation (I.solutionVCSPtoLP x) := by
-  simp [StandardLP.IsSolution, ValuedCSP.Instance.LPrelaxation]
-  constructor
-  · apply I.solutionVCSPtoLP_IsSolution_aux
-  · intro v
-    cases v <;> aesop
-
 theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι)
      -- TODO the following three must be inferred automatically !!!
-    [Fintype I.LPvars] [Fintype I.LPconds] [DecidableEq I.LPvars]
+    [Fintype I.LPvars] [DecidableEq I.LPvars]
     (x : ι → D) :
     I.LPrelaxation.Reaches (I.evalSolution x) := by
   use I.solutionVCSPtoLP x
   constructor
-  · apply I.solutionVCSPtoLP_IsSolution
+  · sorry
   · simp [ValuedCSP.Instance.LPrelaxation, ValuedCSP.Instance.evalSolution]
     trans
     · convert sumType_zeroFun_dotProduct <;> infer_instance
