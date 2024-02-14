@@ -47,7 +47,7 @@ lemma sumElim_le_sumElim_iff {α β γ : Type} [LE γ] (u u' : α → γ) (v v' 
 open Matrix
 
 
-section standard_inequalities
+section inequalities_only
 
 /-- Linear program in the standard form. Variables are of type `n`. Conditions are indexed by type `m`. -/
 structure StandardLP (n m K : Type) [Fintype n] [Fintype m] [LinearOrderedField K] where
@@ -104,10 +104,10 @@ theorem StandardLP.strongDuality {P : StandardLP n m K}
     ∃ v : K, P.Reaches v ∧ P.dual.Reaches v :=
   sorry -- will be challenging to prove
 
-end standard_inequalities
+end inequalities_only
 
 
-section both_inequalities_equalities
+section inequalities_and_equalities
 
 /-- Linear program (where variables are of type `n`) with
 both inequalities (indexed by `m`) and equalities (indexed by `m'`). -/
@@ -200,4 +200,4 @@ lemma BothieLP.toStandardLP_reaches_iff (P : BothieLP n m m' K) (v : K) :
   · rwa [toStandardLP_isSolution_iff] at hx
   · rwa [toStandardLP_isSolution_iff]
 
-end both_inequalities_equalities
+end inequalities_and_equalities

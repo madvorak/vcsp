@@ -16,15 +16,18 @@ def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι) :
     BothieLP
       ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- variables
       ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- inequalities
-      ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι) -- equalities
+      ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι)       -- equalities
       ℚ :=
   BothieLP.mk
     1 -- the identity matrix
     1 -- the all ones vector
     (Matrix.fromBlocks
-      (Matrix.of fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun ⟨⟨t, _⟩, x⟩ =>
-        if ht : cₜ.n = t.n
-        then if x (Fin.cast ht cᵢ) = cₐ then 1 else 0
+      (Matrix.of fun ⟨cₜ, cᵢ, cₐ⟩ => fun ⟨t, x⟩ =>
+        if ht : cₜ = t
+        then
+          if x (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cᵢ) = cₐ
+          then 1
+          else 0
         else 0)
       (Matrix.of fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0)
       0
