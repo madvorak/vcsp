@@ -123,6 +123,20 @@ structure BothieLP (n m m' K : Type) [Fintype n] [Fintype m] [Fintype m'] [Linea
   /-- Objective function coefficients -/
   c : n → K
 
+/-- Linear program (with nonnegative variables of type `n` and general variables of type `n'`)
+with inequalities (indexed by `m`) only. -/
+structure BothieDualLP (n n' m K : Type) [Fintype n] [Fintype n'] [Fintype m] [LinearOrderedField K] where
+  /-- Matrix of coefficients (part for nonnegative variables) -/
+  A : Matrix m n K
+  /-- Matrix of coefficients (part for general variables) -/
+  A' : Matrix m n' K
+  /-- Right-hand side -/
+  b : m → K
+  /-- Objective function coefficients for nonnegative variables -/
+  c : n → K
+  /-- Objective function coefficients for general variables -/
+  c' : n' → K
+
 variable {n m m' K : Type} [Fintype n] [Fintype m] [Fintype m'] [LinearOrderedField K]
 
 def BothieLP.IsSolution (P : BothieLP n m m' K) (x : n → K) : Prop :=
@@ -140,25 +154,24 @@ def BothieLP.toStandardLP (P : BothieLP n m m' K) : StandardLP n (m ⊕ m' ⊕ m
     (Sum.elim P.b (Sum.elim P.b' (-P.b')))
     P.c
 
-lemma BothieLP.toStandardLP_isSolution_iff (P : BothieLP n m m' ℚ) (x : n → ℚ) :
+lemma BothieLP.toStandardLP_isSolution_iff (P : BothieLP n m m' K) (x : n → K) :
     P.toStandardLP.IsSolution x ↔ P.IsSolution x := by
   constructor
   · intro hyp
     simp only [StandardLP.IsSolution, BothieLP.toStandardLP, Matrix.fromRows_mulVec] at hyp
     rw [sumElim_le_sumElim_iff, sumElim_le_sumElim_iff] at hyp
-    obtain ⟨⟨ineqA, ineqA', ineqA''⟩, nonneg⟩ := hyp
+    obtain ⟨⟨ineqA, ineqPos, ineqNeg⟩, nonneg⟩ := hyp
     constructor
     · exact ineqA
     constructor
-    · apply le_antisymm ineqA'
+    · apply le_antisymm ineqPos
       intro i
       have almost : - ((P.A' *ᵥ x) i) ≤ - (P.b' i)
-      · specialize ineqA'' i
-        rwa [Matrix.neg_mulVec] at ineqA''
+      · specialize ineqNeg i
+        rwa [Matrix.neg_mulVec] at ineqNeg
       rwa [neg_le_neg_iff] at almost
     · exact nonneg
   · intro hyp
-    unfold BothieLP.IsSolution at hyp
     unfold BothieLP.toStandardLP
     unfold StandardLP.IsSolution
     obtain ⟨ineq, equ, nonneg⟩ := hyp
@@ -168,11 +181,23 @@ lemma BothieLP.toStandardLP_isSolution_iff (P : BothieLP n m m' ℚ) (x : n → 
       · exact ineq
       constructor
       · exact equ.le
-      · rw [Matrix.neg_mulVec]
-        intro i
-        show - ((P.A' *ᵥ x) i) ≤ - (P.b' i)
-        rw [neg_le_neg_iff]
-        exact equ.symm.le i
+      rw [Matrix.neg_mulVec]
+      intro i
+      show - ((P.A' *ᵥ x) i) ≤ - (P.b' i)
+      rw [neg_le_neg_iff]
+      exact equ.symm.le i
     · exact nonneg
+
+lemma BothieLP.toStandardLP_isFeasible_iff (P : BothieLP n m m' K) :
+    P.toStandardLP.IsFeasible ↔ P.IsFeasible := by
+  constructor <;> intro ⟨x, hx⟩ <;> use x
+  · rwa [toStandardLP_isSolution_iff] at hx
+  · rwa [toStandardLP_isSolution_iff]
+
+lemma BothieLP.toStandardLP_reaches_iff (P : BothieLP n m m' K) (v : K) :
+    P.toStandardLP.Reaches v ↔ P.Reaches v := by
+  constructor <;> intro ⟨x, hx⟩ <;> use x
+  · rwa [toStandardLP_isSolution_iff] at hx
+  · rwa [toStandardLP_isSolution_iff]
 
 end both_inequalities_equalities
