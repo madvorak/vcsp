@@ -6,7 +6,8 @@ import Mathlib.Data.Multiset.Fintype
 variable
   {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
   {ι : Type} [Nonempty ι] [Fintype ι] [DecidableEq ι]
-  {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
+  {C : Type} [LinearOrderedField C]
+  {Γ : ValuedCSP D C} [DecidableEq (Γ.Term ι)]
 
 instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
   inferInstanceAs (DecidableEq (Σ t : Γ.Term ι, Fin (I.count t)))
@@ -16,7 +17,7 @@ def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι) :
     CanonicalLP
       ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) -- variables
       ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι)     -- equalities
-      ℚ :=
+      C :=
   CanonicalLP.mk
     (Matrix.fromBlocks
       (Matrix.of fun ⟨cₜ, cₙ, cₐ⟩ => fun ⟨t, x⟩ =>
@@ -40,13 +41,13 @@ def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι) :
 open scoped Matrix
 
 lemma sumType_zeroFun_dotProduct {α β : Type} [Fintype α] [Fintype β]
-    (u v : α → ℚ) (v' : β → ℚ) :
+    (u v : α → C) (v' : β → C) :
     Sum.elim u 0 ⬝ᵥ Sum.elim v v' = u ⬝ᵥ v := by
   rw [Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct, add_zero]
 
 @[pp_dot]
 abbrev ValuedCSP.Instance.solutionVCSPtoLP (I : Γ.Instance ι) (x : ι → D) :
-    ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) → ℚ :=
+    ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) → C :=
   Sum.elim
     (fun ⟨⟨t, _⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0)
     (fun ⟨i, d⟩ => if x i = d then 1 else 0)
