@@ -13,23 +13,20 @@ instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
 
 @[pp_dot]
 def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι) :
-    BothieLP
-      ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- variables
-      ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- inequalities
-      ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι)       -- equalities
+    CanonicalLP
+      ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) -- variables
+      ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι)     -- equalities
       ℚ :=
-  BothieLP.mk
-    1 -- the identity matrix
-    1 -- the all ones vector
+  CanonicalLP.mk
     (Matrix.fromBlocks
-      (Matrix.of fun ⟨cₜ, cᵢ, cₐ⟩ => fun ⟨t, x⟩ =>
+      (Matrix.of fun ⟨cₜ, cₙ, cₐ⟩ => fun ⟨t, x⟩ =>
         if ht : cₜ = t
         then
-          if x (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cᵢ) = cₐ
+          if x (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
           then 1
           else 0
         else 0)
-      (Matrix.of fun ⟨⟨cₜ, _⟩, cᵢ, cₐ⟩ => fun ⟨i, a⟩ => if cₜ.app cᵢ = i ∧ cₐ = a then -1 else 0)
+      (Matrix.of fun ⟨⟨cₜ, _⟩, cₙ, cₐ⟩ => fun ⟨i, a⟩ => if cₜ.app cₙ = i ∧ cₐ = a then -1 else 0)
       0
       (Matrix.of fun cᵢ : ι => fun ⟨i, _⟩ => if cᵢ = i then 1 else 0))
     (Sum.elim
@@ -44,7 +41,7 @@ open scoped Matrix
 
 lemma sumType_zeroFun_dotProduct {α β : Type} [Fintype α] [Fintype β]
     (u v : α → ℚ) (v' : β → ℚ) :
-    (Sum.elim u 0) ⬝ᵥ (Sum.elim v v') = u ⬝ᵥ v := by
+    Sum.elim u 0 ⬝ᵥ Sum.elim v v' = u ⬝ᵥ v := by
   rw [Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct, add_zero]
 
 @[pp_dot]

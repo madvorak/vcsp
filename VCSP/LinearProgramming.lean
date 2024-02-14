@@ -44,7 +44,7 @@ lemma sumElim_le_sumElim_iff {α β γ : Type} [LE γ] (u u' : α → γ) (v v' 
       exact hyp.right b
 
 
-open Matrix
+open scoped Matrix
 
 
 section inequalities_only
@@ -91,13 +91,13 @@ theorem StandardLP.weakDuality {P : StandardLP n m K}
   obtain ⟨x, ⟨hxb, h0x⟩, rfl⟩ := hP
   obtain ⟨y, ⟨hyc, h0y⟩, rfl⟩ := hD
   dsimp only [StandardLP.dual] at hyc ⊢
-  have hxyb : P.A *ᵥ x ⬝ᵥ y ≤ P.b ⬝ᵥ y
-  · exact dotProduct_le_dotProduct_of_nonneg_right hxb h0y
-  have hcxy : P.c ⬝ᵥ x ≤ P.Aᵀ *ᵥ y ⬝ᵥ x
-  · rw [← neg_le_neg_iff, ← neg_dotProduct, ← neg_dotProduct, ← neg_mulVec]
-    exact dotProduct_le_dotProduct_of_nonneg_right hyc h0x
-  rw [dotProduct_comm (P.Aᵀ *ᵥ y), dotProduct_mulVec, vecMul_transpose] at hcxy
-  exact hcxy.trans hxyb
+  have hy : P.A *ᵥ x ⬝ᵥ y ≤ P.b ⬝ᵥ y
+  · exact Matrix.dotProduct_le_dotProduct_of_nonneg_right hxb h0y
+  have hx : P.c ⬝ᵥ x ≤ P.Aᵀ *ᵥ y ⬝ᵥ x
+  · rw [← neg_le_neg_iff, ← Matrix.neg_dotProduct, ← Matrix.neg_dotProduct, ← Matrix.neg_mulVec]
+    exact Matrix.dotProduct_le_dotProduct_of_nonneg_right hyc h0x
+  rw [Matrix.dotProduct_comm (P.Aᵀ *ᵥ y), Matrix.dotProduct_mulVec, Matrix.vecMul_transpose] at hx
+  exact hx.trans hy
 
 theorem StandardLP.strongDuality {P : StandardLP n m K}
     (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
@@ -105,6 +105,85 @@ theorem StandardLP.strongDuality {P : StandardLP n m K}
   sorry -- will be challenging to prove
 
 end inequalities_only
+
+
+section equalities_only
+
+/-- Linear program in the canonical form. Variables are of type `n`. Conditions are indexed by type `m`. -/
+structure CanonicalLP (n m K : Type) [Fintype n] [Fintype m] [LinearOrderedField K] where
+  /-- Matrix of coefficients -/
+  A : Matrix m n K
+  /-- Right-hand side -/
+  b : m → K
+  /-- Objective function coefficients -/
+  c : n → K
+
+variable {n m K : Type} [Fintype n] [Fintype m] [LinearOrderedField K]
+
+/-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and
+its multiplication by matrix `A` from the left yields the vector `b`. -/
+def CanonicalLP.IsSolution (P : CanonicalLP n m K) (x : n → K) : Prop :=
+  P.A *ᵥ x = P.b ∧ 0 ≤ x
+
+/-- Linear program `P` is feasible iff there is a vector `x` that is a solution to `P`. -/
+def CanonicalLP.IsFeasible (P : CanonicalLP n m K) : Prop :=
+  ∃ x : n → K, P.IsSolution x
+
+/-- Linear program `P` reaches objective value `v` iff there is a solution `x` such that,
+when its entries are elementwise multiplied by the costs (given by the vector `c`) and summed up,
+the result is the value `v`. -/
+def CanonicalLP.Reaches (P : CanonicalLP n m K) (v : K) : Prop :=
+  ∃ x : n → K, P.IsSolution x ∧ P.c ⬝ᵥ x = v
+
+def CanonicalLP.toStandardLP (P : CanonicalLP n m K) : StandardLP n (m ⊕ m) K :=
+  StandardLP.mk
+    (Matrix.fromRows P.A (-P.A))
+    (Sum.elim P.b (-P.b))
+    P.c
+
+lemma CanonicalLP.toStandardLP_isSolution_iff (P : CanonicalLP n m K) (x : n → K) :
+    P.toStandardLP.IsSolution x ↔ P.IsSolution x := by
+  constructor
+  · intro hyp
+    simp only [StandardLP.IsSolution, CanonicalLP.toStandardLP, Matrix.fromRows_mulVec] at hyp
+    rw [sumElim_le_sumElim_iff] at hyp
+    obtain ⟨⟨ineqPos, ineqNeg⟩, nonneg⟩ := hyp
+    constructor
+    · apply le_antisymm ineqPos
+      intro i
+      have almost : - ((P.A *ᵥ x) i) ≤ - (P.b i)
+      · specialize ineqNeg i
+        rwa [Matrix.neg_mulVec] at ineqNeg
+      rwa [neg_le_neg_iff] at almost
+    · exact nonneg
+  · intro hyp
+    unfold CanonicalLP.toStandardLP
+    unfold StandardLP.IsSolution
+    obtain ⟨equ, nonneg⟩ := hyp
+    constructor
+    · rw [Matrix.fromRows_mulVec, sumElim_le_sumElim_iff]
+      constructor
+      · exact equ.le
+      rw [Matrix.neg_mulVec]
+      intro i
+      show - ((P.A *ᵥ x) i) ≤ - (P.b i)
+      rw [neg_le_neg_iff]
+      exact equ.symm.le i
+    · exact nonneg
+
+lemma CanonicalLP.toStandardLP_isFeasible_iff (P : CanonicalLP n m K) :
+    P.toStandardLP.IsFeasible ↔ P.IsFeasible := by
+  constructor <;> intro ⟨x, hx⟩ <;> use x
+  · rwa [CanonicalLP.toStandardLP_isSolution_iff] at hx
+  · rwa [CanonicalLP.toStandardLP_isSolution_iff]
+
+lemma CanonicalLP.toStandardLP_reaches_iff (P : CanonicalLP n m K) (v : K) :
+    P.toStandardLP.Reaches v ↔ P.Reaches v := by
+  constructor <;> intro ⟨x, hx⟩ <;> use x
+  · rwa [CanonicalLP.toStandardLP_isSolution_iff] at hx
+  · rwa [CanonicalLP.toStandardLP_isSolution_iff]
+
+end equalities_only
 
 
 section inequalities_and_equalities
@@ -191,13 +270,13 @@ lemma BothieLP.toStandardLP_isSolution_iff (P : BothieLP n m m' K) (x : n → K)
 lemma BothieLP.toStandardLP_isFeasible_iff (P : BothieLP n m m' K) :
     P.toStandardLP.IsFeasible ↔ P.IsFeasible := by
   constructor <;> intro ⟨x, hx⟩ <;> use x
-  · rwa [toStandardLP_isSolution_iff] at hx
-  · rwa [toStandardLP_isSolution_iff]
+  · rwa [BothieLP.toStandardLP_isSolution_iff] at hx
+  · rwa [BothieLP.toStandardLP_isSolution_iff]
 
 lemma BothieLP.toStandardLP_reaches_iff (P : BothieLP n m m' K) (v : K) :
     P.toStandardLP.Reaches v ↔ P.Reaches v := by
   constructor <;> intro ⟨x, hx⟩ <;> use x
-  · rwa [toStandardLP_isSolution_iff] at hx
-  · rwa [toStandardLP_isSolution_iff]
+  · rwa [BothieLP.toStandardLP_isSolution_iff] at hx
+  · rwa [BothieLP.toStandardLP_isSolution_iff]
 
 end inequalities_and_equalities
