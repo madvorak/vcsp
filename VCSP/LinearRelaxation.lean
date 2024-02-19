@@ -52,9 +52,35 @@ abbrev ValuedCSP.Instance.solutionVCSPtoLP (I : Γ.Instance ι) (x : ι → D) :
     (fun ⟨⟨t, _⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0)
     (fun ⟨i, d⟩ => if x i = d then 1 else 0)
 
+lemma ValuedCSP.Instance.LPrelaxation_iota (I : Γ.Instance ι) (cᵢ : ι) (x : ι → D) :
+    (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inr) = 1 := by
+  unfold ValuedCSP.Instance.solutionVCSPtoLP
+  simp only [Sum.elim_comp_inr]
+  rw [Matrix.dotProduct]
+  simp_rw [mul_ite, mul_one, mul_zero, ←ite_and]
+  rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
+  use (cᵢ, x cᵢ)
+  aesop
+
 theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι) (x : ι → D) :
     I.LPrelaxation.Reaches (I.evalSolution x) := by
   use I.solutionVCSPtoLP x
   constructor
-  · sorry
+  · simp [CanonicalLP.IsSolution, ValuedCSP.Instance.LPrelaxation, ValuedCSP.Instance.solutionVCSPtoLP]
+    constructor
+    · ext j
+      rw [← Matrix.fromRows_fromColumn_eq_fromBlocks]
+      rw [Matrix.fromRows_mulVec]
+      rw [Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
+      rw [Matrix.zero_mulVec, zero_add]
+      cases j with
+      | inl c =>
+        obtain ⟨cₜ, cₙ, cₐ⟩ := c
+        rw [Sum.elim_inl, Sum.elim_inl]
+        sorry
+      | inr cᵢ =>
+        rw [Sum.elim_inr, Sum.elim_inr]
+        rw [Matrix.mulVec]
+        exact I.LPrelaxation_iota cᵢ x
+    · sorry
   · sorry
