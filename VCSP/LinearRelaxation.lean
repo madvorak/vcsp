@@ -86,52 +86,36 @@ lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.I
       if ht : cₜ = t
       then
         if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-        then (1 : C)
-        else (0 : C)
-      else (0 : C)
+        then 1
+        else 0
+      else 0
       ) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inl) =
     1 := by
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   show
     Finset.sum Finset.univ (fun (i : Σ t : I, (Fin t.fst.n → D)) =>
       (match i with
-        | Sigma.mk t y => (
+        | Sigma.mk t y =>
           if ht : cₜ = t
           then
             if y (Fin.cast (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-            then (1 : C)
-            else (0 : C)
-          else (0 : C)
-          ) : C) *
+            then 1
+            else 0
+          else 0
+        ) *
       (match i with
-        | Sigma.mk t y => (
+        | Sigma.mk t y =>
           if (∀ i : Fin t.fst.n, y i = x (t.fst.app i))
-          then (1 : C)
-          else (0 : C)
-        ) : C)
+          then 1
+          else 0
+        )
       ) =
-    1
+    (1 : C)
   simp_rw [mul_ite, mul_one, mul_zero]
-  show
-    Finset.sum Finset.univ (fun (i : Σ t : I, (Fin t.fst.n → D)) =>
-      (match i with
-        | Sigma.mk t y => (
-          if (∀ i : Fin t.fst.n, y i = x (t.fst.app i))
-          then
-            if ht : cₜ = t
-            then
-              if y (Fin.cast (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-              then (1 : C)
-              else (0 : C)
-            else (0 : C)
-          else (0 : C)
-          ) : C)
-      ) =
-    1
   convert_to
     Finset.sum Finset.univ (fun (i : Σ t : I, (Fin t.fst.n → D)) =>
       (match i with
-        | Sigma.mk t y => (
+        | Sigma.mk t y =>
           if (
             if (∀ i : Fin t.fst.n, y i = x (t.fst.app i))
             then
@@ -142,13 +126,12 @@ lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.I
                 else False
               else False
             else False
-            )
-            then (1 : C)
-            else (0 : C)
-          ) : C)
-      ) =
-    1
-      using 2
+          )
+          then 1
+          else 0
+      )) =
+    (1 : C)
+        using 2
   · aesop
   rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
   use ⟨cₜ, x ∘ cₜ.fst.app⟩
@@ -163,52 +146,36 @@ lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_miss (I : Γ.
       if ht : cₜ = t
       then
         if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-        then (1 : C)
-        else (0 : C)
-      else (0 : C)
+        then 1
+        else 0
+      else 0
       ) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inl) =
     0 := by
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   show
     Finset.sum Finset.univ (fun (i : Σ t : I, (Fin t.fst.n → D)) =>
       (match i with
-        | Sigma.mk t y => (
+        | Sigma.mk t y =>
           if ht : cₜ = t
           then
             if y (Fin.cast (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-            then (1 : C)
-            else (0 : C)
-          else (0 : C)
-          ) : C) *
+            then 1
+            else 0
+          else 0
+        ) *
       (match i with
-        | Sigma.mk t y => (
+        | Sigma.mk t y =>
           if (∀ i : Fin t.fst.n, y i = x (t.fst.app i))
-          then (1 : C)
-          else (0 : C)
-        ) : C)
+          then 1
+          else 0
+        )
       ) =
-    0
+    (0 : C)
   simp_rw [mul_ite, mul_one, mul_zero]
-  show
-    Finset.sum Finset.univ (fun (i : Σ t : I, (Fin t.fst.n → D)) =>
-      (match i with
-        | Sigma.mk t y => (
-          if (∀ i : Fin t.fst.n, y i = x (t.fst.app i))
-          then
-            if ht : cₜ = t
-            then
-              if y (Fin.cast (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-              then (1 : C)
-              else (0 : C)
-            else (0 : C)
-          else (0 : C)
-          ) : C)
-      ) =
-    0
   convert_to
     Finset.sum Finset.univ (fun (i : Σ t : I, (Fin t.fst.n → D)) =>
       (match i with
-        | Sigma.mk t y => (
+        | Sigma.mk t y =>
           if (
             if (∀ i : Fin t.fst.n, y i = x (t.fst.app i))
             then
@@ -219,13 +186,12 @@ lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_miss (I : Γ.
                 else False
               else False
             else False
-            )
-            then (1 : C)
-            else (0 : C)
-          ) : C)
-      ) =
-    0
-      using 2
+          )
+          then 1
+          else 0
+      )) =
+    (0 : C)
+        using 2
   · aesop
   rw [Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero]
   aesop
