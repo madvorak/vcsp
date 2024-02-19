@@ -62,6 +62,15 @@ lemma ValuedCSP.Instance.LPrelaxation_iota (I : Γ.Instance ι) (cᵢ : ι) (x :
   use (cᵢ, x cᵢ)
   aesop
 
+-- TODO probably upstream (otherwise rename arguments)
+lemma Matrix.fromBlocks_mulVec_sum_elim {l m n o R : Type*} [Semiring R]
+    [Fintype l] [Fintype m] [Fintype n] [Fintype o]
+    (A : Matrix n l R) (B : Matrix n m R) (C : Matrix o l R) (D : Matrix o m R)
+    (u : l → R) (v : m → R) :
+    Matrix.fromBlocks A B C D *ᵥ Sum.elim u v = Sum.elim (A *ᵥ u + B *ᵥ v) (C *ᵥ u + D *ᵥ v) := by
+  rw [← Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulVec,
+    Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
+
 theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι) (x : ι → D) :
     I.LPrelaxation.Reaches (I.evalSolution x) := by
   use I.solutionVCSPtoLP x
@@ -69,9 +78,7 @@ theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι) (x : ι →
   · simp only [CanonicalLP.IsSolution, ValuedCSP.Instance.LPrelaxation]
     constructor
     · ext j
-      rw [← Matrix.fromRows_fromColumn_eq_fromBlocks]
-      rw [Matrix.fromRows_mulVec]
-      rw [Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
+      rw [Matrix.fromBlocks_mulVec_sum_elim]
       rw [Matrix.zero_mulVec, zero_add]
       cases j with
       | inl c =>
