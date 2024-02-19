@@ -19,6 +19,14 @@ lemma sumType_zeroFun_dotProduct {α β R : Type} [Fintype α] [Fintype β] [Sem
     Sum.elim u 0 ⬝ᵥ Sum.elim v v' = u ⬝ᵥ v := by
   rw [Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct, add_zero]
 
+lemma neg_finset_sum_univ {α R : Type} [Fintype α] [Ring R] (f : α → R) :
+    - (Finset.sum Finset.univ f) = Finset.sum Finset.univ (- f) := by
+  simp only [Pi.neg_apply, Finset.sum_neg_distrib]
+
+lemma neg_indicator_neg {α R : Type} [Fintype α] [Ring R] (P : α → Prop) [DecidablePred P] :
+    - (fun x => if P x then -1 else (0 : R)) = (fun x => if P x then 1 else 0) := by
+  aesop
+
 
 variable
   {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
@@ -71,32 +79,55 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_cost (I : Γ.Instance ι) (x : ι → 
   simp [LPrelaxation, solutionVCSPtoLP, evalSolution, Matrix.dotProduct] -- TODO refactor
   sorry
 
-lemma ValuedCSP.Instance.LPrelaxation_top_left (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left (I : Γ.Instance ι)
     (cₜ : Σ t : Γ.Term ι, Fin (I.count t)) (cₙ : Fin cₜ.fst.n) (cₐ : D) (x : ι → D) :
-    (fun ⟨t, x⟩ =>
+    (fun ⟨t, y⟩ =>
       if ht : cₜ = t
       then
-        if x (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-        then 1
-        else 0
-      else 0
+        if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+        then (1 : C)
+        else (0 : C)
+      else (0 : C)
       ) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inl) =
     1 := by
-  unfold ValuedCSP.Instance.solutionVCSPtoLP
-  simp only [Sum.elim_comp_inl]
-  rw [Matrix.dotProduct]
+  rw [Sum.elim_comp_inl, Matrix.dotProduct]
+  show
+    Finset.sum Finset.univ (fun (i : Σ t : I, (Fin t.fst.n → D)) =>
+      (match i with
+        | Sigma.mk t y => (
+          if ht : cₜ = t
+          then
+            if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+            then (1 : C)
+            else (0 : C)
+          else (0 : C)
+          ) : C) *
+      (match i with
+        | Sigma.mk t y => (
+          if (∀ i : Fin t.fst.n, y i = x (t.fst.app i))
+          then (1 : C)
+          else (0 : C)
+        ) : C)
+      ) =
+    1
   sorry
 
-lemma ValuedCSP.Instance.LPrelaxation_top_right (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_right (I : Γ.Instance ι)
     (cₜ : Σ t : Γ.Term ι, Fin (I.count t)) (cₙ : Fin cₜ.fst.n) (cₐ : D) (x : ι → D) :
     (fun ⟨i, a⟩ => if cₜ.fst.app cₙ = i ∧ cₐ = a then -1 else 0) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inr) = -1 := by
-  unfold ValuedCSP.Instance.solutionVCSPtoLP
-  simp only [Sum.elim_comp_inr]
-  rw [Matrix.dotProduct]
+  rw [Sum.elim_comp_inr, Matrix.dotProduct]
   simp_rw [mul_ite, mul_one, mul_zero, ←ite_and]
-  sorry
+  rw [←neg_eq_iff_eq_neg, neg_finset_sum_univ, neg_indicator_neg]
+  rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
+  use (cₜ.fst.app cₙ, cₐ)
+  rw [Finset.eq_singleton_iff_unique_mem]
+  constructor
+  · simp only [Finset.mem_filter, Finset.mem_univ, and_self, and_true, true_and]
+    sorry
+  · aesop
 
-lemma ValuedCSP.Instance.LPrelaxation_bottom_right (I : Γ.Instance ι) (cᵢ : ι) (x : ι → D) :
+lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_bottom_right (I : Γ.Instance ι)
+    (cᵢ : ι) (x : ι → D) :
     (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inr) = 1 := by
   rw [Sum.elim_comp_inr, Matrix.dotProduct]
   simp_rw [mul_ite, mul_one, mul_zero, ←ite_and]
@@ -117,12 +148,11 @@ theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι) (x : ι →
       | inl c =>
         obtain ⟨cₜ, cₙ, cₐ⟩ := c
         rw [Sum.elim_inl, Sum.elim_inl, Pi.add_apply]
-        convert_to (1 : C) + (-1) = 0 using 2
-        · exact I.LPrelaxation_top_left  cₜ cₙ cₐ x
-        · exact I.LPrelaxation_top_right cₜ cₙ cₐ x
-        exact add_neg_self 1
+        convert @add_neg_self C _ 1
+        · exact I.LPrelaxation_solutionVCSPtoLP_top_left  cₜ cₙ cₐ x
+        · exact I.LPrelaxation_solutionVCSPtoLP_top_right cₜ cₙ cₐ x -- missing `x (cₜ.fst.app cₙ) = cₐ`
       | inr cᵢ =>
         rw [Sum.elim_inr, Sum.elim_inr]
-        exact I.LPrelaxation_bottom_right cᵢ x
+        exact I.LPrelaxation_solutionVCSPtoLP_bottom_right cᵢ x
     · exact I.solutionVCSPtoLP_nneg x
   · exact I.solutionVCSPtoLP_cost x
