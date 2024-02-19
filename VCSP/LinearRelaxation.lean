@@ -63,10 +63,12 @@ abbrev ValuedCSP.Instance.solutionVCSPtoLP (I : Γ.Instance ι) (x : ι → D) :
 
 lemma ValuedCSP.Instance.solutionVCSPtoLP_nneg (I : Γ.Instance ι) (x : ι → D) :
     0 ≤ I.solutionVCSPtoLP x := by
-  sorry
+  unfold Pi.hasLe
+  aesop
 
 lemma ValuedCSP.Instance.solutionVCSPtoLP_cost (I : Γ.Instance ι) (x : ι → D) :
     I.LPrelaxation.c ⬝ᵥ I.solutionVCSPtoLP x = I.evalSolution x := by
+  simp [LPrelaxation, solutionVCSPtoLP, evalSolution, Matrix.dotProduct] -- TODO refactor
   sorry
 
 lemma ValuedCSP.Instance.LPrelaxation_top_left (I : Γ.Instance ι)
@@ -96,9 +98,7 @@ lemma ValuedCSP.Instance.LPrelaxation_top_right (I : Γ.Instance ι)
 
 lemma ValuedCSP.Instance.LPrelaxation_bottom_right (I : Γ.Instance ι) (cᵢ : ι) (x : ι → D) :
     (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inr) = 1 := by
-  unfold ValuedCSP.Instance.solutionVCSPtoLP
-  simp only [Sum.elim_comp_inr]
-  rw [Matrix.dotProduct]
+  rw [Sum.elim_comp_inr, Matrix.dotProduct]
   simp_rw [mul_ite, mul_one, mul_zero, ←ite_and]
   rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
   use (cᵢ, x cᵢ)
