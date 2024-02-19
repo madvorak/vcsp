@@ -66,7 +66,7 @@ theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι) (x : ι →
     I.LPrelaxation.Reaches (I.evalSolution x) := by
   use I.solutionVCSPtoLP x
   constructor
-  · simp [CanonicalLP.IsSolution, ValuedCSP.Instance.LPrelaxation, ValuedCSP.Instance.solutionVCSPtoLP]
+  · simp only [CanonicalLP.IsSolution, ValuedCSP.Instance.LPrelaxation]
     constructor
     · ext j
       rw [← Matrix.fromRows_fromColumn_eq_fromBlocks]
@@ -80,7 +80,6 @@ theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι) (x : ι →
         sorry
       | inr cᵢ =>
         rw [Sum.elim_inr, Sum.elim_inr]
-        rw [Matrix.mulVec]
         exact I.LPrelaxation_iota cᵢ x
     · sorry
   · sorry
