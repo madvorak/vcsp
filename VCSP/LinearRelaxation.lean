@@ -158,7 +158,7 @@ example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
     S.sum f := by
   sorry
 
-example (α : Type) [Fintype α] (β : Π t : α, Type) [Π t : α, Fintype (β t)] [Π t : α, DecidableEq (β t)]
+example (α : Type) [Fintype α] (β : α → Type) [Π t : α, Fintype (β t)] [Π t : α, DecidableEq (β t)]
     (f : α → ℚ) (p : (Π t : α, β t)) :
     (Finset.univ.filter (fun (x : Σ t : α, β t) => p x.fst = x.snd)).sum
       (fun (x : Σ t : α, β t) => f x.fst) =
