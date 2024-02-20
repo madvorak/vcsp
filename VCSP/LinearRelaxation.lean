@@ -156,14 +156,21 @@ example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
     (Finset.univ.filter (fun (x : Σ n : S, Fin n) => p x.fst.val = x.snd)).sum
       (fun (x : Σ n : S, Fin n) => f x.fst.val) =
     S.sum f := by
-  sorry
-
-example (α : Type) [Fintype α] (β : α → Type) [Π t : α, Fintype (β t)] [Π t : α, DecidableEq (β t)]
-    (f : α → ℚ) (p : (Π t : α, β t)) :
-    (Finset.univ.filter (fun (x : Σ t : α, β t) => p x.fst = x.snd)).sum
-      (fun (x : Σ t : α, β t) => f x.fst) =
-    Finset.univ.sum f := by
-  sorry
+  induction S using Finset.induction_on with
+  | empty => rfl
+  | @insert a s ha ih =>
+    rw [Finset.sum_insert ha, ←ih]
+    clear ih
+    show
+      (Finset.univ.filter (fun (x : (n : { x // x ∈ insert a s }) × Fin n.val) => p x.fst.val = x.snd)).sum (fun x => f x.fst.val) =
+      f a + (Finset.univ.filter (fun (x : (n : { x // x ∈ s }) × Fin n.val) => p x.fst.val = x.snd)).sum (fun x => f x.fst.val)
+    --simp_rw [Finset.mem_insert]
+    convert_to
+      (Finset.univ.filter (fun (x : (n : { x // x = a ∨ x ∈ s }) × Fin n.val) => p x.fst.val = x.snd)).sum (fun x => f x.fst.val) =
+      f a +   (Finset.univ.filter (fun (x : (n : { x // x ∈ s }) × Fin n.val) => p x.fst.val = x.snd)).sum (fun x => f x.fst.val)
+        using 3
+    · simp
+    repeat sorry
 
 lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
