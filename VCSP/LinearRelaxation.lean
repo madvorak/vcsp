@@ -137,9 +137,33 @@ example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
   convert_to
     (S.attach.map ⟨bije.invFun, bije.right_inv.injective⟩).sum (fun x => f x.val.fst) =
     S.attach.sum (fun x => f x.val)
-  · sorry -- does not work: `apply Finset.sum_congr`
+  · convert_to
+      (Finset.univ.filter (fun (x : Σ n : S, Fin n) => p x.fst.val = x.snd)).sum
+        (fun (x : Σ n : S, Fin n) => f x.fst.val) =
+      S.attach.sum (fun x : { n : ℕ // n ∈ S } => f x.val)
+    · simp
+    sorry -- does not work: `apply Finset.sum_congr`
   · rw [Finset.sum_attach]
   simp
+
+example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
+    (Finset.univ.filter (fun (x : Σ n : S, Fin n) => p x.fst.val = x.snd)).sum
+      (fun (x : Σ n : S, Fin n) => f x.fst.val) =
+    S.attach.sum (fun x : { n : ℕ // n ∈ S } => f x.val) := by
+  sorry
+
+example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
+    (Finset.univ.filter (fun (x : Σ n : S, Fin n) => p x.fst.val = x.snd)).sum
+      (fun (x : Σ n : S, Fin n) => f x.fst.val) =
+    S.sum f := by
+  sorry
+
+example (α : Type) [Fintype α] (β : Π t : α, Type) [Π t : α, Fintype (β t)] [Π t : α, DecidableEq (β t)]
+    (f : α → ℚ) (p : (Π t : α, β t)) :
+    (Finset.univ.filter (fun (x : Σ t : α, β t) => p x.fst = x.snd)).sum
+      (fun (x : Σ t : α, β t) => f x.fst) =
+    Finset.univ.sum f := by
+  sorry
 
 lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
