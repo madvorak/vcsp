@@ -14,6 +14,11 @@ lemma Matrix.fromBlocks_mulVec_sumType {l m n o R : Type*} [Semiring R]
   rw [← Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulVec,
     Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
 
+-- TODO ask
+lemma Finset.filter_univ_eq_image {α : Type*} [Fintype α] [DecidableEq α] {p : α → Prop} [DecidablePred p] :
+    Finset.univ.filter p = (Finset.univ : Finset { a : α // p a }).image Subtype.val := by
+  aesop
+
 lemma neg_finset_univ_sum {α R : Type} [Fintype α] [Ring R] (f : α → R) :
     - Finset.univ.sum f = Finset.univ.sum (-f) := by
   simp only [Pi.neg_apply, Finset.sum_neg_distrib]
@@ -118,59 +123,20 @@ example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
   -- does not work: `rw [Finset.sum_sigma]`
   sorry
 
-example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
-    Finset.univ.sum
-      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) =>
-        if p n = v then f n else 0) =
-    S.sum f := by
-  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
-  show
-    (Finset.univ.filter (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) => p n = v)).sum
-      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) => f n) =
-    S.sum f
-  let bije : Finset.univ.filter (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) => p n = v) ≃ S
-  · use (fun ⟨⟨x, _⟩, _⟩ => ⟨x, by aesop⟩)
-    use (fun ⟨n, hn⟩ => ⟨⟨⟨n, hn⟩, p n⟩, by aesop⟩)
-    all_goals
-    · intro
-      aesop
-  convert_to
-    (S.attach.map ⟨bije.invFun, bije.right_inv.injective⟩).sum (fun x => f x.val.fst) =
-    S.attach.sum (fun x => f x.val)
-  · convert_to
-      (Finset.univ.filter (fun (x : Σ n : S, Fin n) => p x.fst.val = x.snd)).sum
-        (fun (x : Σ n : S, Fin n) => f x.fst.val) =
-      S.attach.sum (fun x : { n : ℕ // n ∈ S } => f x.val)
-    · simp
-    sorry -- does not work: `apply Finset.sum_congr`
-  · rw [Finset.sum_attach]
-  simp
-
-example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
-    (Finset.univ.filter (fun (x : Σ n : S, Fin n) => p x.fst.val = x.snd)).sum
-      (fun (x : Σ n : S, Fin n) => f x.fst.val) =
-    S.attach.sum (fun x : { n : ℕ // n ∈ S } => f x.val) := by
-  sorry
-
+-- Emilie (Shad Amethyst):
 example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
     (Finset.univ.filter (fun (x : Σ n : S, Fin n) => p x.fst.val = x.snd)).sum
       (fun (x : Σ n : S, Fin n) => f x.fst.val) =
     S.sum f := by
-  induction S using Finset.induction_on with
-  | empty => rfl
-  | @insert a s ha ih =>
-    rw [Finset.sum_insert ha, ←ih]
-    clear ih
-    show
-      (Finset.univ.filter (fun (x : (n : { x // x ∈ insert a s }) × Fin n.val) => p x.fst.val = x.snd)).sum (fun x => f x.fst.val) =
-      f a + (Finset.univ.filter (fun (x : (n : { x // x ∈ s }) × Fin n.val) => p x.fst.val = x.snd)).sum (fun x => f x.fst.val)
-    --simp_rw [Finset.mem_insert]
-    convert_to
-      (Finset.univ.filter (fun (x : (n : { x // x = a ∨ x ∈ s }) × Fin n.val) => p x.fst.val = x.snd)).sum (fun x => f x.fst.val) =
-      f a +   (Finset.univ.filter (fun (x : (n : { x // x ∈ s }) × Fin n.val) => p x.fst.val = x.snd)).sum (fun x => f x.fst.val)
-        using 3
-    · simp
-    repeat sorry
+  let eqv : { s : (Σ n : S, Fin n) // p s.fst.val = s.snd } ≃ S := {
+    toFun := fun ⟨⟨n, _⟩, _⟩ => n
+    invFun := fun n => ⟨⟨n, p n.val⟩, rfl⟩
+    left_inv := fun _ => by aesop
+    right_inv := fun _ => by aesop
+  }
+  rw [Finset.filter_univ_eq_image, Finset.sum_image (fun _ _ _ _ equ => Subtype.coe_injective equ),
+     ←Finset.sum_attach S, ←Finset.univ_eq_attach]
+  apply Finset.sum_equiv eqv <;> aesop
 
 lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
