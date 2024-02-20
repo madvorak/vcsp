@@ -61,10 +61,6 @@ section not_VCSP_specific
 
 variable {α β γ : Type*}
 
-lemma univ_val_map_2x2 {f : (Fin 2 → α) → β} {a b c d : α} :
-    Finset.univ.val.map (fun i => f (![![a, b], ![c, d]] i)) = [f ![a, b], f ![c, d]] :=
-  rfl
-
 lemma column_of_2x2_left (a b c d : α) :
     (fun i => ![![a, b], ![c, d]] i 0) = (fun i => ![a, c] i) :=
   List.ofFn_inj.mp rfl
@@ -73,9 +69,13 @@ lemma column_of_2x2_right (a b c d : α) :
     (fun i => ![![a, b], ![c, d]] i 1) = (fun i => ![b, d] i) :=
   List.ofFn_inj.mp rfl
 
-lemma Multiset.sum_ofList_twice [AddCommMonoid α] (x : α) :
-    Multiset.sum ↑[x, x] = 2 • x := by
-  simp [two_nsmul]
+lemma univ_val_map_2x2 {f : (Fin 2 → α) → β} {a b c d : α} :
+    Finset.univ.val.map (fun i => f (![![a, b], ![c, d]] i)) = [f ![a, b], f ![c, d]] :=
+  rfl
+
+lemma univ_sum_2x2 {f : (Fin 2 → α) → β} [AddCommMonoid β] {a b c d : α} :
+    Finset.univ.sum (fun i => f (![![a, b], ![c, d]] i)) = f ![a, b] + f ![c, d] :=
+  Fin.sum_univ_two (fun i => f (![![a, b], ![c, d]] i))
 
 lemma Multiset.summap_singleton [AddCommMonoid β] (a : α) (f : α → β) :
     Multiset.summap {a} f = f a := by
@@ -265,13 +265,13 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP
     intro x
     specialize ihf x
     specialize ihg x
-    rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul] at ihf ihg ⊢
+    rw [←Multiset.summap_nsmul, ←Finset.sum_nsmul] at ihf ihg ⊢
     convert add_le_add ihf ihg
     · simp
     · simp [Finset.sum_add_distrib]
   | @minimize n f _ ih =>
     intro x
-    rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul]
+    rw [←Multiset.summap_nsmul, ←Finset.sum_nsmul]
     simp_rw [←Finset.nsmul_inf']
     let z :=
       fun i : Fin m =>
@@ -279,7 +279,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP
           (fun d : D => ω.size • f (Matrix.vecCons d (x i)))
         ).choose
     specialize ih (fun i j => Matrix.vecCons (z i) (x i) j)
-    rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul] at ih
+    rw [←Multiset.summap_nsmul, ←Finset.sum_nsmul] at ih
     convert_to
       (ω.tt x).summap (fun yᵢ : Fin n → D =>
         Finset.univ.inf' Finset.univ_nonempty (fun zᵢ : D => m • f (Matrix.vecCons zᵢ yᵢ))) ≤
@@ -349,7 +349,7 @@ lemma Function.HasMaxCutProperty.forbids_commutativeFractionalPolymorphism [Orde
   intro contr
   rcases mcf with ⟨a, b, hab, mcfab⟩
   specialize contr ![![a, b], ![b, a]]
-  rw [univ_val_map_2x2, ←mcfab.left, Multiset.sum_ofList_twice] at contr
+  rw [univ_sum_2x2, ←mcfab.left, ←two_nsmul] at contr
   have sharp :
     2 • ((ω.tt ![![a, b], ![b, a]]).map (fun _ => f ![a, b])).sum <
     2 • ((ω.tt ![![a, b], ![b, a]]).map (fun r => f r)).sum

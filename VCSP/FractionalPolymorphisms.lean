@@ -39,7 +39,7 @@ variable {C : Type*} [OrderedAddCommMonoid C]
 /-- Cost function admits given fractional operation, i.e., `ω` improves `f` in the `≤` sense. -/
 def Function.AdmitsFractional {n : ℕ} (f : (Fin n → D) → C) (ω : FractionalOperation D m) : Prop :=
   ∀ x : (Fin m → (Fin n → D)),
-    m • ((ω.tt x).map f).sum ≤ ω.size • (Finset.univ.val.map (fun i => f (x i))).sum
+    m • ((ω.tt x).map f).sum ≤ ω.size • Finset.univ.sum (fun i => f (x i))
 
 /-- Fractional operation is a fractional polymorphism for given VCSP template. -/
 def FractionalOperation.IsFractionalPolymorphismFor (ω : FractionalOperation D m) (Γ : ValuedCSP D C) : Prop :=

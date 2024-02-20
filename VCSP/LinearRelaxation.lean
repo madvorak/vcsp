@@ -82,7 +82,7 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_cost (I : Γ.Instance ι) (x : ι → 
     Finset.univ.sum
       (fun (⟨⟨t, _⟩, v⟩ : Σ t : I, (Fin t.fst.n → D)) =>
         t.f v * if (∀ i : Fin t.n, v i = x (t.app i)) then 1 else 0) =
-    I.summap (fun t => t.f (x ∘ t.app))
+    I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
   sorry
 
 
