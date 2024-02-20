@@ -14,11 +14,6 @@ lemma Matrix.fromBlocks_mulVec_sumType {l m n o R : Type*} [Semiring R]
   rw [← Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulVec,
     Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
 
-lemma sumType_zeroFun_dotProduct {α β R : Type} [Fintype α] [Fintype β] [Semiring R]
-    (u v : α → R) (v' : β → R) :
-    Sum.elim u 0 ⬝ᵥ Sum.elim v v' = u ⬝ᵥ v := by
-  rw [Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct, add_zero]
-
 lemma neg_finset_univ_sum {α R : Type} [Fintype α] [Ring R] (f : α → R) :
     - Finset.univ.sum f = Finset.univ.sum (-f) := by
   simp only [Pi.neg_apply, Finset.sum_neg_distrib]

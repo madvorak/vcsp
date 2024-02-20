@@ -69,23 +69,13 @@ lemma column_of_2x2_right (a b c d : α) :
     (fun i => ![![a, b], ![c, d]] i 1) = (fun i => ![b, d] i) :=
   List.ofFn_inj.mp rfl
 
-lemma univ_val_map_2x2 {f : (Fin 2 → α) → β} {a b c d : α} :
-    Finset.univ.val.map (fun i => f (![![a, b], ![c, d]] i)) = [f ![a, b], f ![c, d]] :=
-  rfl
-
 lemma univ_sum_2x2 {f : (Fin 2 → α) → β} [AddCommMonoid β] {a b c d : α} :
     Finset.univ.sum (fun i => f (![![a, b], ![c, d]] i)) = f ![a, b] + f ![c, d] :=
   Fin.sum_univ_two (fun i => f (![![a, b], ![c, d]] i))
 
-lemma Multiset.summap_singleton [AddCommMonoid β] (a : α) (f : α → β) :
-    Multiset.summap {a} f = f a := by
-  simp
-
 lemma Multiset.summap_nsmul [AddCommMonoid β] (s : Multiset α) (f : α → β) (n : ℕ) :
-    s.summap (fun a => n • f a) = n • s.summap f := by
-  induction n with
-  | zero => simp
-  | succ n ih => simp [succ_nsmul, Multiset.sum_map_add, ih]
+    s.summap (fun a => n • f a) = n • s.summap f :=
+  Multiset.sum_map_nsmul
 
 lemma Multiset.summap_summap_swap [AddCommMonoid γ]
     (A : Multiset α) (B : Multiset β) (f : α → β → γ) :
@@ -101,6 +91,8 @@ lemma Multiset.summap_le_summap [OrderedAddCommMonoid β] {s : Multiset α}
 lemma Finset.nsmul_inf' [LinearOrderedAddCommMonoid β] {s : Finset α}
     (hs : s.Nonempty) (f : α → β) (n : ℕ) :
     s.inf' hs (fun a => n • f a) = n • s.inf' hs f := by
+  -- TODO delete after Mathlib bump
+  -- now present in `Mathlib.Data.Finset.Lattice`
   if nz : n = 0 then
     rw [nz]
     simp_rw [zero_smul]
@@ -408,26 +400,3 @@ theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFractionalPolymorphism
   exact frpol.expressivePowerVCSP ⟨2, f⟩ fin
 
 end max_cut
-
-example [Nonempty D] [Fintype D] (ζ : Type) [Nonempty ζ] [Fintype ζ]
-    (A : Multiset (Σ α : Type, Σ _ : Fintype α, D × α × ζ → ℚ)) :
-  ∃ β : Type, ∃ _ : Fintype β, ∃ B : Multiset (D × β → ℚ), ∀ d : D,
-    Finset.univ.inf' Finset.univ_nonempty (fun z : ζ =>
-      A.summap (fun ⟨α, _, f⟩ => Finset.univ.inf' sorry (fun a : α => f (d, a, z)))) =
-    Finset.univ.inf' sorry (fun b : β => B.summap (· (d, b))) := by
-  classical
-  use (A.map Sigma.fst).toList.TProd id × ζ, sorry
-  use A.attach.map (fun t x => t.val.snd.snd ⟨x.fst, x.snd.fst.elim (by aesop), x.snd.snd⟩)
-  intro d
-  apply le_antisymm
-  · rw [Finset.inf'_le_iff]
-    sorry
-  · obtain ⟨i, -, hi⟩ := Finset.exists_mem_eq_inf' Finset.univ_nonempty (fun z : ζ =>
-        A.summap (fun ⟨α, _, f⟩ => Finset.univ.inf' sorry (fun a : α => f (d, a, z))))
-    rw [hi, Finset.inf'_le_iff, Prod.exists, exists_comm]
-    use i
-    -- now (1) unfold `summap` (2) compose `map_map` (3) fold `summap` (4) `summap_le_summap`
-    -- then the inner `Finset.inf'` will reveal what `a : (A.map Sigma.fst).toList.TProd id` works
-    -- through `Finset.inf'_le_iff` for concrete `f`
-    -- finally, the left conjunct is trivial and the right conjunct is by reflexivity
-    sorry
