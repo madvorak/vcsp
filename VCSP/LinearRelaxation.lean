@@ -80,6 +80,66 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_cost (I : Γ.Instance ι) (x : ι → 
     I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
   sorry
 
+example (S : Multiset ℕ) (f : ℕ → ℚ) (P : (Σ n : ℕ, Fin (S.count n) × Fin n) → Prop)
+    (hP : ∀ n, ∀ m, ∃! v, P ⟨n, m, v⟩) [DecidablePred P] :
+    Finset.univ.sum
+      (fun (⟨⟨n, m⟩, v⟩ : Σ n : S, Fin n) =>
+        f n * if P ⟨n, m, v⟩ then 1 else 0) =
+    S.summap f := by
+  sorry
+
+example (S : Multiset ℕ) (f : ℕ → ℚ) (P : (Σ n : ℕ, Fin n) → Prop)
+    (hP : ∀ n, ∃! v, P ⟨n, v⟩) [DecidablePred P] :
+    Finset.univ.sum
+      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) =>
+        f n * if P ⟨n, v⟩ then 1 else 0) =
+    S.summap f := by
+  sorry
+
+example (S : Multiset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
+    Finset.univ.sum
+      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) =>
+        f n * if p n = v then 1 else 0) =
+    S.summap f := by
+  sorry
+
+example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
+    Finset.univ.sum
+      (fun (⟨⟨n, (_ : n ∈ S)⟩, v⟩ : Σ n : S, Fin n) =>
+        f n * if p n = v then 1 else 0) =
+    S.sum f := by
+  sorry
+
+example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
+    Finset.univ.sum
+      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) =>
+        if p n = v then f n else 0) =
+    S.sum f := by
+  -- does not work: `rw [Finset.sum_sigma]`
+  sorry
+
+example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
+    Finset.univ.sum
+      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) =>
+        if p n = v then f n else 0) =
+    S.sum f := by
+  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
+  show
+    (Finset.univ.filter (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) => p n = v)).sum
+      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) => f n) =
+    S.sum f
+  let bije : Finset.univ.filter (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) => p n = v) ≃ S
+  · use (fun ⟨⟨x, _⟩, _⟩ => ⟨x, by aesop⟩)
+    use (fun ⟨n, hn⟩ => ⟨⟨⟨n, hn⟩, p n⟩, by aesop⟩)
+    all_goals
+    · intro
+      aesop
+  convert_to
+    (S.attach.map ⟨bije.invFun, bije.right_inv.injective⟩).sum (fun x => f x.val.fst) =
+    S.attach.sum (fun x => f x.val)
+  · sorry -- does not work: `apply Finset.sum_congr`
+  · rw [Finset.sum_attach]
+  simp
 
 lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
