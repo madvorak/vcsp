@@ -22,14 +22,14 @@ lemma Finset.filter_univ_eq_image {α : Type*} [Fintype α] [DecidableEq α] {p 
 lemma Multiset.summap_to_sumFinset {α β : Type*} [DecidableEq α] [OrderedAddCommMonoid β]
     (S : Multiset α) (f : α → β) :
     S.summap f = Finset.univ.sum (fun (a : S) => f a.fst) := by
-  sorry
+  simp [Multiset.summap, Finset.sum]
 
 lemma neg_finset_univ_sum {α R : Type} [Fintype α] [Ring R] (f : α → R) :
-    - Finset.univ.sum f = Finset.univ.sum (-f) := by
+    -(Finset.univ.sum f) = Finset.univ.sum (-f) := by
   simp only [Pi.neg_apply, Finset.sum_neg_distrib]
 
 lemma indicator_of_neg {α R : Type} [Fintype α] [Ring R] (P : α → Prop) [DecidablePred P] :
-    - (fun x => if P x then -1 else (0 : R)) = (fun x => if P x then 1 else 0) := by
+    -(fun x => if P x then -1 else (0 : R)) = (fun x => if P x then 1 else 0) := by
   aesop
 
 
@@ -108,10 +108,6 @@ example (S : Multiset ℕ) (f : ℕ → ℚ) (P : (Σ n : ℕ, Fin n) → Prop)
     S.summap f := by
   sorry
 
-lemma Multiset.sum_attach {β : Type} {α : Type} [AddCommMonoid β] (S : Multiset α) (f : α → β) :
-    S.attach.summap (fun x => f x.val) = S.summap f :=
-  sorry
-
 -- Based on a proof by Emilie (Shad Amethyst):
 example (S : Multiset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
     Finset.univ.sum
@@ -125,7 +121,7 @@ example (S : Multiset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
         if p x.fst.fst = x.snd then f x.fst.fst else 0) =
     S.summap f
   rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
-  let eqv : { s : (Σ n : S, Fin n) // p s.fst.fst = s.snd } ≃ { s : S.ToType // s ∈ Finset.univ } :=
+  let eqv : { s : (Σ n : S, Fin n) // p s.fst.fst = s.snd } ≃ { s : S // s ∈ Finset.univ } :=
   {
     toFun := fun ⟨⟨t, _⟩, _⟩ => ⟨t, Finset.mem_univ t⟩
     invFun := fun ⟨t, _⟩ => ⟨⟨t, p t.fst⟩, rfl⟩
