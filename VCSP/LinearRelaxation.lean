@@ -19,6 +19,11 @@ lemma Finset.filter_univ_eq_image {α : Type*} [Fintype α] [DecidableEq α] {p 
     Finset.univ.filter p = (Finset.univ : Finset { a : α // p a }).image Subtype.val := by
   aesop
 
+lemma Multiset.summap_to_sumFinset {α β : Type*} [DecidableEq α] [OrderedAddCommMonoid β]
+    (S : Multiset α) (f : α → β) :
+    S.summap f = Finset.univ.sum (fun (a : S) => f a.fst) := by
+  sorry
+
 lemma neg_finset_univ_sum {α R : Type} [Fintype α] [Ring R] (f : α → R) :
     - Finset.univ.sum f = Finset.univ.sum (-f) := by
   simp only [Pi.neg_apply, Finset.sum_neg_distrib]
@@ -83,6 +88,8 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_cost (I : Γ.Instance ι) (x : ι → 
       (fun (⟨⟨t, _⟩, v⟩ : Σ t : I, (Fin t.fst.n → D)) =>
         t.f v * if (∀ i : Fin t.n, v i = x (t.app i)) then 1 else 0) =
     I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
+  simp_rw [mul_ite, mul_one, mul_zero]
+  -- rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
   sorry
 
 example (S : Multiset ℕ) (f : ℕ → ℚ) (P : (Σ n : ℕ, Fin (S.count n) × Fin n) → Prop)
@@ -101,41 +108,34 @@ example (S : Multiset ℕ) (f : ℕ → ℚ) (P : (Σ n : ℕ, Fin n) → Prop)
     S.summap f := by
   sorry
 
+lemma Multiset.sum_attach {β : Type} {α : Type} [AddCommMonoid β] (S : Multiset α) (f : α → β) :
+    S.attach.summap (fun x => f x.val) = S.summap f :=
+  sorry
+
+-- Based on a proof by Emilie (Shad Amethyst):
 example (S : Multiset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
     Finset.univ.sum
       (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) =>
         f n * if p n = v then 1 else 0) =
     S.summap f := by
-  sorry
-
-example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
+  simp_rw [mul_ite, mul_one, mul_zero]
+  show
     Finset.univ.sum
-      (fun (⟨⟨n, (_ : n ∈ S)⟩, v⟩ : Σ n : S, Fin n) =>
-        f n * if p n = v then 1 else 0) =
-    S.sum f := by
-  sorry
-
-example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
-    Finset.univ.sum
-      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) =>
-        if p n = v then f n else 0) =
-    S.sum f := by
-  -- does not work: `rw [Finset.sum_sigma]`
-  sorry
-
--- Emilie (Shad Amethyst):
-example (S : Finset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
-    (Finset.univ.filter (fun (x : Σ n : S, Fin n) => p x.fst.val = x.snd)).sum
-      (fun (x : Σ n : S, Fin n) => f x.fst.val) =
-    S.sum f := by
-  let eqv : { s : (Σ n : S, Fin n) // p s.fst.val = s.snd } ≃ S := {
-    toFun := fun ⟨⟨n, _⟩, _⟩ => n
-    invFun := fun n => ⟨⟨n, p n.val⟩, rfl⟩
+      (fun (x : Σ n : S, Fin n) =>
+        if p x.fst.fst = x.snd then f x.fst.fst else 0) =
+    S.summap f
+  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
+  let eqv : { s : (Σ n : S, Fin n) // p s.fst.fst = s.snd } ≃ { s : S.ToType // s ∈ Finset.univ } :=
+  {
+    toFun := fun ⟨⟨t, _⟩, _⟩ => ⟨t, Finset.mem_univ t⟩
+    invFun := fun ⟨t, _⟩ => ⟨⟨t, p t.fst⟩, rfl⟩
     left_inv := fun _ => by aesop
     right_inv := fun _ => by aesop
   }
+  classical
   rw [Finset.filter_univ_eq_image, Finset.sum_image (fun _ _ _ _ equ => Subtype.coe_injective equ),
-     ←Finset.sum_attach S, ←Finset.univ_eq_attach]
+      Multiset.summap_to_sumFinset]
+  nth_rewrite 2 [← Finset.sum_attach]
   apply Finset.sum_equiv eqv <;> aesop
 
 lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.Instance ι)
