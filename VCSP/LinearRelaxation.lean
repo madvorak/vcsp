@@ -14,7 +14,7 @@ lemma Matrix.fromBlocks_mulVec_sumType {l m n o R : Type*} [Semiring R]
   rw [← Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulVec,
     Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
 
--- TODO ask
+-- Emilie (Shad Amethyst) stated this lemma:
 lemma Finset.filter_univ_eq_image {α : Type*} [Fintype α] [DecidableEq α] {p : α → Prop} [DecidablePred p] :
     Finset.univ.filter p = (Finset.univ : Finset { a : α // p a }).image Subtype.val := by
   aesop
@@ -32,6 +32,9 @@ lemma indicator_of_neg {α R : Type} [Fintype α] [Ring R] (P : α → Prop) [De
     -(fun x => if P x then -1 else (0 : R)) = (fun x => if P x then 1 else 0) := by
   aesop
 
+-- Nonterminal `aesop` (strongly discouraged to use)
+macro (name := aesopnt) "aesopnt" : tactic =>
+  `(tactic| aesop (config := {warnOnNonterminal := false}))
 
 variable
   {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
@@ -85,54 +88,27 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_cost (I : Γ.Instance ι) (x : ι → 
         ValuedCSP.Instance.evalSolution, ValuedCSP.Term.evalSolution, Matrix.dotProduct]
   show
     Finset.univ.sum
-      (fun (⟨⟨t, _⟩, v⟩ : Σ t : I, (Fin t.fst.n → D)) =>
+      (fun (⟨⟨t, _⟩, v⟩ : Σ _t : I, (Fin _t.fst.n → D)) =>
         t.f v * if (∀ i : Fin t.n, v i = x (t.app i)) then 1 else 0) =
     I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
   simp_rw [mul_ite, mul_one, mul_zero]
-  -- rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
-  sorry
-
-example (S : Multiset ℕ) (f : ℕ → ℚ) (P : (Σ n : ℕ, Fin (S.count n) × Fin n) → Prop)
-    (hP : ∀ n, ∀ m, ∃! v, P ⟨n, m, v⟩) [DecidablePred P] :
-    Finset.univ.sum
-      (fun (⟨⟨n, m⟩, v⟩ : Σ n : S, Fin n) =>
-        f n * if P ⟨n, m, v⟩ then 1 else 0) =
-    S.summap f := by
-  sorry
-
-example (S : Multiset ℕ) (f : ℕ → ℚ) (P : (Σ n : ℕ, Fin n) → Prop)
-    (hP : ∀ n, ∃! v, P ⟨n, v⟩) [DecidablePred P] :
-    Finset.univ.sum
-      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) =>
-        f n * if P ⟨n, v⟩ then 1 else 0) =
-    S.summap f := by
-  sorry
-
--- Based on a proof by Emilie (Shad Amethyst):
-example (S : Multiset ℕ) (f : ℕ → ℚ) (p : (Π n : ℕ, Fin n)) :
-    Finset.univ.sum
-      (fun (⟨⟨n, _⟩, v⟩ : Σ n : S, Fin n) =>
-        f n * if p n = v then 1 else 0) =
-    S.summap f := by
-  simp_rw [mul_ite, mul_one, mul_zero]
   show
-    Finset.univ.sum
-      (fun (x : Σ n : S, Fin n) =>
-        if p x.fst.fst = x.snd then f x.fst.fst else 0) =
-    S.summap f
-  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
-  let eqv : { s : (Σ n : S, Fin n) // p s.fst.fst = s.snd } ≃ { s : S // s ∈ Finset.univ } :=
-  {
-    toFun := fun ⟨⟨t, _⟩, _⟩ => ⟨t, Finset.mem_univ t⟩
-    invFun := fun ⟨t, _⟩ => ⟨⟨t, p t.fst⟩, rfl⟩
-    left_inv := fun _ => by aesop
-    right_inv := fun _ => by aesop
-  }
-  classical
-  rw [Finset.filter_univ_eq_image, Finset.sum_image (fun _ _ _ _ equ => Subtype.coe_injective equ),
-      Multiset.summap_to_sumFinset]
-  nth_rewrite 2 [← Finset.sum_attach]
-  apply Finset.sum_equiv eqv <;> aesop
+    Finset.sum Finset.univ (fun (e : Σ t : I, (Fin t.fst.n → D)) =>
+      if ∀ (i : Fin e.fst.fst.n), e.snd i = x (e.fst.fst.app i) then e.fst.fst.f e.snd else 0) =
+    I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
+  -- The rest of this proof is based on a proof by Emilie (Shad Amethyst):
+  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.filter_univ_eq_image,
+      Finset.sum_image (fun _ _ _ _ equ => Subtype.coe_injective equ), Multiset.summap_to_sumFinset]
+  apply Finset.sum_equiv ⟨
+      fun ⟨⟨⟨t, m⟩, _⟩, _⟩ => ⟨t, m, Fin.prop m⟩,
+      fun t => ⟨⟨t, fun i => x (t.fst.app i)⟩, fun _ => rfl⟩,
+      fun _ => by aesopnt; ext i; exact (property i).symm,
+      fun _ => by aesop⟩
+  · aesop
+  · aesopnt
+    congr
+    ext
+    simp_all
 
 lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
