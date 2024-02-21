@@ -6,7 +6,8 @@ My long-term goal is to formalize the dichotomy for fixed-template finite-valued
 
 ## Results
 
-[If a VCSP template can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/61cacff2ba620f00657091a21fddbd4495a0c746/VCSP/Hardness.lean#L335)
+* [If a VCSP template can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/61cacff2ba620f00657091a21fddbd4495a0c746/VCSP/Hardness.lean#L335)
+* [Linear relaxation of a finite-valued instance is a valid relaxation with respect to the VCSP.](https://github.com/madvorak/vcsp/blob/4209830a88cce2c0518b942380c43e8057783de5/VCSP/LinearRelaxation.lean#L260)
 
 ## Mathlib contributions
 
