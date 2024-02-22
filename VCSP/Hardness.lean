@@ -240,7 +240,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePowerVCSP
     ω.IsFractionalPolymorphismFor Γ.expressivePower := by
   intro f hf
   rw [ValuedCSP.expressivePower, Set.mem_setOf_eq] at hf
-  rcases hf with ⟨n, μ, I, -, -, rfl⟩
+  obtain ⟨n, μ, I, -, -, rfl⟩ := hf
   intro x
   apply frpo.evalMinimize_le_evalMinimize
 
@@ -334,49 +334,49 @@ def ValuedCSP.CanExpressMaxCut [Nonempty D] [Fintype D] [LinearOrderedAddCommMon
     {Γ : ValuedCSP D C} : Prop :=
   ∃ f : (Fin 2 → D) → C, ⟨2, f⟩ ∈ Γ.expressivePower ∧ f.HasMaxCutProperty
 
+private lemma Function.HasMaxCutPropertyAt.rows_lt [OrderedCancelAddCommMonoid C]
+    {f : (Fin 2 → D) → C} {a b : D} (mcf : f.HasMaxCutPropertyAt a b) (hab : a ≠ b)
+    {ω : FractionalOperation D 2} (symmega : ω.IsSymmetric)
+    {r : Fin 2 → D} (rin : r ∈ (ω.tt ![![a, b], ![b, a]])) :
+    f ![a, b] < f r := by
+  rw [FractionalOperation.tt, Multiset.mem_map] at rin
+  rw [show r = ![r 0, r 1] from List.ofFn_inj.mp rfl]
+  apply lt_of_le_of_ne (mcf.right (r 0) (r 1)).left
+  intro equ
+  have asymm : r 0 ≠ r 1
+  · rcases (mcf.right (r 0) (r 1)).right equ with ⟨ha0, hb1⟩ | ⟨ha1, hb0⟩
+    · rw [ha0, hb1] at hab
+      exact hab
+    · rw [ha1, hb0] at hab
+      exact hab.symm
+  apply asymm
+  obtain ⟨o, in_omega, rfl⟩ := rin
+  show o (fun j => ![![a, b], ![b, a]] j 0) = o (fun j => ![![a, b], ![b, a]] j 1)
+  rw [column_of_2x2_left, column_of_2x2_right]
+  exact symmega ![a, b] ![b, a] (List.Perm.swap b a []) o in_omega
+
 lemma Function.HasMaxCutProperty.forbids_commutativeFractionalPolymorphism [OrderedCancelAddCommMonoid C]
     {f : (Fin 2 → D) → C} (mcf : f.HasMaxCutProperty)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) (symmega : ω.IsSymmetric) :
     ¬ f.AdmitsFractional ω := by
   intro contr
-  rcases mcf with ⟨a, b, hab, mcfab⟩
+  obtain ⟨a, b, hab, mcfab⟩ := mcf
   specialize contr ![![a, b], ![b, a]]
   rw [univ_sum_2x2, ←mcfab.left, ←two_nsmul] at contr
   have sharp :
     2 • ((ω.tt ![![a, b], ![b, a]]).map (fun _ => f ![a, b])).sum <
     2 • ((ω.tt ![![a, b], ![b, a]]).map (fun r => f r)).sum
-  · have rows_lt : ∀ r ∈ (ω.tt ![![a, b], ![b, a]]), f ![a, b] < f r
-    · intro r rin
-      rw [FractionalOperation.tt, Multiset.mem_map] at rin
-      rcases rin with ⟨o, in_omega, eq_r⟩
-      rw [show r = ![r 0, r 1] from List.ofFn_inj.mp rfl]
-      apply lt_of_le_of_ne (mcfab.right (r 0) (r 1)).left
-      intro equ
-      have asymm : r 0 ≠ r 1
-      · rcases (mcfab.right (r 0) (r 1)).right equ with ⟨ha0, hb1⟩ | ⟨ha1, hb0⟩
-        · rw [ha0, hb1] at hab
-          exact hab
-        · rw [ha1, hb0] at hab
-          exact hab.symm
-      apply asymm
-      rw [←eq_r]
-      show o (fun j => ![![a, b], ![b, a]] j 0) = o (fun j => ![![a, b], ![b, a]] j 1)
-      rw [column_of_2x2_left, column_of_2x2_right]
-      exact symmega ![a, b] ![b, a] (List.Perm.swap b a []) o in_omega
-    have half_sharp :
+  · have half_sharp :
       ((ω.tt ![![a, b], ![b, a]]).map (fun _ => f ![a, b])).sum <
       ((ω.tt ![![a, b], ![b, a]]).map (fun r => f r)).sum
     · apply Multiset.sum_lt_sum
       · intro r rin
-        exact le_of_lt (rows_lt r rin)
+        exact le_of_lt (mcfab.rows_lt hab symmega rin)
       · obtain ⟨g, _⟩ := valid.contains
-        use fun i => g ((Function.swap ![![a, b], ![b, a]]) i)
-        constructor
-        · simp [FractionalOperation.tt]
+        have hmem : (fun i => g ((Function.swap ![![a, b], ![b, a]]) i)) ∈ ω.tt ![![a, b], ![b, a]]
+        · simp only [FractionalOperation.tt, Multiset.mem_map]
           use g
-        · apply rows_lt
-          simp [FractionalOperation.tt]
-          use g
+        exact ⟨_, hmem, mcfab.rows_lt hab symmega hmem⟩
     rw [two_nsmul, two_nsmul]
     exact add_lt_add half_sharp half_sharp
   have impos : 2 • (ω.map (fun _ => f ![a, b])).sum < ω.size • 2 • f ![a, b]
@@ -395,7 +395,7 @@ theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFractionalPolymorphism
     {ω : FractionalOperation D 2} (valid : ω.IsValid) :
     ¬ ω.IsSymmetricFractionalPolymorphismFor Γ := by
   rintro ⟨frpol, symme⟩
-  rcases expressMC with ⟨f, fin, fmc⟩
+  obtain ⟨f, fin, fmc⟩ := expressMC
   apply fmc.forbids_commutativeFractionalPolymorphism valid symme
   exact frpol.expressivePowerVCSP ⟨2, f⟩ fin
 

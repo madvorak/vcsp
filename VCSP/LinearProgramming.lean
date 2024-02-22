@@ -100,6 +100,7 @@ theorem StandardLP.weakDuality {P : StandardLP n m K}
 
 theorem StandardLP.strongDuality {P : StandardLP n m K}
     (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
+    -- will require additional assumptions
     ∃ v : K, P.Reaches v ∧ P.dual.Reaches v :=
   sorry -- will be challenging to prove
 
