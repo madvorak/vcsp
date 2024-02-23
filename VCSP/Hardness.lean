@@ -88,6 +88,11 @@ lemma Multiset.summap_le_summap [OrderedAddCommMonoid β] {s : Multiset α}
     s.summap f ≤ s.summap g :=
   Multiset.sum_map_le_sum_map f g hfg
 
+lemma Multiset.summap_lt_summap [OrderedCancelAddCommMonoid β] {s : Multiset α}
+    (hs : s ≠ ∅) {f g : α → β} (hfg : ∀ i ∈ s, f i < g i) :
+    s.summap f < s.summap g :=
+  Multiset.sum_lt_sum_of_nonempty hs hfg
+
 lemma Finset.nsmul_inf' [LinearOrderedAddCommMonoid β] {s : Finset α}
     (hs : s.Nonempty) (f : α → β) (n : ℕ) :
     s.inf' hs (fun a => n • f a) = n • s.inf' hs f := by

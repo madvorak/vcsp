@@ -46,7 +46,7 @@ instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
   inferInstanceAs (DecidableEq (Σ t : Γ.Term ι, Fin (I.count t)))
 
 @[pp_dot]
-def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι) :
+def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
     CanonicalLP
       ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) -- variables
       ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι)     -- equalities
@@ -71,20 +71,20 @@ def ValuedCSP.Instance.LPrelaxation (I : Γ.Instance ι) :
       (fun _ => 0))
 
 @[pp_dot]
-abbrev ValuedCSP.Instance.solutionVCSPtoLP (I : Γ.Instance ι) (x : ι → D) :
+abbrev ValuedCSP.Instance.solutionVCSPtoBLP (I : Γ.Instance ι) (x : ι → D) :
     ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) → C :=
   Sum.elim
     (fun ⟨⟨t, _⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0)
     (fun ⟨i, d⟩ => if x i = d then 1 else 0)
 
-lemma ValuedCSP.Instance.solutionVCSPtoLP_nneg (I : Γ.Instance ι) (x : ι → D) :
-    0 ≤ I.solutionVCSPtoLP x := by
+lemma ValuedCSP.Instance.solutionVCSPtoBLP_nneg (I : Γ.Instance ι) (x : ι → D) :
+    0 ≤ I.solutionVCSPtoBLP x := by
   unfold Pi.hasLe
   aesop
 
-lemma ValuedCSP.Instance.solutionVCSPtoLP_cost (I : Γ.Instance ι) (x : ι → D) :
-    I.LPrelaxation.c ⬝ᵥ I.solutionVCSPtoLP x = I.evalSolution x := by
-  simp [ValuedCSP.Instance.LPrelaxation, ValuedCSP.Instance.solutionVCSPtoLP,
+lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι → D) :
+    I.RelaxBLP.c ⬝ᵥ I.solutionVCSPtoBLP x = I.evalSolution x := by
+  simp [ValuedCSP.Instance.RelaxBLP, ValuedCSP.Instance.solutionVCSPtoBLP,
         ValuedCSP.Instance.evalSolution, ValuedCSP.Term.evalSolution, Matrix.dotProduct]
   show
     Finset.univ.sum
@@ -110,7 +110,7 @@ lemma ValuedCSP.Instance.solutionVCSPtoLP_cost (I : Γ.Instance ι) (x : ι → 
     ext
     simp_all
 
-lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (hit : x (cₜ.fst.app cₙ) = cₐ) :
     (fun ⟨t, y⟩ =>
@@ -120,7 +120,7 @@ lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.I
         then 1
         else 0
       else 0
-      ) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inl) =
+      ) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inl) =
     1 := by
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   show
@@ -171,7 +171,7 @@ lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_hit (I : Γ.I
   constructor <;> aesop
 
 set_option maxHeartbeats 333333 in
-lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_miss (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (miss : x (cₜ.fst.app cₙ) ≠ cₐ) :
     (fun ⟨t, y⟩ =>
@@ -181,7 +181,7 @@ lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_miss (I : Γ.
         then 1
         else 0
       else 0
-      ) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inl) =
+      ) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inl) =
     0 := by
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   show
@@ -228,10 +228,10 @@ lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_left_of_miss (I : Γ.
   rw [Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero]
   aesop
 
-lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_right_of_hit (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (hit : x (cₜ.fst.app cₙ) = cₐ) :
-    (fun ⟨i, a⟩ => if cₜ.fst.app cₙ = i ∧ cₐ = a then -1 else 0) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inr) = -1 := by
+    (fun ⟨i, a⟩ => if cₜ.fst.app cₙ = i ∧ cₐ = a then -1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inr) = -1 := by
   rw [Sum.elim_comp_inr, Matrix.dotProduct]
   simp_rw [mul_ite, mul_one, mul_zero, ←ite_and]
   rw [←neg_eq_iff_eq_neg, neg_finset_univ_sum, indicator_of_neg]
@@ -239,29 +239,29 @@ lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_right_of_hit (I : Γ.
   use (cₜ.fst.app cₙ, cₐ)
   aesop
 
-lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_top_right_of_miss (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_right_of_miss (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (miss : x (cₜ.fst.app cₙ) ≠ cₐ) :
-    (fun ⟨i, a⟩ => if cₜ.fst.app cₙ = i ∧ cₐ = a then -1 else 0) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inr) = -0 := by
+    (fun ⟨i, a⟩ => if cₜ.fst.app cₙ = i ∧ cₐ = a then -1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inr) = -0 := by
   rw [Sum.elim_comp_inr, Matrix.dotProduct]
   simp_rw [mul_ite, mul_one, mul_zero, ←ite_and]
   rw [←neg_eq_iff_eq_neg, neg_finset_univ_sum, indicator_of_neg, Finset.sum_boole]
   aesop
 
-lemma ValuedCSP.Instance.LPrelaxation_solutionVCSPtoLP_bottom_right (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_right (I : Γ.Instance ι)
     (cᵢ : ι) (x : ι → D) :
-    (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0) ⬝ᵥ (I.solutionVCSPtoLP x ∘ Sum.inr) = 1 := by
+    (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inr) = 1 := by
   rw [Sum.elim_comp_inr, Matrix.dotProduct]
   simp_rw [mul_ite, mul_one, mul_zero, ←ite_and]
   rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
   use (cᵢ, x cᵢ)
   aesop
 
-theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι) (x : ι → D) :
-    I.LPrelaxation.Reaches (I.evalSolution x) := by
-  use I.solutionVCSPtoLP x
+theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) :
+    I.RelaxBLP.Reaches (I.evalSolution x) := by
+  use I.solutionVCSPtoBLP x
   constructor
-  · simp only [CanonicalLP.IsSolution, ValuedCSP.Instance.LPrelaxation]
+  · simp only [CanonicalLP.IsSolution, ValuedCSP.Instance.RelaxBLP]
     constructor
     · ext j
       rw [Matrix.fromBlocks_mulVec_sumType]
@@ -272,14 +272,14 @@ theorem ValuedCSP.Instance.LPrelaxation_Reaches (I : Γ.Instance ι) (x : ι →
         rw [Sum.elim_inl, Sum.elim_inl, Pi.add_apply]
         if hits : x (cₜ.fst.app cₙ) = cₐ then
           convert @add_neg_self C _ 1
-          · exact I.LPrelaxation_solutionVCSPtoLP_top_left_of_hit hits
-          · exact I.LPrelaxation_solutionVCSPtoLP_top_right_of_hit hits
+          · exact I.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit hits
+          · exact I.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit hits
         else
           convert @add_neg_self C _ 0
-          · exact I.LPrelaxation_solutionVCSPtoLP_top_left_of_miss hits
-          · exact I.LPrelaxation_solutionVCSPtoLP_top_right_of_miss hits
+          · exact I.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss hits
+          · exact I.RelaxBLP_solutionVCSPtoBLP_top_right_of_miss hits
       | inr cᵢ =>
         rw [Sum.elim_inr, Sum.elim_inr]
-        exact I.LPrelaxation_solutionVCSPtoLP_bottom_right cᵢ x
-    · exact I.solutionVCSPtoLP_nneg x
-  · exact I.solutionVCSPtoLP_cost x
+        exact I.RelaxBLP_solutionVCSPtoBLP_bottom_right cᵢ x
+    · exact I.solutionVCSPtoBLP_nneg x
+  · exact I.solutionVCSPtoBLP_cost x

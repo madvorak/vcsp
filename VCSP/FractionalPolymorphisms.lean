@@ -28,11 +28,11 @@ def FractionalOperation.tt {ι : Type*} (ω : FractionalOperation D m) (x : Fin 
   ω.map (fun (g : (Fin m → D) → D) (i : ι) => g ((Function.swap x) i))
 -- `Function.swap` notation issue: https://github.com/leanprover/lean4/issues/1629
 
-lemma FractionalOperation.tt_singleton {m n : ℕ} {ω : FractionalOperation D m} (x : Fin m → Fin n → D)
-    {g : (Fin m → D) → D} (singleto : ω = {g}) :
-    ω.tt x = {fun i => g (Function.swap x i)} := by
-  unfold FractionalOperation.tt
-  rw [singleto, Multiset.map_singleton]
+def FractionalOperation.IsValid.tt_nonempty {ι : Type*} {ω : FractionalOperation D m}
+    (valid : ω.IsValid) {x : Fin m → ι → D} :
+    ω.tt x ≠ ∅ := by
+  convert valid
+  simp [FractionalOperation.tt]
 
 variable {C : Type*} [OrderedAddCommMonoid C]
 
