@@ -14,7 +14,6 @@ variable {D : Type*} {m : ℕ}
 def FractionalOperation.size (ω : FractionalOperation D m) : ℕ :=
   Multiset.card.toFun ω
 
-/-- TODO maybe change to subtype -/
 def FractionalOperation.IsValid (ω : FractionalOperation D m) : Prop :=
   ω ≠ ∅
 
@@ -22,13 +21,17 @@ lemma FractionalOperation.IsValid.contains {ω : FractionalOperation D m} (valid
     ∃ g : (Fin m → D) → D, g ∈ ω :=
   Multiset.exists_mem_of_ne_zero valid
 
+lemma FractionalOperation.IsValid.size {ω : FractionalOperation D m} (valid : ω.IsValid) :
+    0 < ω.size := by
+  rwa [FractionalOperation.size, ZeroHom.toFun_eq_coe, AddMonoidHom.toZeroHom_coe, Multiset.card_pos]
+
 /-- Fractional operation applied to a transposed table of values. -/
 def FractionalOperation.tt {ι : Type*} (ω : FractionalOperation D m) (x : Fin m → ι → D) :
     Multiset (ι → D) :=
   ω.map (fun (g : (Fin m → D) → D) (i : ι) => g ((Function.swap x) i))
 -- `Function.swap` notation issue: https://github.com/leanprover/lean4/issues/1629
 
-def FractionalOperation.IsValid.tt_nonempty {ι : Type*} {ω : FractionalOperation D m}
+lemma FractionalOperation.IsValid.tt_nonempty {ι : Type*} {ω : FractionalOperation D m}
     (valid : ω.IsValid) {x : Fin m → ι → D} :
     ω.tt x ≠ ∅ := by
   convert valid
@@ -44,6 +47,18 @@ def Function.AdmitsFractional {n : ℕ} (f : (Fin n → D) → C) (ω : Fraction
 /-- Fractional operation is a fractional polymorphism for given VCSP template. -/
 def FractionalOperation.IsFractionalPolymorphismFor (ω : FractionalOperation D m) (Γ : ValuedCSP D C) : Prop :=
   ∀ f ∈ Γ, f.snd.AdmitsFractional ω
+
+lemma FractionalOperation.IsFractionalPolymorphismFor.onInstance {ω : FractionalOperation D m} {Γ : ValuedCSP D C}
+    (fp : ω.IsFractionalPolymorphismFor Γ) {ι : Type} (I : Γ.Instance ι) (x : Fin m → ι → D) :
+    m • ((ω.tt x).map I.evalSolution).sum ≤ ω.size • Finset.univ.sum (fun i => I.evalSolution (x i)) := by
+  convert_to ((ω.tt x).map (m • I.evalSolution ·)).sum ≤ Finset.univ.sum (fun i => ω.size • I.evalSolution (x i))
+  · exact Multiset.sum_map_nsmul.symm -- TODO move and refactor
+  · exact Finset.smul_sum
+  -- (1) unfold `ValuedCSP.Instance.evalSolution`
+  -- (2) distribute the sums over `I` to the very lefts
+  -- (3) apply `Multiset.summap_lt_summap`
+  -- (4) inequlities are satified from `fp` by definition `Function.AdmitsFractional`
+  sorry
 
 /-- Fractional operation is symmetric. -/
 def FractionalOperation.IsSymmetric (ω : FractionalOperation D m) : Prop :=
