@@ -83,6 +83,12 @@ lemma Multiset.summap_summap_swap [AddCommMonoid γ]
     B.summap (fun b => A.summap (fun a => f a b)) :=
   Multiset.sum_map_sum_map A B
 
+lemma Finset.sum_summap_swap [AddCommMonoid γ]
+    (A : Finset α) (B : Multiset β) (f : α → β → γ) :
+    A.sum (fun a => B.summap (fun b => f a b)) =
+    B.summap (fun b => A.sum (fun a => f a b)) := by
+  apply Multiset.summap_summap_swap
+
 lemma Multiset.summap_le_summap [OrderedAddCommMonoid β] {s : Multiset α}
     {f g : α → β} (hfg : ∀ i ∈ s, f i ≤ g i) :
     s.summap f ≤ s.summap g :=
@@ -123,6 +129,24 @@ section expressiveness
 section partial_order
 
 variable [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
+
+lemma FractionalOperation.IsFractionalPolymorphismFor.onInstance
+    (frpo : ω.IsFractionalPolymorphismFor Γ) (I : Γ.Instance ι) (x : Fin m → ι → D) :
+    m • (ω.tt x).summap I.evalSolution ≤ ω.size • Finset.univ.sum (fun i => I.evalSolution (x i)) := by
+  rw [←Multiset.summap_nsmul, Finset.smul_sum]
+  -- (1) unfold `ValuedCSP.Instance.evalSolution`
+  unfold ValuedCSP.Instance.evalSolution
+  -- (2) distribute the sums over `I` to the very lefts
+  simp_rw [← Multiset.summap_nsmul]
+  rw [Multiset.summap_summap_swap, Finset.sum_summap_swap]
+  -- (3) apply `Multiset.summap_lt_summap`
+  apply Multiset.summap_le_summap
+  -- (4) inequlities are satified from `frpo` by definition `Function.AdmitsFractional`
+  intro t _
+  rw [Multiset.summap_nsmul, ←Finset.smul_sum]
+  convert frpo ⟨t.n, t.f⟩ t.inΓ (fun j i => x j (t.app i))
+  simp [FractionalOperation.tt, ValuedCSP.Term.evalSolution]
+  rfl
 
 lemma Function.AdmitsFractional.evalTerm_le_evalTerm {t : Γ.Term ι}
     (impr : t.f.AdmitsFractional ω) (x : Fin m → (ι → D)) :
