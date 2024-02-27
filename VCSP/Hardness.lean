@@ -73,9 +73,9 @@ lemma univ_sum_2x2 {f : (Fin 2 → α) → β} [AddCommMonoid β] {a b c d : α}
     Finset.univ.sum (fun i => f (![![a, b], ![c, d]] i)) = f ![a, b] + f ![c, d] :=
   Fin.sum_univ_two (fun i => f (![![a, b], ![c, d]] i))
 
-lemma Multiset.summap_nsmul [AddCommMonoid β] (s : Multiset α) (f : α → β) (n : ℕ) :
-    s.summap (fun a => n • f a) = n • s.summap f :=
-  Multiset.sum_map_nsmul
+lemma Multiset.nsmul_summap [AddCommMonoid β] (s : Multiset α) (f : α → β) (n : ℕ) :
+    n • s.summap f = s.summap (fun a => n • f a) :=
+  Multiset.sum_map_nsmul.symm
 
 lemma Multiset.summap_summap_swap [AddCommMonoid γ]
     (A : Multiset α) (B : Multiset β) (f : α → β → γ) :
@@ -124,29 +124,27 @@ end not_VCSP_specific
 
 variable {D C : Type*}
 
+lemma FractionalOperation.IsFractionalPolymorphismFor.onInstance [OrderedAddCommMonoid C]
+    {Γ : ValuedCSP D C} {ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
+    (frpo : ω.IsFractionalPolymorphismFor Γ) (I : Γ.Instance ι) (x : Fin m → ι → D) :
+    m • (ω.tt x).summap I.evalSolution ≤ ω.size • Finset.univ.sum (fun i => I.evalSolution (x i)) := by
+  rw [Multiset.nsmul_summap, Finset.smul_sum]
+  simp only [ValuedCSP.Instance.evalSolution, Multiset.nsmul_summap] -- on both sides
+  rw [Multiset.summap_summap_swap, Finset.sum_summap_swap]
+  apply Multiset.summap_le_summap
+  intro t _
+  specialize frpo ⟨t.n, t.f⟩ t.inΓ (fun j : Fin m => fun i : Fin t.n => x j (t.app i))
+  rw [Multiset.nsmul_summap, Finset.smul_sum] at frpo
+  convert frpo
+  simp [FractionalOperation.tt, ValuedCSP.Term.evalSolution]
+  rfl
+
+
 section expressiveness
 
 section partial_order
 
 variable [OrderedAddCommMonoid C] {Γ : ValuedCSP D C} {ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
-
-lemma FractionalOperation.IsFractionalPolymorphismFor.onInstance
-    (frpo : ω.IsFractionalPolymorphismFor Γ) (I : Γ.Instance ι) (x : Fin m → ι → D) :
-    m • (ω.tt x).summap I.evalSolution ≤ ω.size • Finset.univ.sum (fun i => I.evalSolution (x i)) := by
-  rw [←Multiset.summap_nsmul, Finset.smul_sum]
-  -- (1) unfold `ValuedCSP.Instance.evalSolution`
-  unfold ValuedCSP.Instance.evalSolution
-  -- (2) distribute the sums over `I` to the very lefts
-  simp_rw [← Multiset.summap_nsmul]
-  rw [Multiset.summap_summap_swap, Finset.sum_summap_swap]
-  -- (3) apply `Multiset.summap_lt_summap`
-  apply Multiset.summap_le_summap
-  -- (4) inequlities are satified from `frpo` by definition `Function.AdmitsFractional`
-  intro t _
-  rw [Multiset.summap_nsmul, ←Finset.smul_sum]
-  convert frpo ⟨t.n, t.f⟩ t.inΓ (fun j i => x j (t.app i))
-  simp [FractionalOperation.tt, ValuedCSP.Term.evalSolution]
-  rfl
 
 lemma Function.AdmitsFractional.evalTerm_le_evalTerm {t : Γ.Term ι}
     (impr : t.f.AdmitsFractional ω) (x : Fin m → (ι → D)) :
@@ -175,7 +173,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.evalSolution_le_evalSoluti
     m • (ω.tt x).summap (fun yᵢ => I.summap (fun t => t.evalSolution yᵢ)) ≤
     ω.size • Finset.univ.val.summap (fun i => I.summap (fun t => t.evalSolution (x i)))
   iterate 2
-    rw [Multiset.summap_summap_swap _ I, ←Multiset.summap_nsmul]
+    rw [Multiset.summap_summap_swap _ I, Multiset.nsmul_summap]
   apply Multiset.summap_le_summap
   intro t _
   apply (frpo ⟨t.n, t.f⟩ t.inΓ).evalSolution_le_evalSolution
@@ -196,7 +194,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.evalPartial_le_evalPartial
     (ω.tt (fun i : Fin m => Sum.elim (x i) (z i))).summap (fun y : (ι ⊕ μ) → D =>
       m • I.evalPartial (y ∘ Sum.inl) (y ∘ Sum.inr)) ≤
     Finset.univ.val.summap (fun i : Fin m => ω.size • I.evalPartial (x i) (z i)) := by
-  rw [Multiset.summap_nsmul, Multiset.summap_nsmul]
+  rw [←Multiset.nsmul_summap, ←Multiset.nsmul_summap]
   exact frpo.evalPartial_le_evalPartial I x z
 
 end partial_order
@@ -261,7 +259,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.evalMinimize_le_evalMinimi
     (I : Γ.Instance (ι ⊕ μ)) (x : Fin m → (ι → D)) :
     m • (ω.tt x).summap I.evalMinimize ≤
     ω.size • Finset.univ.val.summap (fun i : Fin m => I.evalMinimize (x i)) := by
-  rw [←Multiset.summap_nsmul, ←Multiset.summap_nsmul]
+  rw [Multiset.nsmul_summap, Multiset.nsmul_summap]
   exact frpo.evalMinimize_le_evalMinimize_with_nsmul_inside I x
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.expressivePowerVCSP
@@ -284,15 +282,14 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP
     exact hf
   | double _ _ ihf ihg =>
     intro x
-    specialize ihf x
-    specialize ihg x
-    rw [←Multiset.summap_nsmul, ←Finset.sum_nsmul] at ihf ihg ⊢
-    convert add_le_add ihf ihg
-    · simp
-    · simp [Finset.sum_add_distrib]
+    have summed := add_le_add (ihf x) (ihg x)
+    rw [Finset.smul_sum, Finset.smul_sum, ←Finset.sum_add_distrib,
+      Multiset.nsmul_summap, Multiset.nsmul_summap, ←Multiset.sum_map_add] at summed
+    rw [Finset.smul_sum, Multiset.nsmul_summap]
+    convert summed using 2 <;> simp
   | @minimize n f _ ih =>
     intro x
-    rw [←Multiset.summap_nsmul, ←Finset.sum_nsmul]
+    rw [Multiset.nsmul_summap, Finset.smul_sum]
     simp_rw [←Finset.nsmul_inf']
     let z :=
       fun i : Fin m =>
@@ -300,7 +297,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP
           (fun d : D => ω.size • f (Matrix.vecCons d (x i)))
         ).choose
     specialize ih (fun i j => Matrix.vecCons (z i) (x i) j)
-    rw [←Multiset.summap_nsmul, ←Finset.sum_nsmul] at ih
+    rw [Multiset.nsmul_summap, Finset.smul_sum] at ih
     convert_to
       (ω.tt x).summap (fun yᵢ : Fin n → D =>
         Finset.univ.inf' Finset.univ_nonempty (fun zᵢ : D => m • f (Matrix.vecCons zᵢ yᵢ))) ≤

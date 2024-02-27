@@ -28,6 +28,7 @@ lemma ValuedCSP.Instance.evalMinimize_def {Γ : ValuedCSP D C} {ι μ : Type*} [
 def ValuedCSP.expressivePower (Γ : ValuedCSP D C) : ValuedCSP D C :=
   { ⟨n, I.evalMinimize⟩ | (n : ℕ) (μ : Type) (_ : DecidableEq μ) (_ : Fintype μ) (I : Γ.Instance (Fin n ⊕ μ)) }
 
+/-- NEW definition! -/
 inductive ValuedCSP.expresses (Γ : ValuedCSP D C) : ValuedCSP D C
 | single {n : ℕ} {f : (Fin n → D) → C} (hf : ⟨n, f⟩ ∈ Γ) :
     Γ.expresses ⟨n, f⟩
