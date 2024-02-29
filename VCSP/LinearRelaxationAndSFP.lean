@@ -61,11 +61,26 @@ def Function.unaryAdmitsFractional {m : ℕ} (f : D → ℚ) (ω : FractionalOpe
   ∀ x : (Fin m → D),
     m • (ω.map (· x)).summap f ≤ ω.size • Finset.univ.sum (fun i => f (x i))
 
+noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, ι → Fin m → D := by
+  let w : ι → D → ℕ := fun i : ι => fun a : D =>
+    Finset.univ.prod (fun j : ι =>
+      Finset.univ.prod (fun b : D => if i = j ∧ a = b then (δ j b).num.toNat else (δ j b).den)
+    )
+  use Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
+  intro i
+  let l : List D := List.join (Finset.univ.val.map (fun d : D => List.replicate (w i d) d)).toList
+  have llen : l.length = Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
+  · have missing : ∀ j : ι, Finset.univ.sum (δ j) = 1
+    · sorry
+    rw [List.length_join]
+    sorry
+  convert l.get
+  exact llen.symm
+
 -- TODO change to perhaps `∃ m : ℕ, ∃ v : Fin m → ι → D, ` (properties of `v` wrt `δ`)
-def convertDistribution {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, Fin m → ι → D := sorry
-  -- We have a discrete probability distributions over rationals.
-  -- How do we get them all to a common denominator?
-  -- Furthermore, convert them to vectors!
+noncomputable def convertDistribution {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, Fin m → ι → D :=
+  let ⟨m, v⟩ := convertDistribution_aux nonneg
+  ⟨m, Function.swap v⟩
 
 open scoped Matrix
 
