@@ -68,11 +68,14 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
     )
   use Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
   intro i
-  let l : List D := List.join (Finset.univ.val.map (fun d : D => List.replicate (w i d) d)).toList
+  let l : List D := List.join (Finset.univ.val.toList.map (fun d : D => List.replicate (w i d) d))
   have llen : l.length = Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
   · have missing : ∀ j : ι, Finset.univ.sum (δ j) = 1
     · sorry
-    rw [List.length_join]
+    rw [List.length_join, List.map_map]
+    have d_lengths : List.length ∘ (fun d : D => List.replicate (w i d) d) = w i
+    · aesop
+    rw [d_lengths]
     sorry
   convert l.get
   exact llen.symm
