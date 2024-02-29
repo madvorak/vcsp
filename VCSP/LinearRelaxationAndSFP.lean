@@ -1,4 +1,5 @@
 import VCSP.LinearRelaxation
+import Mathlib.Data.Fin.Tuple.Curry
 
 variable
   {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
@@ -56,6 +57,10 @@ example (δ : D → ℚ) (non_neg : 0 ≤ δ) (sum_one : Finset.univ.sum δ = 1)
     rw [triv]
     apply Rat.zero_iff_num_zero
 
+def Function.unaryAdmitsFractional {m : ℕ} (f : D → ℚ) (ω : FractionalOperation D m) : Prop :=
+  ∀ x : (Fin m → D),
+    m • (ω.map (· x)).summap f ≤ ω.size • Finset.univ.sum (fun i => f (x i))
+
 -- TODO change to perhaps `∃ m : ℕ, ∃ v : Fin m → ι → D, ` (properties of `v` wrt `δ`)
 def convertDistribution {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, Fin m → ι → D := sorry
   -- We have a discrete probability distributions over rationals.
@@ -63,6 +68,53 @@ def convertDistribution {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ
   -- Furthermore, convert them to vectors!
 
 open scoped Matrix
+
+lemma ValuedCSP.Instance.RelaxBLP_case_single_unary_function
+    (I : Γ.Instance ι) {o : ℚ} (ho : I.RelaxBLP.Reaches o)
+    {f : D → ℚ} (hf : Γ = {⟨1, Function.OfArity.uncurry f⟩})
+    (hΓ : ∀ m : ℕ, ∃ ω : FractionalOperation D m, ω.IsValid ∧ f.unaryAdmitsFractional ω ∧ ω.IsSymmetric) :
+    ∃ m : ℕ, ∃ ω : FractionalOperation D m,
+      ω.IsValid ∧ ∃ X : Fin m → ι → D, (ω.tt X).summap I.evalSolution ≤ ω.size • o := by
+  obtain ⟨x, ⟨x_equl, x_nneg⟩, x_cost⟩ := ho
+  let δ : ι → D → ℚ := fun i d => x (Sum.inr ⟨i, d⟩)
+  have nonneg : 0 ≤ δ := fun i d => x_nneg (Sum.inr (i, d))
+  obtain ⟨m, X⟩ := convertDistribution nonneg -- TODO get more info from here
+  use m
+  obtain ⟨ω, valid, frpol, symmega⟩ := hΓ m
+  use ω
+  constructor
+  · exact valid
+  use X
+  rw [← x_cost]
+  clear x_cost
+  suffices mtimes : m • (ω.tt X).summap I.evalSolution ≤ m • ω.size • Matrix.dotProduct I.RelaxBLP.c x
+  · have : 0 < m := sorry -- will come from API around `convertDistribution`
+    simp_all
+  show       m • (ω.tt X).summap (fun s => I.summap (fun t => t.f (s ∘ t.app))) ≤ m • ω.size • (I.RelaxBLP.c ⬝ᵥ x)
+  convert_to m • (ω.tt X).summap (fun s => I.summap (fun t => f (s (t.app 0)))) ≤ m • ω.size • (I.RelaxBLP.c ⬝ᵥ x)
+  swap
+  · intro s t
+    have ht1 : t.n = 1
+    · suffices : (⟨t.n, t.f⟩ : Σ (n : ℕ), (Fin n → D) → ℚ) ∈ ({⟨1, Function.OfArity.uncurry f⟩} : ValuedCSP D ℚ)
+      · aesop
+      convert t.inΓ
+      exact hf.symm
+    simp only [ht1]
+    exact ⟨⟨0, (show 1 ≤ 1 by rfl)⟩⟩
+  · have ht : ∀ t ∈ I, (⟨t.n, t.f⟩ : Σ (n : ℕ), (Fin n → D) → ℚ) = ⟨1, Function.OfArity.uncurry f⟩
+    · intro t tin
+      suffices : (⟨t.n, t.f⟩ : Σ (n : ℕ), (Fin n → D) → ℚ) ∈ ({⟨1, Function.OfArity.uncurry f⟩} : ValuedCSP D ℚ)
+      · aesop
+      convert t.inΓ
+      exact hf.symm
+    congr
+    ext1 s
+    congr
+    ext1 t
+    specialize ht t sorry
+    rw [Sigma.mk.inj_iff] at ht
+    sorry
+  sorry
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms_aux
     (I : Γ.Instance ι) {o : ℚ} (ho : I.RelaxBLP.Reaches o)
