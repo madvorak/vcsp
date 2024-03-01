@@ -1,5 +1,7 @@
 import VCSP.LinearRelaxation
 import Mathlib.Data.Fin.Tuple.Curry
+import Mathlib.Tactic.Qify
+
 
 variable
   {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
@@ -61,6 +63,9 @@ def Function.unaryAdmitsFractional {m : ℕ} (f : D → ℚ) (ω : FractionalOpe
   ∀ x : (Fin m → D),
     m • (ω.map (· x)).summap f ≤ ω.size • Finset.univ.sum (fun i => f (x i))
 
+lemma nat_cast_int_cast (a : ℤ) /-(ha : 0 ≤ a)-/ : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
+  sorry--aesop
+
 noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, ι → Fin m → D := by
   let w : ι → D → ℕ := fun i : ι => fun a : D =>
     Finset.univ.prod (fun j : ι =>
@@ -69,29 +74,32 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
   use Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
   intro i
   let l : List D := List.join (Finset.univ.val.toList.map (fun d : D => List.replicate (w i d) d))
+  have missing : ∀ j : ι, Finset.univ.sum (δ j) = 1
+  · sorry
+  have llenq :
+    ((Multiset.toList Finset.univ.val).map (fun a : D => ((w i a) : ℚ))).sum =
+    Finset.univ.prod
+      (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ)))
+  · sorry
+  simp_rw [Nat.cast_prod, Nat.cast_ite, nat_cast_int_cast] at llenq
   have llen : l.length = Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
-  · have missing : ∀ j : ι, Finset.univ.sum (δ j) = 1
-    · sorry
-    rw [List.length_join, List.map_map]
+  · rw [List.length_join, List.map_map]
     have d_lengths : List.length ∘ (fun d : D => List.replicate (w i d) d) = w i
     · aesop
     rw [d_lengths]
-    simp only
-    convert_to
-      ((Multiset.toList Finset.univ.val).map fun a =>
-          Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den)) * Int.toNat (δ i a).num / (δ i a).den).sum =
-        Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
-    · congr
-      ext a
-      sorry -- I firmly believe this.
-    convert_to
-      Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den)) *
-        ((Multiset.toList Finset.univ.val).map fun a => Int.toNat (δ i a).num / (δ i a).den).sum =
-      Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
-    · sorry -- This would require calculating in rationals.
-    have sum_to_one : ((Multiset.toList Finset.univ.val).map fun a => Int.toNat (δ i a).num / (δ i a).den).sum = 1
-    · sorry -- This would also require calculating in rationals.
-    rw [sum_to_one, mul_one]
+    qify
+    convert llenq
+    simp only [List.map_map]
+    congr
+    ext1 a
+    simp only [Function.comp_apply, Nat.cast_prod, Nat.cast_ite, Int.cast_prod, Int.cast_ite, Int.cast_ofNat]
+    congr
+    ext1 j
+    congr
+    ext1 b
+    have : @Nat.cast ℚ _ (Int.toNat (δ j b).num) = @Int.cast ℚ _ (δ j b).num
+    · apply nat_cast_int_cast
+    aesop
   convert l.get
   exact llen.symm
 
