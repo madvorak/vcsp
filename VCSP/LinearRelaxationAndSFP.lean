@@ -76,7 +76,22 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
     have d_lengths : List.length ∘ (fun d : D => List.replicate (w i d) d) = w i
     · aesop
     rw [d_lengths]
-    sorry
+    simp only
+    convert_to
+      ((Multiset.toList Finset.univ.val).map fun a =>
+          Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den)) * Int.toNat (δ i a).num / (δ i a).den).sum =
+        Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
+    · congr
+      ext a
+      sorry -- I firmly believe this.
+    convert_to
+      Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den)) *
+        ((Multiset.toList Finset.univ.val).map fun a => Int.toNat (δ i a).num / (δ i a).den).sum =
+      Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
+    · sorry -- This would require calculating in rationals.
+    have sum_to_one : ((Multiset.toList Finset.univ.val).map fun a => Int.toNat (δ i a).num / (δ i a).den).sum = 1
+    · sorry -- This would also require calculating in rationals.
+    rw [sum_to_one, mul_one]
   convert l.get
   exact llen.symm
 
