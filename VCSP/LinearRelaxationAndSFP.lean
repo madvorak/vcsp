@@ -66,6 +66,14 @@ def Function.unaryAdmitsFractional {m : ℕ} (f : D → ℚ) (ω : FractionalOpe
 lemma nat_cast_int_cast {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
   aesop
 
+lemma asdf' {α β : Type*} (s : Multiset α) [AddCommMonoid β] (f : α → β) :
+    (s.toList.map f).sum = (s.map f).sum := by
+  sorry
+
+lemma asdf {α β : Type*} [Fintype α] [AddCommMonoid β] (f : α → β) :
+    (Finset.univ.val.toList.map f).sum = (Finset.univ.val.map f).sum := by
+  apply asdf'
+
 noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, ι → Fin m → D := by
   let w : ι → D → ℕ := fun i : ι => fun a : D =>
     Finset.univ.prod (fun j : ι =>
@@ -75,16 +83,39 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
   intro i
   let l : List D := List.join (Finset.univ.val.toList.map (fun d : D => List.replicate (w i d) d))
   have missing : ∀ j : ι, Finset.univ.sum (δ j) = 1
-  · sorry
-  have llenq :
-    ((Multiset.toList Finset.univ.val).map (fun a : D => ((w i a) : ℚ))).sum =
-    Finset.univ.prod
-      (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ)))
-  · sorry
+  · sorry -- should come from the LP
   have nonnegnum : ∀ i : ι, ∀ a : D, 0 ≤ (δ i a).num
   · intro i a
     rw [Rat.num_nonneg_iff_zero_le]
     exact nonneg i a
+  have llenq :
+    (Finset.univ.val.toList.map (fun a : D => ((w i a) : ℚ))).sum =
+    Finset.univ.prod
+      (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ)))
+  · simp only
+    convert_to
+      (Finset.univ.val.toList.map fun a =>
+        Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ))) *
+          (Int.toNat (δ i a).num : ℚ) / ((δ i a).den : ℚ)).sum =
+      Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ)))
+    · sorry -- goal looks plausible
+    convert_to
+      Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ))) *
+        (Finset.univ.val.toList.map fun a => (Int.toNat (δ i a).num : ℚ) / ((δ i a).den : ℚ)).sum =
+      Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ)))
+    · simp_rw [mul_div_assoc]
+      apply List.sum_map_mul_left
+    have sum_to_one :
+      (Finset.univ.val.toList.map fun a => (Int.toNat (δ i a).num : ℚ) / ((δ i a).den : ℚ)).sum =
+      (1 : ℚ)
+    · convert_to ((Multiset.toList Finset.univ.val).map fun a => (δ i a)).sum = (1 : ℚ)
+      · congr
+        ext1 a
+        rw [nat_cast_int_cast (nonnegnum i a)]
+        sorry -- by definition of a rational number
+      convert missing i
+      apply asdf
+    rw [sum_to_one, mul_one]
   simp_rw [Nat.cast_prod, Nat.cast_ite, nat_cast_int_cast (nonnegnum _ _)] at llenq
   have llen : l.length = Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
   · rw [List.length_join, List.map_map]
