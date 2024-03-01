@@ -63,8 +63,8 @@ def Function.unaryAdmitsFractional {m : ℕ} (f : D → ℚ) (ω : FractionalOpe
   ∀ x : (Fin m → D),
     m • (ω.map (· x)).summap f ≤ ω.size • Finset.univ.sum (fun i => f (x i))
 
-lemma nat_cast_int_cast (a : ℤ) /-(ha : 0 ≤ a)-/ : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
-  sorry--aesop
+lemma nat_cast_int_cast {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
+  aesop
 
 noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, ι → Fin m → D := by
   let w : ι → D → ℕ := fun i : ι => fun a : D =>
@@ -81,7 +81,11 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
     Finset.univ.prod
       (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ)))
   · sorry
-  simp_rw [Nat.cast_prod, Nat.cast_ite, nat_cast_int_cast] at llenq
+  have nonnegnum : ∀ i : ι, ∀ a : D, 0 ≤ (δ i a).num
+  · intro i a
+    rw [Rat.num_nonneg_iff_zero_le]
+    exact nonneg i a
+  simp_rw [Nat.cast_prod, Nat.cast_ite, nat_cast_int_cast (nonnegnum _ _)] at llenq
   have llen : l.length = Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
   · rw [List.length_join, List.map_map]
     have d_lengths : List.length ∘ (fun d : D => List.replicate (w i d) d) = w i
@@ -99,6 +103,7 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
     ext1 b
     have : @Nat.cast ℚ _ (Int.toNat (δ j b).num) = @Int.cast ℚ _ (δ j b).num
     · apply nat_cast_int_cast
+      apply nonnegnum
     aesop
   convert l.get
   exact llen.symm
