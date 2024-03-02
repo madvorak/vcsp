@@ -32,9 +32,8 @@ lemma nat_cast_int_cast {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a)
 
 
 variable
-  {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
-  {ι : Type} [Nonempty ι] [Fintype ι] [DecidableEq ι]
-  {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
+  {D : Type} [Fintype D] [DecidableEq D]
+  {ι : Type} [Fintype ι] [DecidableEq ι]
 
 noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, ι → Fin m → D := by
   let w : ι → D → ℕ := fun i : ι => fun a : D =>
@@ -109,6 +108,8 @@ noncomputable def convertDistribution {δ : ι → D → ℚ} (nonneg : 0 ≤ δ
   let ⟨m, v⟩ := convertDistribution_aux nonneg
   ⟨m, Function.swap v⟩
 
+
+variable {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
 open scoped Matrix
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms_aux

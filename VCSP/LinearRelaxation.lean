@@ -37,8 +37,8 @@ macro (name := aesopnt) "aesopnt" : tactic =>
   `(tactic| aesop (config := {warnOnNonterminal := false}))
 
 variable
-  {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
-  {ι : Type} [Nonempty ι] [Fintype ι] [DecidableEq ι]
+  {D : Type} [Fintype D] [DecidableEq D]
+  {ι : Type} [Fintype ι] [DecidableEq ι]
   {C : Type} [LinearOrderedField C]
   {Γ : ValuedCSP D C} [DecidableEq (Γ.Term ι)]
 
