@@ -13,6 +13,24 @@ lemma Finset.univ.val.toList.map_sum {α β : Type*} [Fintype α] [AddCommMonoid
     (Finset.univ.val.toList.map f).sum = (Finset.univ.val.map f).sum :=
   Finset.univ.val.toList_map_sum f
 
+lemma Finset.univ.prod_with_one_exception {α : Type*} [Fintype α] [DecidableEq α] (f g : α → ℚ) (a : α) :
+    Finset.univ.prod (fun i : α => if a = i then g i else f i) = Finset.univ.prod f * g a / f a := by
+  sorry
+
+lemma Finset.univ.prod_with_one_exception_nested {α β : Type*}
+    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β]
+    (f g : α → β → ℚ) (a : α) (b : β) :
+    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g i j else f i j)) =
+    Finset.univ.prod (Finset.univ.prod f) * g a b / f a b := by
+  sorry
+
+lemma Finset.univ.prod_with_one_exception_nested_swapped {α β : Type*}
+    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β]
+    (f g : β → α → ℚ) (a : α) (b : β) :
+    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g j i else f j i)) =
+    Finset.univ.prod (Finset.univ.prod f) * g b a / f b a := by
+  sorry
+
 
 variable
   {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
@@ -101,7 +119,12 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
         Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ))) *
           (Int.toNat (δ i a).num : ℚ) / ((δ i a).den : ℚ)).sum =
       Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ)))
-    · sorry -- goal looks plausible
+    · congr
+      ext1 a
+      push_cast
+      convert Finset.univ.prod_with_one_exception_nested_swapped _ _ _ _
+      symm
+      apply Finset.prod_apply
     convert_to
       Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ))) *
         (Finset.univ.val.toList.map fun a => (Int.toNat (δ i a).num : ℚ) / ((δ i a).den : ℚ)).sum =
