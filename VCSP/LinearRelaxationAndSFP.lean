@@ -2,6 +2,17 @@ import VCSP.LinearRelaxation
 import Mathlib.Data.Fin.Tuple.Curry
 import Mathlib.Tactic.Qify
 
+lemma Multiset.toList_map_sum {α β : Type*} (s : Multiset α) [AddCommMonoid β] (f : α → β) :
+    (s.toList.map f).sum = (s.map f).sum := by
+  induction' s using Multiset.induction with a s ih
+  · simp
+  · rw [Multiset.map_cons, Multiset.sum_cons, ←ih]
+    sorry
+
+lemma Finset.univ.val.toList.map_sum {α β : Type*} [Fintype α] [AddCommMonoid β] (f : α → β) :
+    (Finset.univ.val.toList.map f).sum = (Finset.univ.val.map f).sum :=
+  Finset.univ.val.toList_map_sum f
+
 
 variable
   {D : Type} [Nonempty D] [Fintype D] [DecidableEq D]
@@ -66,14 +77,6 @@ def Function.unaryAdmitsFractional {m : ℕ} (f : D → ℚ) (ω : FractionalOpe
 lemma nat_cast_int_cast {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
   aesop
 
-lemma asdf' {α β : Type*} (s : Multiset α) [AddCommMonoid β] (f : α → β) :
-    (s.toList.map f).sum = (s.map f).sum := by
-  sorry
-
-lemma asdf {α β : Type*} [Fintype α] [AddCommMonoid β] (f : α → β) :
-    (Finset.univ.val.toList.map f).sum = (Finset.univ.val.map f).sum := by
-  apply asdf'
-
 noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, ι → Fin m → D := by
   let w : ι → D → ℕ := fun i : ι => fun a : D =>
     Finset.univ.prod (fun j : ι =>
@@ -114,7 +117,7 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
         rw [nat_cast_int_cast (nonnegnum i a)]
         sorry -- by definition of a rational number
       convert missing i
-      apply asdf
+      apply Finset.univ.val.toList.map_sum
     rw [sum_to_one, mul_one]
   simp_rw [Nat.cast_prod, Nat.cast_ite, nat_cast_int_cast (nonnegnum _ _)] at llenq
   have llen : l.length = Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
