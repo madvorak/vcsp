@@ -115,7 +115,7 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
       · congr
         ext1 a
         rw [nat_cast_int_cast (nonnegnum i a)]
-        sorry -- by definition of a rational number
+        exact Rat.num_div_den (δ i a)
       convert missing i
       apply Finset.univ.val.toList.map_sum
     rw [sum_to_one, mul_one]
