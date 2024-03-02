@@ -2,12 +2,14 @@ import VCSP.LinearRelaxation
 import Mathlib.Data.Fin.Tuple.Curry
 import Mathlib.Tactic.Qify
 
+-- Yaël Dillies stated this lemma:
+lemma Multiset.sum_coe {α : Type*} [AddCommMonoid α] (l : List α) : (l : Multiset α).sum = l.sum :=
+  by simp
+
+-- Yaël Dillies proved this lemma:
 lemma Multiset.toList_map_sum {α β : Type*} (s : Multiset α) [AddCommMonoid β] (f : α → β) :
     (s.toList.map f).sum = (s.map f).sum := by
-  induction' s using Multiset.induction with a s ih
-  · simp
-  · rw [Multiset.map_cons, Multiset.sum_cons, ←ih]
-    sorry
+  rw [←Multiset.sum_coe, ←Multiset.coe_map, Multiset.coe_toList]
 
 lemma Finset.univ.prod_with_one_exception {α : Type*} [Fintype α] [DecidableEq α] (f g : α → ℚ) (a : α) :
     Finset.univ.prod (fun i : α => if a = i then g i else f i) = Finset.univ.prod f * g a / f a := by
