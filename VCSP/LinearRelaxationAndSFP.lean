@@ -71,17 +71,9 @@ lemma Finset.univ.prod_with_one_exception_nested {α β : Type*}
     rw [Finset.prod_eq_zero_iff] at impos
     obtain ⟨k, hk⟩ := impos
     exact hfa k hk.right
-  rw [apart_if, Finset.univ.prod_with_one_exception, Finset.univ.prod_with_one_exception]
-  · rw [mul_div_assoc, mul_div_assoc, mul_div_assoc _ _ (f a b), mul_eq_mul_left_iff]
-    rw [mul_comm, mul_div_assoc, div_self hfpa, mul_one]
-    left
-    rfl
-  · intro contr
-    exfalso
-    exact (hfa b) contr
-  · intro contr
-    exfalso
-    exact hfpa contr
+  rw [apart_if, Finset.univ.prod_with_one_exception, Finset.univ.prod_with_one_exception,
+      mul_div_assoc, mul_div_assoc, mul_div_assoc _ _ (f a b), mul_eq_mul_left_iff,
+      mul_comm, mul_div_assoc, div_self hfpa, mul_one] <;> tauto
 
 lemma nat_cast_int_cast {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
   aesop
