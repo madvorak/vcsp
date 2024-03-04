@@ -22,6 +22,14 @@ lemma Multiset.toList_map_sum {α β : Type*} (s : Multiset α) [AddCommMonoid �
     (s.toList.map f).sum = (s.map f).sum := by
   rw [←Multiset.sum_coe, ←Multiset.coe_map, Multiset.coe_toList]
 
+lemma Finset.univ.prod_single_hit {α : Type*} [Fintype α] [DecidableEq α] (g : α → ℚ) (a : α) :
+    Finset.univ.prod (fun i : α => if a = i then g i else 1) = g a := by
+  simp
+
+lemma Finset.univ.prod_mul_single_hit {α : Type*} [Fintype α] [DecidableEq α] (f g : α → ℚ) (a : α) :
+    Finset.univ.prod (fun i : α => f i * if a = i then g i else 1) = Finset.univ.prod f * g a := by
+  rw [Finset.prod_mul_distrib, Finset.univ.prod_single_hit]
+
 lemma Finset.univ.prod_with_one_exception {α : Type*} [Fintype α] [DecidableEq α] (f g : α → ℚ) (a : α) :
     Finset.univ.prod (fun i : α => if a = i then g i else f i) = Finset.univ.prod f * g a / f a := by
   sorry
@@ -131,7 +139,11 @@ lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds_aux (I : Γ.Instance ι
   simp_rw [Sum.elim_inr]
   simp only [ValuedCSP.Instance.RelaxBLP] at ass
   rw [Matrix.fromBlocks_mulVec_sumType, Matrix.zero_mulVec, zero_add] at ass
-  have bottom_part := Sum.elim_eq_right ass
+  have the_eq : (fun c : ι × D => if j = c.fst then 1 else 0) ⬝ᵥ xᵥ = 1
+  · convert congr_fun (Sum.elim_eq_right ass) j
+  convert_to (Finset.sum Finset.univ fun d : D => xᵥ (j, d)) = (fun c : ι × D => if j = c.1 then 1 else 0) ⬝ᵥ xᵥ
+  · rw [the_eq]
+  clear * -
   sorry
 
 lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds (I : Γ.Instance ι)
@@ -171,7 +183,7 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
   simp_all
   simp_rw [← ValuedCSP.Instance.solutionVCSPtoBLP_cost]
   show
-    Finset.univ.sum (fun j : Fin m => I.RelaxBLP.c ⬝ᵥ (I.solutionVCSPtoBLP (X j))) ≤
+    Finset.univ.sum (fun i : Fin m => I.RelaxBLP.c ⬝ᵥ (I.solutionVCSPtoBLP (X i))) ≤
     m * I.RelaxBLP.c ⬝ᵥ x
   -- thanks to `symmega` we can replace a relationship between `X` and `x (Sum.inl ..)` by
   -- a relationship between `x (Sum.inr ..)` and `x (Sum.inl ..)` hopefully
