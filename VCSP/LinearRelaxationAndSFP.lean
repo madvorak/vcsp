@@ -66,7 +66,11 @@ lemma Finset.univ.prod_with_one_exception_nested_swapped {α β : Type*}
     (hfg : f b a = 0 → g b a = 0) :
     Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g j i else f j i)) =
     Finset.univ.prod (Finset.univ.prod f) * g b a / f b a := by
-  sorry
+  have hfg' : Function.swap f a b = 0 → Function.swap g a b = 0
+  · exact hfg
+  rw [Finset.univ.prod_with_one_exception_nested hfg']
+  simp_rw [Finset.prod_apply]
+  rw [Finset.prod_comm]
 
 lemma nat_cast_int_cast {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
   aesop
