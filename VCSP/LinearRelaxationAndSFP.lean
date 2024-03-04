@@ -30,20 +30,40 @@ lemma Finset.univ.prod_mul_single_hit {α : Type*} [Fintype α] [DecidableEq α]
     Finset.univ.prod (fun i : α => f i * if a = i then g i else 1) = Finset.univ.prod f * g a := by
   rw [Finset.prod_mul_distrib, Finset.univ.prod_single_hit]
 
-lemma Finset.univ.prod_with_one_exception {α : Type*} [Fintype α] [DecidableEq α] (f g : α → ℚ) (a : α) :
+lemma Finset.univ.prod_with_one_exception {α : Type*} [Fintype α] [DecidableEq α] {f g : α → ℚ} {a : α}
+    (hfg : f a = 0 → g a = 0) :
     Finset.univ.prod (fun i : α => if a = i then g i else f i) = Finset.univ.prod f * g a / f a := by
-  sorry
+  if hf : ∀ i : α, f i ≠ 0 then
+    convert Finset.univ.prod_mul_single_hit f (fun i => g i / f i) a using 1
+    · apply congr_arg
+      ext1 i
+      rw [mul_ite, mul_one, mul_div_cancel']
+      exact hf i
+    · apply mul_div_assoc
+  else
+    push_neg at hf
+    obtain ⟨z, hz⟩ := hf
+    convert_to (0 : ℚ) = (0 : ℚ)
+    · rw [Finset.prod_eq_zero_iff]
+      use z
+      exact ⟨mem_univ z, by aesop⟩
+    · rw [mul_div_assoc]
+      convert zero_mul _
+      rw [Finset.prod_eq_zero_iff]
+      use z
+      exact ⟨mem_univ z, hz⟩
+    rfl
 
 lemma Finset.univ.prod_with_one_exception_nested {α β : Type*}
-    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β]
-    (f g : α → β → ℚ) (a : α) (b : β) :
+    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β] {f g : α → β → ℚ} {a : α} {b : β}
+    (hfg : f a b = 0 → g a b = 0) :
     Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g i j else f i j)) =
     Finset.univ.prod (Finset.univ.prod f) * g a b / f a b := by
   sorry
 
 lemma Finset.univ.prod_with_one_exception_nested_swapped {α β : Type*}
-    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β]
-    (f g : β → α → ℚ) (a : α) (b : β) :
+    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β] {f g : β → α → ℚ} {a : α} {b : β}
+    (hfg : f b a = 0 → g b a = 0) :
     Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g j i else f j i)) =
     Finset.univ.prod (Finset.univ.prod f) * g b a / f b a := by
   sorry
@@ -82,9 +102,13 @@ noncomputable def convertDistrib_aux {δ : ι → D → ℚ} (nonneg : 0 ≤ δ)
     · congr
       ext1 a
       push_cast
-      convert Finset.univ.prod_with_one_exception_nested_swapped _ _ _ _
-      symm
-      apply Finset.prod_apply
+      convert Finset.univ.prod_with_one_exception_nested_swapped _
+      · symm
+        apply Finset.prod_apply
+      · intro impos
+        exfalso
+        rw [Nat.cast_eq_zero] at impos
+        exact (δ i a).den_nz impos
     convert_to
       Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ))) *
         (Finset.univ.val.toList.map fun a => (Int.toNat (δ i a).num : ℚ) / ((δ i a).den : ℚ)).sum =
