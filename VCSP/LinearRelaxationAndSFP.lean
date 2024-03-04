@@ -2,6 +2,17 @@ import VCSP.LinearRelaxation
 import Mathlib.Data.Fin.Tuple.Curry
 import Mathlib.Tactic.Qify
 
+
+lemma Sum.elim_eq_left {α β γ : Type*} {u u' : α → γ} {v v' : β → γ}
+    (huv : Sum.elim u v = Sum.elim u' v') :
+    u = u' := by
+  simp_all [Function.funext_iff]
+
+lemma Sum.elim_eq_right {α β γ : Type*} {u u' : α → γ} {v v' : β → γ}
+    (huv : Sum.elim u v = Sum.elim u' v') :
+    v = v' := by
+  simp_all [Function.funext_iff]
+
 -- Yaël Dillies stated this lemma:
 lemma Multiset.sum_coe {α : Type*} [AddCommMonoid α] (l : List α) : (l : Multiset α).sum = l.sum :=
   by simp
@@ -120,6 +131,7 @@ lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds_aux (I : Γ.Instance ι
   simp_rw [Sum.elim_inr]
   simp only [ValuedCSP.Instance.RelaxBLP] at ass
   rw [Matrix.fromBlocks_mulVec_sumType, Matrix.zero_mulVec, zero_add] at ass
+  have bottom_part := Sum.elim_eq_right ass
   sorry
 
 lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds (I : Γ.Instance ι)
