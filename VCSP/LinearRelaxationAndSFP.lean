@@ -54,26 +54,26 @@ lemma Finset.univ.prod_with_one_exception {α : Type*} [Fintype α] [DecidableEq
       exact ⟨mem_univ z, hz⟩
     rfl
 
-lemma Finset.univ.prod_with_one_exception_nested_swapped {α β : Type*}
-    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β] {f g : β → α → ℚ} {a : α} {b : β}
-    (hfa : ∀ j : β, f j a ≠ 0) :
-    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g j i else f j i)) =
-    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => f j i)) * g b a / f b a := by
+lemma Finset.univ.prod_with_one_exception_nested {α β : Type*}
+    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β] {f g : α → β → ℚ} {a : α} {b : β}
+    (hfa : ∀ j : β, f a j ≠ 0) :
+    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g i j else f i j)) =
+    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => f i j)) * g a b / f a b := by
   have apart_if :
-    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g j i else f j i)) =
+    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g i j else f i j)) =
     Finset.univ.prod (fun i : α => if a = i
-      then Finset.univ.prod (fun j : β => if b = j then g j i else f j i)
-      else Finset.univ.prod (fun j : β => f j i))
+      then Finset.univ.prod (fun j : β => if b = j then g i j else f i j)
+      else Finset.univ.prod (fun j : β => f i j))
   · congr
     aesop
-  have hfja : Finset.univ.prod (fun j : β => f j a) ≠ 0
+  have hfpa : Finset.univ.prod (fun j : β => f a j) ≠ 0
   · intro impos
     rw [Finset.prod_eq_zero_iff] at impos
     obtain ⟨k, hk⟩ := impos
     exact hfa k hk.right
   rw [apart_if, Finset.univ.prod_with_one_exception, Finset.univ.prod_with_one_exception]
-  · rw [mul_div_assoc, mul_div_assoc, mul_div_assoc _ _ (f b a), mul_eq_mul_left_iff]
-    rw [mul_comm, mul_div_assoc, div_self hfja, mul_one]
+  · rw [mul_div_assoc, mul_div_assoc, mul_div_assoc _ _ (f a b), mul_eq_mul_left_iff]
+    rw [mul_comm, mul_div_assoc, div_self hfpa, mul_one]
     left
     rfl
   · intro contr
@@ -81,14 +81,7 @@ lemma Finset.univ.prod_with_one_exception_nested_swapped {α β : Type*}
     exact (hfa b) contr
   · intro contr
     exfalso
-    exact hfja contr
-
-lemma Finset.univ.prod_with_one_exception_nested {α β : Type*}
-    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β] {f g : α → β → ℚ} {a : α} {b : β}
-    (hfa : ∀ j : β, f a j ≠ 0) :
-    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g i j else f i j)) =
-    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => f i j)) * g a b / f a b :=
-  Finset.univ.prod_with_one_exception_nested_swapped hfa
+    exact hfpa contr
 
 lemma nat_cast_int_cast {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
   aesop
