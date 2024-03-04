@@ -37,7 +37,8 @@ variable
   {D : Type} [Fintype D] [DecidableEq D]
   {ι : Type} [Fintype ι] [DecidableEq ι]
 
-noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, ι → Fin m → D := by
+noncomputable def convertDistrib_aux {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1) :
+    Σ m : ℕ, ι → Fin m → D := by
   let w : ι → D → ℕ := fun i : ι => fun a : D =>
     Finset.univ.prod (fun j : ι =>
       Finset.univ.prod (fun b : D => if i = j ∧ a = b then (δ j b).num.toNat else (δ j b).den)
@@ -45,8 +46,6 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
   use Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
   intro i
   let l : List D := List.join (Finset.univ.val.toList.map (fun d : D => List.replicate (w i d) d))
-  have missing : ∀ j : ι, Finset.univ.sum (δ j) = 1
-  · sorry -- should come from the LP
   have nonnegnum : ∀ i : ι, ∀ a : D, 0 ≤ (δ i a).num
   · intro i a
     rw [Rat.num_nonneg_iff_zero_le]
@@ -80,7 +79,7 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
       rw [nat_cast_int_cast (nonnegnum i a)]
       exact Rat.num_div_den (δ i a)
     rw [Finset.univ.val.toList_map_sum]
-    exact missing i
+    exact sumone i
   simp_rw [Nat.cast_prod, Nat.cast_ite, nat_cast_int_cast (nonnegnum _ _)] at llenq
   have llen : l.length = Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den))
   · rw [List.length_join, List.map_map]
@@ -105,14 +104,33 @@ noncomputable def convertDistribution_aux {δ : ι → D → ℚ} (nonneg : 0 �
   convert l.get
   exact llen.symm
 
--- TODO change to perhaps `∃ m : ℕ, ∃ v : Fin m → ι → D, ` (properties of `v` wrt `δ`)
-noncomputable def convertDistribution {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) : Σ m : ℕ, Fin m → ι → D :=
-  let ⟨m, v⟩ := convertDistribution_aux nonneg
+noncomputable def convertDistribution {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1) :
+    Σ m : ℕ, Fin m → ι → D :=
+  let ⟨m, v⟩ := convertDistrib_aux nonneg sumone
   ⟨m, Function.swap v⟩
 
 
 variable {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
 open scoped Matrix
+
+lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds_aux (I : Γ.Instance ι)
+    {xₜ : (Σ t : I, (Fin t.fst.n → D)) → ℚ} {xᵥ : (ι × D) → ℚ}
+    (ass : I.RelaxBLP.A *ᵥ (Sum.elim xₜ xᵥ) = I.RelaxBLP.b) (j : ι) :
+    Finset.univ.sum (fun d => (Sum.elim xₜ xᵥ) (Sum.inr ⟨j, d⟩)) = 1 := by
+  simp_rw [Sum.elim_inr]
+  simp only [ValuedCSP.Instance.RelaxBLP] at ass
+  rw [Matrix.fromBlocks_mulVec_sumType, Matrix.zero_mulVec, zero_add] at ass
+  sorry
+
+lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds (I : Γ.Instance ι)
+    {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
+    (ass : I.RelaxBLP.A *ᵥ x = I.RelaxBLP.b) (j : ι) :
+    Finset.univ.sum (fun d => x (Sum.inr ⟨j, d⟩)) = 1 := by
+  convert I.right_sum_one_of_RelaxBLP_holds_aux _ j
+  · ext1 i
+    cases i <;> rfl
+  convert ass
+  aesop
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms_aux
     (I : Γ.Instance ι) {o : ℚ} (ho : I.RelaxBLP.Reaches o)
@@ -121,8 +139,9 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
       ω.IsValid ∧ ∃ X : Fin m → ι → D, (ω.tt X).summap I.evalSolution ≤ ω.size • o := by
   obtain ⟨x, ⟨x_equl, x_nneg⟩, x_cost⟩ := ho
   let δ : ι → D → ℚ := fun i d => x (Sum.inr ⟨i, d⟩)
-  have nonneg : 0 ≤ δ := fun i d => x_nneg (Sum.inr (i, d))
-  obtain ⟨m, X⟩ := convertDistribution nonneg -- TODO get more info from here
+  have non_neg : 0 ≤ δ := fun i : ι => fun d : D => x_nneg (Sum.inr ⟨i, d⟩)
+  have sum_one (j : ι) : Finset.univ.sum (δ j) = 1 := I.right_sum_one_of_RelaxBLP_holds x_equl j
+  obtain ⟨m, X⟩ := convertDistribution non_neg sum_one
   use m
   obtain ⟨ω, valid, frpol, symmega⟩ := hΓ m
   use ω
