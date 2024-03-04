@@ -59,7 +59,24 @@ lemma Finset.univ.prod_with_one_exception_nested {α β : Type*}
     (hfg : f a b = 0 → g a b = 0) :
     Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g i j else f i j)) =
     Finset.univ.prod (Finset.univ.prod f) * g a b / f a b := by
-  sorry
+  have apart_if :
+    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g i j else f i j)) =
+    Finset.univ.prod (fun i : α => if a = i
+      then Finset.univ.prod (fun j : β => if b = j then g i j else f i j)
+      else Finset.univ.prod (fun j : β => f i j))
+  · congr
+    aesop
+  rw [apart_if, Finset.univ.prod_with_one_exception, Finset.univ.prod_with_one_exception]
+  · show
+      ((Finset.univ.prod fun i => Finset.univ.prod fun j => f i j) * ((Finset.prod univ fun j => f a j) * g a b / f a b) /
+        (Finset.prod univ fun j => f a j)) =
+      Finset.prod univ (Finset.prod univ f) * g a b / f a b
+    have prod_prod_f : (Finset.univ.prod fun i => Finset.univ.prod fun j => f i j) = Finset.prod univ (Finset.prod univ f)
+    · simp_rw [prod_apply]
+      apply prod_comm
+    sorry
+  · sorry
+  · sorry
 
 lemma Finset.univ.prod_with_one_exception_nested_swapped {α β : Type*}
     [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β] {f g : β → α → ℚ} {a : α} {b : β}
@@ -71,6 +88,35 @@ lemma Finset.univ.prod_with_one_exception_nested_swapped {α β : Type*}
   rw [Finset.univ.prod_with_one_exception_nested hfg']
   simp_rw [Finset.prod_apply]
   rw [Finset.prod_comm]
+
+lemma Finset.univ.prod_with_one_exception_nested_swapped' {α β : Type*}
+    [Fintype α] [DecidableEq α] [Fintype β] [DecidableEq β] {f g : β → α → ℚ} {a : α} {b : β}
+    (hfg : f b a = 0 → g b a = 0) :
+    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g j i else f j i)) =
+    Finset.univ.prod (Finset.univ.prod f) * g b a / f b a := by
+  have apart_if :
+    Finset.univ.prod (fun i : α => Finset.univ.prod (fun j : β => if a = i ∧ b = j then g j i else f j i)) =
+    Finset.univ.prod (fun i : α => if a = i
+      then Finset.univ.prod (fun j : β => if b = j then g j i else f j i)
+      else Finset.univ.prod (fun j : β => f j i))
+  · congr
+    aesop
+  have nzfja : Finset.prod univ (fun j : β => f j a) ≠ 0
+  · sorry
+  rw [apart_if, Finset.univ.prod_with_one_exception, Finset.univ.prod_with_one_exception]
+  · have prod_prod_f :
+      Finset.prod univ (Finset.prod univ f) =
+      (Finset.univ.prod fun i : α =>
+        Finset.univ.prod fun j : β => f j i)
+    · simp_rw [prod_apply]
+    rw [←prod_prod_f, mul_div_assoc, mul_div_assoc, mul_div_assoc _ _ (f b a), mul_eq_mul_left_iff]
+    rw [mul_comm, mul_div_assoc, div_self nzfja, mul_one]
+    left
+    rfl
+  · exact hfg
+  · intro contr
+    exfalso
+    exact nzfja contr
 
 lemma nat_cast_int_cast {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
   aesop
