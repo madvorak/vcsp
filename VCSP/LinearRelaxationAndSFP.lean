@@ -168,7 +168,8 @@ lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds_aux (I : Γ.Instance ι
   convert_to (Finset.sum Finset.univ fun d : D => xᵥ (j, d)) = (fun c : ι × D => if j = c.1 then 1 else 0) ⬝ᵥ xᵥ
   · rw [the_eq]
   clear * -
-  sorry
+  simp_rw [Matrix.dotProduct, ite_mul, one_mul, zero_mul, Fintype.sum_prod_type]
+  simp [Finset.sum_comm]
 
 lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
