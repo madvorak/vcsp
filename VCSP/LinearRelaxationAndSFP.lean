@@ -74,7 +74,7 @@ lemma Finset.univ.prod_with_one_exception_nested {α β : Type*}
       mul_div_assoc, mul_div_assoc, mul_div_assoc _ _ (f a b), mul_eq_mul_left_iff,
       mul_comm, mul_div_assoc, div_self hfpa, mul_one] <;> tauto
 
-lemma nat_cast_int_cast {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
+lemma nat_cast_eq_int_cast_of_nneg {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
   aesop
 
 
@@ -82,20 +82,15 @@ variable
   {D : Type} [Fintype D] [DecidableEq D]
   {ι : Type} [Fintype ι] [DecidableEq ι]
 
-abbrev w_aux (δ : ι → D → ℚ) : ι → D → ℕ :=
-  fun i : ι => fun a : D =>
-    Finset.univ.prod (fun j : ι =>
-      Finset.univ.prod (fun b : D => if i = j ∧ a = b then (δ j b).num.toNat else (δ j b).den)
-    )
+abbrev convertWeight (δ : ι → D → ℚ) (i : ι) (a : D) : ℕ :=
+  Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D =>
+    if i = j ∧ a = b then (δ j b).num.toNat else (δ j b).den))
 
-noncomputable abbrev l_aux (δ : ι → D → ℚ) (i : ι) : List D :=
-  List.join (Finset.univ.val.toList.map (fun d : D => List.replicate (w_aux δ i d) d))
-
-lemma l_aux_length_aux {δ : ι → D → ℚ}
+lemma prod_all_denoms_as_rat_eq_ith_sum_convertWeight {δ : ι → D → ℚ}
     (nonnegnum : ∀ i : ι, ∀ a : D, 0 ≤ (δ i a).num) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1)
     (i : ι) :
     Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ))) =
-    (Finset.univ.val.toList.map (fun a : D => ((w_aux δ i a) : ℚ))).sum := by
+    (Finset.univ.val.toList.map (fun a : D => ((convertWeight δ i a) : ℚ))).sum := by
   convert_to
     Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ))) =
     (Finset.univ.val.toList.map fun a =>
@@ -119,43 +114,46 @@ lemma l_aux_length_aux {δ : ι → D → ℚ}
   convert_to ((Multiset.toList Finset.univ.val).map fun a => (δ i a)).sum = (1 : ℚ)
   · congr
     ext1 a
-    rw [nat_cast_int_cast (nonnegnum i a)]
+    rw [nat_cast_eq_int_cast_of_nneg (nonnegnum i a)]
     exact Rat.num_div_den (δ i a)
   rw [Finset.univ.val.toList_map_sum]
   exact sumone i
 
-lemma l_aux_length {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1) (i : ι) :
-    Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den)) = (l_aux δ i).length := by
+noncomputable abbrev convertColumn (δ : ι → D → ℚ) (i : ι) : List D :=
+  List.join (Finset.univ.val.toList.map (fun d : D => List.replicate (convertWeight δ i d) d))
+
+lemma convertColumn_height {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1) (i : ι) :
+    Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den)) = (convertColumn δ i).length := by
   have nonnegnum : ∀ i : ι, ∀ a : D, 0 ≤ (δ i a).num
   · intro i a
     rw [Rat.num_nonneg_iff_zero_le]
     exact nonneg i a
   rw [List.length_join, List.map_map]
-  have d_lengths : List.length ∘ (fun d : D => List.replicate (w_aux δ i d) d) = w_aux δ i
+  have d_lengths : List.length ∘ (fun d : D => List.replicate (convertWeight δ i d) d) = convertWeight δ i
   · ext d
     rw [Function.comp_apply, List.length_replicate]
   rw [d_lengths]
   qify
-  have llen_aux := l_aux_length_aux nonnegnum sumone i
-  simp_rw [Nat.cast_prod, Nat.cast_ite, nat_cast_int_cast (nonnegnum _ _)] at llen_aux
-  convert llen_aux
-  simp only [List.map_map]
+  have prod_all_denoms_as_rat_aux := prod_all_denoms_as_rat_eq_ith_sum_convertWeight nonnegnum sumone i
+  simp_rw [Nat.cast_prod, Nat.cast_ite, nat_cast_eq_int_cast_of_nneg (nonnegnum _ _)] at prod_all_denoms_as_rat_aux
+  convert prod_all_denoms_as_rat_aux
+  simp_rw [List.map_map]
   congr
   ext1 a
-  simp only [Function.comp_apply, Nat.cast_prod, Nat.cast_ite, Int.cast_prod, Int.cast_ite, Int.cast_ofNat]
+  simp_rw [Function.comp_apply, Nat.cast_prod, Nat.cast_ite, Int.cast_prod, Int.cast_ite, Int.cast_ofNat]
   congr
   ext1 j
   congr
   ext1 b
   have : @Nat.cast ℚ _ (Int.toNat (δ j b).num) = @Int.cast ℚ _ (δ j b).num
-  · apply nat_cast_int_cast
+  · apply nat_cast_eq_int_cast_of_nneg
     apply nonnegnum
   aesop
 
 noncomputable def convertDistribution {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1) :
     Σ m : ℕ, Fin m → ι → D :=
   ⟨Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den)),
-   fun n => fun i : ι => (l_aux δ i).get (Fin.cast (l_aux_length nonneg sumone i) n)⟩
+    fun n => fun i : ι => (convertColumn δ i).get (Fin.cast (convertColumn_height nonneg sumone i) n)⟩
 
 
 variable {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
@@ -163,14 +161,14 @@ open scoped Matrix
 
 lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds_aux (I : Γ.Instance ι)
     {xₜ : (Σ t : I, (Fin t.fst.n → D)) → ℚ} {xᵥ : (ι × D) → ℚ}
-    (ass : I.RelaxBLP.A *ᵥ (Sum.elim xₜ xᵥ) = I.RelaxBLP.b) (j : ι) :
+    (hx : I.RelaxBLP.A *ᵥ (Sum.elim xₜ xᵥ) = I.RelaxBLP.b) (j : ι) :
     Finset.univ.sum (fun d => (Sum.elim xₜ xᵥ) (Sum.inr ⟨j, d⟩)) = 1 := by
   simp_rw [Sum.elim_inr]
-  simp only [ValuedCSP.Instance.RelaxBLP] at ass
-  rw [Matrix.fromBlocks_mulVec_sumType, Matrix.zero_mulVec, zero_add] at ass
+  simp only [ValuedCSP.Instance.RelaxBLP] at hx
+  rw [Matrix.fromBlocks_mulVec_sumType, Matrix.zero_mulVec, zero_add] at hx
   have the_eq : (fun c : ι × D => if j = c.fst then 1 else 0) ⬝ᵥ xᵥ = 1
-  · convert congr_fun (Sum.elim_eq_right ass) j
-  convert_to (Finset.sum Finset.univ fun d : D => xᵥ (j, d)) = (fun c : ι × D => if j = c.1 then 1 else 0) ⬝ᵥ xᵥ
+  · convert congr_fun (Sum.elim_eq_right hx) j
+  convert_to Finset.sum Finset.univ (fun d : D => xᵥ ⟨j, d⟩) = (fun c : ι × D => if j = c.1 then 1 else 0) ⬝ᵥ xᵥ
   · rw [the_eq]
   clear * -
   simp_rw [Matrix.dotProduct, ite_mul, one_mul, zero_mul, Fintype.sum_prod_type]
@@ -209,7 +207,7 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
     simp_all
   apply (frpol.onInstance I X).trans
   rw [smul_comm]
-  have zero_lt_size : 0 < ω.size := valid.size
+  have zero_lt_size : 0 < ω.size := valid.size_pos
   simp_all
   simp_rw [← ValuedCSP.Instance.solutionVCSPtoBLP_cost]
   show
@@ -217,6 +215,31 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
     m * I.RelaxBLP.c ⬝ᵥ x
   -- thanks to `symmega` we can replace a relationship between `X` and `x (Sum.inl ..)` by
   -- a relationship between `x (Sum.inr ..)` and `x (Sum.inl ..)` hopefully
+  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct', add_zero,
+    Matrix.dotProduct, Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, zero_mul, Finset.sum_const_zero, add_zero]
+  show
+    Finset.univ.sum (fun i : Fin m => Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
+      tᵥ.fst.fst.f tᵥ.snd * if ∀ iₙ : Fin tᵥ.fst.fst.n, tᵥ.snd iₙ = X i (tᵥ.fst.fst.app iₙ) then 1 else 0)) ≤
+    m * Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) => tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ))
+  convert_to
+    Finset.univ.sum (fun i : Fin m => Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
+      tᵥ.fst.fst.f tᵥ.snd * if ∀ iₙ : Fin tᵥ.fst.fst.n, tᵥ.snd iₙ = X i (tᵥ.fst.fst.app iₙ) then 1 else 0)) ≤
+    Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
+      m * (tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ)))
+  · apply Finset.mul_sum
+  convert_to
+    Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) => Finset.univ.sum (fun i : Fin m =>
+      tᵥ.fst.fst.f tᵥ.snd * if ∀ iₙ : Fin tᵥ.fst.fst.n, tᵥ.snd iₙ = X i (tᵥ.fst.fst.app iₙ) then 1 else 0)) ≤
+    Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
+      m * (tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ)))
+  · apply Finset.sum_comm
+  apply Finset.sum_le_sum
+  intro ⟨⟨t, iₜ⟩, vₜ⟩ tin
+  clear tin
+  simp_rw [mul_ite, mul_one, mul_zero]
+  show
+    Finset.univ.sum (fun iₘ : Fin m => if ∀ iₙ : Fin t.n, vₜ iₙ = X iₘ (t.app iₙ) then t.f vₜ else 0) ≤
+    m * (t.f vₜ * x (Sum.inl ⟨⟨t, iₜ⟩, vₜ⟩))
   sorry
 
 theorem ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms

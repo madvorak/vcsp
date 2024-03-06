@@ -21,7 +21,7 @@ lemma FractionalOperation.IsValid.contains {ω : FractionalOperation D m} (valid
     ∃ g : (Fin m → D) → D, g ∈ ω :=
   Multiset.exists_mem_of_ne_zero valid
 
-lemma FractionalOperation.IsValid.size {ω : FractionalOperation D m} (valid : ω.IsValid) :
+lemma FractionalOperation.IsValid.size_pos {ω : FractionalOperation D m} (valid : ω.IsValid) :
     0 < ω.size := by
   rwa [FractionalOperation.size, ZeroHom.toFun_eq_coe, AddMonoidHom.toZeroHom_coe, Multiset.card_pos]
 

@@ -21,7 +21,7 @@ lemma Finset.filter_univ_eq_image {α : Type*} [Fintype α] [DecidableEq α] {p 
 
 lemma Multiset.summap_to_sumFinset {α β : Type*} [DecidableEq α] [OrderedAddCommMonoid β]
     (S : Multiset α) (f : α → β) :
-    S.summap f = Finset.univ.sum (fun (a : S) => f a.fst) := by
+    S.summap f = Finset.univ.sum (fun a : S => f a.fst) := by
   simp [Multiset.summap, Finset.sum]
 
 lemma neg_finset_univ_sum {α R : Type} [Fintype α] [Ring R] (f : α → R) :
@@ -35,6 +35,7 @@ lemma indicator_of_neg {α R : Type} [Fintype α] [Ring R] (P : α → Prop) [De
 -- Nonterminal `aesop` (strongly discouraged to use)
 macro (name := aesopnt) "aesopnt" : tactic =>
   `(tactic| aesop (config := {warnOnNonterminal := false}))
+
 
 variable
   {D : Type} [Fintype D] [DecidableEq D]
