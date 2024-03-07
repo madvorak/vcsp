@@ -82,11 +82,11 @@ variable
   {D : Type} [Fintype D] [DecidableEq D]
   {ι : Type} [Fintype ι] [DecidableEq ι]
 
-abbrev convertWeight (δ : ι → D → ℚ) (i : ι) (a : D) : ℕ :=
+private abbrev convertWeight (δ : ι → D → ℚ) (i : ι) (a : D) : ℕ :=
   Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D =>
     if i = j ∧ a = b then (δ j b).num.toNat else (δ j b).den))
 
-lemma prod_all_denoms_as_rat_eq_ith_sum_convertWeight {δ : ι → D → ℚ}
+private lemma prod_all_denoms_as_rat_eq_ith_sum_convertWeight {δ : ι → D → ℚ}
     (nonnegnum : ∀ i : ι, ∀ a : D, 0 ≤ (δ i a).num) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1)
     (i : ι) :
     Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => ((δ j b).den : ℚ))) =
@@ -119,10 +119,10 @@ lemma prod_all_denoms_as_rat_eq_ith_sum_convertWeight {δ : ι → D → ℚ}
   rw [Finset.univ.val.toList_map_sum]
   exact sumone i
 
-noncomputable abbrev convertColumn (δ : ι → D → ℚ) (i : ι) : List D :=
+private noncomputable abbrev convertColumn (δ : ι → D → ℚ) (i : ι) : List D :=
   List.join (Finset.univ.val.toList.map (fun d : D => List.replicate (convertWeight δ i d) d))
 
-lemma convertColumn_height {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1) (i : ι) :
+private lemma convertColumn_height {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1) (i : ι) :
     Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den)) = (convertColumn δ i).length := by
   have nonnegnum : ∀ i : ι, ∀ a : D, 0 ≤ (δ i a).num
   · intro i a
@@ -234,8 +234,26 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
   intro t₁ tin
   clear tin
   show
-    (ω.tt X.snd).summap (fun y => t₁.fst.evalSolution y) ≤
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D => ω.size • t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩))
+    (ω.tt X.snd).summap (fun y : ι → D => t₁.fst.evalSolution y) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      ω.size • t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩))
+  convert_to
+    ω.summap (fun g : (Fin X.fst → D) → D => t₁.fst.evalSolution (fun j : ι =>
+      g (fun i : Fin X.fst => (convertColumn δ j).get (Fin.cast (convertColumn_height non_neg sum_one j) i)))) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      ω.size • t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩))
+  · simp [FractionalOperation.tt]
+    rfl
+  show
+    ω.summap (fun g : (Fin X.fst → D) → D => t₁.fst.f ((fun j : ι =>
+      g (fun i : Fin X.fst => (convertColumn δ j).get (Fin.cast _ i))) ∘ t₁.fst.app)) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      ω.size • t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩))
+  show
+    ω.summap (fun g : (Fin X.fst → D) → D => t₁.fst.f (fun p : Fin t₁.fst.n => (
+      g (fun i : Fin X.fst => (convertColumn δ (t₁.fst.app p)).get (Fin.cast (convertColumn_height non_neg sum_one (t₁.fst.app p)) i))))) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      ω.size • t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩))
   sorry
 
 theorem ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms
