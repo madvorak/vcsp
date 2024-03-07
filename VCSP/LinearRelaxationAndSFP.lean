@@ -229,7 +229,7 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
     Finset.univ.sum (fun t : I => (ω.tt X.snd).summap (fun y => t.fst.evalSolution y)) ≤
     Finset.univ.sum (fun t : I => Finset.univ.sum (fun v : Fin t.fst.n → D =>
       ω.size • t.fst.f v * x (Sum.inl ⟨t, v⟩)))
-  · sorry
+  · rw [Finset.sum, Multiset.summap, ←Multiset.map_univ] -- trick by Damiano Testa
   apply Finset.sum_le_sum
   intro t₁ tin
   clear tin
