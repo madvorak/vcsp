@@ -164,12 +164,10 @@ lemma ValuedCSP.Instance.right_sum_one_of_RelaxBLP_holds_aux (I : Γ.Instance ι
     (hx : I.RelaxBLP.A *ᵥ (Sum.elim xₜ xᵥ) = I.RelaxBLP.b) (j : ι) :
     Finset.univ.sum (fun d => (Sum.elim xₜ xᵥ) (Sum.inr ⟨j, d⟩)) = 1 := by
   simp_rw [Sum.elim_inr]
-  simp only [ValuedCSP.Instance.RelaxBLP] at hx
+  simp_rw [ValuedCSP.Instance.RelaxBLP] at hx
   rw [Matrix.fromBlocks_mulVec_sumType, Matrix.zero_mulVec, zero_add] at hx
-  have the_eq : (fun c : ι × D => if j = c.fst then 1 else 0) ⬝ᵥ xᵥ = 1
-  · convert congr_fun (Sum.elim_eq_right hx) j
-  convert_to Finset.sum Finset.univ (fun d : D => xᵥ ⟨j, d⟩) = (fun c : ι × D => if j = c.1 then 1 else 0) ⬝ᵥ xᵥ
-  · rw [the_eq]
+  convert_to Finset.univ.sum (fun d : D => xᵥ ⟨j, d⟩) = (fun c : ι × D => if j = c.1 then 1 else 0) ⬝ᵥ xᵥ
+  · convert congr_fun (Sum.elim_eq_right hx.symm) j
   clear * -
   simp_rw [Matrix.dotProduct, ite_mul, one_mul, zero_mul, Fintype.sum_prod_type]
   simp [Finset.sum_comm]
@@ -245,13 +243,9 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
   · simp [FractionalOperation.tt]
     rfl
   show
-    ω.summap (fun g : (Fin X.fst → D) → D => t₁.fst.f ((fun j : ι =>
-      g (fun i : Fin X.fst => (convertColumn δ j).get (Fin.cast _ i))) ∘ t₁.fst.app)) ≤
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-      ω.size • t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩))
-  show
     ω.summap (fun g : (Fin X.fst → D) → D => t₁.fst.f (fun p : Fin t₁.fst.n => (
-      g (fun i : Fin X.fst => (convertColumn δ (t₁.fst.app p)).get (Fin.cast (convertColumn_height non_neg sum_one (t₁.fst.app p)) i))))) ≤
+      g (fun i : Fin X.fst => (convertColumn δ (t₁.fst.app p)).get
+        (Fin.cast (convertColumn_height non_neg sum_one (t₁.fst.app p)) i))))) ≤
     Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
       ω.size • t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩))
   sorry
