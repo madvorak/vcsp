@@ -192,109 +192,50 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
   obtain ⟨x, ⟨x_equl, x_nneg⟩, x_cost⟩ := ho
   let δ : ι → D → ℚ := fun i d => x (Sum.inr ⟨i, d⟩)
   have non_neg : 0 ≤ δ := fun i : ι => fun d : D => x_nneg (Sum.inr ⟨i, d⟩)
-  have sum_one (j : ι) : Finset.univ.sum (δ j) = 1 := I.right_sum_one_of_RelaxBLP_holds x_equl j
-  obtain ⟨m, X⟩ := convertDistribution non_neg sum_one
-  use m
-  obtain ⟨ω, valid, frpol, symmega⟩ := hΓ m
+  have sum_one := I.right_sum_one_of_RelaxBLP_holds x_equl
+  let X := convertDistribution non_neg sum_one
+  use X.fst
+  obtain ⟨ω, valid, frpol, symmega⟩ := hΓ X.fst
   use ω
   constructor
   · exact valid
-  use X
+  use X.snd
   rw [← x_cost]
   clear x_cost
-  suffices : m • (ω.tt X).summap I.evalSolution ≤ m • ω.size • Matrix.dotProduct I.RelaxBLP.c x
-  · have : 0 < m := sorry -- will come from API around `convertDistribution`
-    simp_all
-  apply (frpol.onInstance I X).trans
-  rw [smul_comm]
-  have zero_lt_size : 0 < ω.size := valid.size_pos
-  simp_all
-  simp_rw [← ValuedCSP.Instance.solutionVCSPtoBLP_cost]
+  show (ω.tt X.snd).summap (fun y => I.summap (fun t => t.evalSolution y)) ≤ ω.size • (I.RelaxBLP.c ⬝ᵥ x)
+  rw [Multiset.summap_summap_swap, Matrix.dotProduct, Finset.smul_sum]
   show
-    Finset.univ.sum (fun i : Fin m => I.RelaxBLP.c ⬝ᵥ (I.solutionVCSPtoBLP (X i))) ≤
-    m * I.RelaxBLP.c ⬝ᵥ x
-  -- thanks to `symmega` we can replace a relationship between `X` and `x (Sum.inl ..)` by
-  -- a relationship between `x (Sum.inr ..)` and `x (Sum.inl ..)` hopefully
-  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct', add_zero,
-    Matrix.dotProduct, Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, zero_mul, Finset.sum_const_zero, add_zero]
-  show
-    Finset.univ.sum (fun i : Fin m => Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
-      tᵥ.fst.fst.f tᵥ.snd * if ∀ iₙ : Fin tᵥ.fst.fst.n, tᵥ.snd iₙ = X i (tᵥ.fst.fst.app iₙ) then 1 else 0)) ≤
-    m * Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) => tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ))
+    I.summap (fun t => (ω.tt X.snd).summap (fun y => t.evalSolution y)) ≤
+    Finset.univ.sum (fun v : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) => ω.size • (I.RelaxBLP.c v * x v))
   convert_to
-    Finset.univ.sum (fun i : Fin m => Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
-      tᵥ.fst.fst.f tᵥ.snd * if ∀ iₙ : Fin tᵥ.fst.fst.n, tᵥ.snd iₙ = X i (tᵥ.fst.fst.app iₙ) then 1 else 0)) ≤
+    I.summap (fun t => (ω.tt X.snd).summap (fun y => t.evalSolution y)) ≤
     Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
-      m * (tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ)))
-  · apply Finset.mul_sum
-  convert_to
-    Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) => Finset.univ.sum (fun i : Fin m =>
-      tᵥ.fst.fst.f tᵥ.snd * if ∀ iₙ : Fin tᵥ.fst.fst.n, tᵥ.snd iₙ = X i (tᵥ.fst.fst.app iₙ) then 1 else 0)) ≤
-    Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
-      m * (tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ)))
-  · apply Finset.sum_comm
+      (ω.size • tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ)))
+  · simp [RelaxBLP]
+    congr
+    ext1
+    rewrite [mul_assoc]
+    rfl
   show
+    I.summap (fun t => (ω.tt X.snd).summap (fun y => t.evalSolution y)) ≤
     (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
-      Finset.univ.sum (fun i : Fin m =>
-        tᵥ.fst.fst.f tᵥ.snd * if ∀ iₙ : Fin tᵥ.fst.fst.n, tᵥ.snd iₙ = X i (tᵥ.fst.fst.app iₙ) then 1 else 0)) ≤
-    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
-      m * (tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ)))
-  rw [Finset.sum_sigma, Finset.sum_sigma]
+      ω.size • tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ))
+  rw [Finset.sum_sigma]
+  show
+    I.summap (fun t : Γ.Term ι => (ω.tt X.snd).summap (fun y => t.evalSolution y)) ≤
+    Finset.univ.sum (fun t : I => Finset.univ.sum (fun v : Fin t.fst.n → D =>
+      ω.size • t.fst.f v * x (Sum.inl ⟨t, v⟩)))
+  convert_to
+    Finset.univ.sum (fun t : I => (ω.tt X.snd).summap (fun y => t.fst.evalSolution y)) ≤
+    Finset.univ.sum (fun t : I => Finset.univ.sum (fun v : Fin t.fst.n → D =>
+      ω.size • t.fst.f v * x (Sum.inl ⟨t, v⟩)))
+  · sorry
   apply Finset.sum_le_sum
   intro t₁ tin
   clear tin
   show
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-      Finset.univ.sum (fun i : Fin m =>
-        t₁.fst.f v * if ∀ iₙ : Fin t₁.fst.n, v iₙ = X i (t₁.fst.app iₙ) then 1 else 0)) ≤
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-      m * (t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩)))
-  convert_to
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-      Finset.univ.sum (fun i : Fin m =>
-        t₁.fst.f v * if ∀ iₙ : Fin t₁.fst.n, v iₙ = X i (t₁.fst.app iₙ) then 1 else 0)) ≤
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-      t₁.fst.f v * (m * x (Sum.inl ⟨t₁, v⟩)))
-  · congr
-    ext1
-    rw [← mul_assoc (m : ℚ), mul_comm (m : ℚ), mul_assoc _ (m : ℚ)]
-  convert_to
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D => t₁.fst.f v *
-        Finset.univ.sum (fun i : Fin m => if ∀ iₙ : Fin t₁.fst.n, v iₙ = X i (t₁.fst.app iₙ) then 1 else 0)) ≤
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D => t₁.fst.f v *
-        (m * x (Sum.inl ⟨t₁, v⟩)))
-  · simp_rw [Finset.mul_sum]
-  convert_to
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D => t₁.fst.f v *
-        Finset.univ.sum (fun i : Fin m => if v = X i ∘ t₁.fst.app then 1 else 0)) ≤
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D => t₁.fst.f v *
-        (m * x (Sum.inl ⟨t₁, v⟩)))
-  · congr
-    ext1
-    congr
-    ext1
-    congr
-    aesop
-  simp_rw [Finset.mul_sum, mul_ite, mul_one, mul_zero]
-  show
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-      Finset.univ.sum (fun i : Fin m => if v = X i ∘ t₁.fst.app then t₁.fst.f v else 0)) ≤
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-      t₁.fst.f v * (m * x (Sum.inl ⟨t₁, v⟩)))
-  rw [Finset.sum_comm]
-  show
-    Finset.univ.sum (fun i : Fin m =>
-      Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-        if v = X i ∘ t₁.fst.app then t₁.fst.f v else 0)) ≤
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-      t₁.fst.f v * (m * x (Sum.inl ⟨t₁, v⟩)))
-  simp_rw [Finset.sum_ite_eq', Finset.mem_univ, if_true]
-  show
-    Finset.univ.sum (fun i : Fin m =>
-      t₁.fst.f (X i ∘ t₁.fst.app)) ≤
-    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
-      t₁.fst.f v * (m * x (Sum.inl ⟨t₁, v⟩)))
-  -- we have `X i = fun j : ι => (convertColumn δ j).get (Fin.cast _ i)`
+    (ω.tt X.snd).summap (fun y => t₁.fst.evalSolution y) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D => ω.size • t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩))
   sorry
 
 theorem ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms
