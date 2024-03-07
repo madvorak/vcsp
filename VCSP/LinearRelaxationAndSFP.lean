@@ -153,7 +153,7 @@ lemma convertColumn_height {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) (sumone :
 noncomputable def convertDistribution {δ : ι → D → ℚ} (nonneg : 0 ≤ δ) (sumone : ∀ j : ι, Finset.univ.sum (δ j) = 1) :
     Σ m : ℕ, Fin m → ι → D :=
   ⟨Finset.univ.prod (fun j : ι => Finset.univ.prod (fun b : D => (δ j b).den)),
-    fun n => fun i : ι => (convertColumn δ i).get (Fin.cast (convertColumn_height nonneg sumone i) n)⟩
+    fun i => fun j : ι => (convertColumn δ j).get (Fin.cast (convertColumn_height nonneg sumone j) i)⟩
 
 
 variable {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
@@ -233,13 +233,68 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
     Finset.univ.sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
       m * (tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ)))
   · apply Finset.sum_comm
-  apply Finset.sum_le_sum
-  intro ⟨⟨t, iₜ⟩, vₜ⟩ tin
-  clear tin
-  simp_rw [mul_ite, mul_one, mul_zero]
   show
-    Finset.univ.sum (fun iₘ : Fin m => if ∀ iₙ : Fin t.n, vₜ iₙ = X iₘ (t.app iₙ) then t.f vₜ else 0) ≤
-    m * (t.f vₜ * x (Sum.inl ⟨⟨t, iₜ⟩, vₜ⟩))
+    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
+      Finset.univ.sum (fun i : Fin m =>
+        tᵥ.fst.fst.f tᵥ.snd * if ∀ iₙ : Fin tᵥ.fst.fst.n, tᵥ.snd iₙ = X i (tᵥ.fst.fst.app iₙ) then 1 else 0)) ≤
+    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ : (Σ t : I, (Fin t.fst.n → D)) =>
+      m * (tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ)))
+  rw [Finset.sum_sigma, Finset.sum_sigma]
+  apply Finset.sum_le_sum
+  intro t₁ tin
+  clear tin
+  show
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      Finset.univ.sum (fun i : Fin m =>
+        t₁.fst.f v * if ∀ iₙ : Fin t₁.fst.n, v iₙ = X i (t₁.fst.app iₙ) then 1 else 0)) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      m * (t₁.fst.f v * x (Sum.inl ⟨t₁, v⟩)))
+  convert_to
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      Finset.univ.sum (fun i : Fin m =>
+        t₁.fst.f v * if ∀ iₙ : Fin t₁.fst.n, v iₙ = X i (t₁.fst.app iₙ) then 1 else 0)) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      t₁.fst.f v * (m * x (Sum.inl ⟨t₁, v⟩)))
+  · congr
+    ext1
+    rw [← mul_assoc (m : ℚ), mul_comm (m : ℚ), mul_assoc _ (m : ℚ)]
+  convert_to
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D => t₁.fst.f v *
+        Finset.univ.sum (fun i : Fin m => if ∀ iₙ : Fin t₁.fst.n, v iₙ = X i (t₁.fst.app iₙ) then 1 else 0)) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D => t₁.fst.f v *
+        (m * x (Sum.inl ⟨t₁, v⟩)))
+  · simp_rw [Finset.mul_sum]
+  convert_to
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D => t₁.fst.f v *
+        Finset.univ.sum (fun i : Fin m => if v = X i ∘ t₁.fst.app then 1 else 0)) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D => t₁.fst.f v *
+        (m * x (Sum.inl ⟨t₁, v⟩)))
+  · congr
+    ext1
+    congr
+    ext1
+    congr
+    aesop
+  simp_rw [Finset.mul_sum, mul_ite, mul_one, mul_zero]
+  show
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      Finset.univ.sum (fun i : Fin m => if v = X i ∘ t₁.fst.app then t₁.fst.f v else 0)) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      t₁.fst.f v * (m * x (Sum.inl ⟨t₁, v⟩)))
+  rw [Finset.sum_comm]
+  show
+    Finset.univ.sum (fun i : Fin m =>
+      Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+        if v = X i ∘ t₁.fst.app then t₁.fst.f v else 0)) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      t₁.fst.f v * (m * x (Sum.inl ⟨t₁, v⟩)))
+  simp_rw [Finset.sum_ite_eq', Finset.mem_univ, if_true]
+  show
+    Finset.univ.sum (fun i : Fin m =>
+      t₁.fst.f (X i ∘ t₁.fst.app)) ≤
+    Finset.univ.sum (fun v : Fin t₁.fst.n → D =>
+      t₁.fst.f v * (m * x (Sum.inl ⟨t₁, v⟩)))
+  -- we have `X i = fun j : ι => (convertColumn δ j).get (Fin.cast _ i)`
   sorry
 
 theorem ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms
