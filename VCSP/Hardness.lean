@@ -124,22 +124,6 @@ end not_VCSP_specific
 
 variable {D C : Type*}
 
-lemma FractionalOperation.IsFractionalPolymorphismFor.onInstance [OrderedAddCommMonoid C]
-    {Γ : ValuedCSP D C} {ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
-    (frpo : ω.IsFractionalPolymorphismFor Γ) (I : Γ.Instance ι) (x : Fin m → ι → D) :
-    m • (ω.tt x).summap I.evalSolution ≤ ω.size • Finset.univ.sum (fun i => I.evalSolution (x i)) := by
-  rw [Multiset.nsmul_summap, Finset.smul_sum]
-  simp only [ValuedCSP.Instance.evalSolution, Multiset.nsmul_summap] -- on both sides
-  rw [Multiset.summap_summap_swap, Finset.sum_summap_swap]
-  apply Multiset.summap_le_summap
-  intro t _
-  specialize frpo ⟨t.n, t.f⟩ t.inΓ (fun j : Fin m => fun i : Fin t.n => x j (t.app i))
-  rw [Multiset.nsmul_summap, Finset.smul_sum] at frpo
-  convert frpo
-  simp [FractionalOperation.tt, ValuedCSP.Term.evalSolution]
-  rfl
-
-
 section expressiveness
 
 section partial_order
