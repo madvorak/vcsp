@@ -1,7 +1,7 @@
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.Data.Matrix.ColumnRowPartitioned
 
-lemma sumElim_le_sumElim_iff {α β γ : Type} [LE γ] (u u' : α → γ) (v v' : β → γ) :
+lemma sumElim_le_sumElim_iff {α β γ : Type*} [LE γ] (u u' : α → γ) (v v' : β → γ) :
     Sum.elim u v ≤ Sum.elim u' v' ↔ u ≤ u' ∧ v ≤ v' := by
   constructor <;> intro hyp
   · constructor
@@ -19,6 +19,9 @@ lemma sumElim_le_sumElim_iff {α β γ : Type} [LE γ] (u u' : α → γ) (v v' 
     | inr b =>
       rw [Sum.elim_inr, Sum.elim_inr]
       exact hyp.right b
+
+lemma nat_cast_eq_int_cast_of_nneg {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a := by
+  aesop
 
 
 /-!
@@ -49,7 +52,7 @@ open scoped Matrix
 section inequalities_only
 
 /-- Linear program in the standard form. Variables are of type `n`. Conditions are indexed by type `m`. -/
-structure StandardLP (n m K : Type) [Fintype n] [Fintype m] [LinearOrderedField K] where
+structure StandardLP (n m K : Type*) [Fintype n] [Fintype m] [LinearOrderedField K] where
   /-- Matrix of coefficients -/
   A : Matrix m n K
   /-- Right-hand side -/
@@ -57,7 +60,7 @@ structure StandardLP (n m K : Type) [Fintype n] [Fintype m] [LinearOrderedField 
   /-- Objective function coefficients -/
   c : n → K
 
-variable {n m K : Type} [Fintype n] [Fintype m] [LinearOrderedField K]
+variable {n m K : Type*} [Fintype n] [Fintype m] [LinearOrderedField K]
 
 /-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and its
 multiplication by matrix `A` from the left yields a vector whose all entries are less or equal to
@@ -110,7 +113,7 @@ end inequalities_only
 section equalities_only
 
 /-- Linear program in the canonical form. Variables are of type `n`. Conditions are indexed by type `m`. -/
-structure CanonicalLP (n m K : Type) [Fintype n] [Fintype m] [LinearOrderedField K] where
+structure CanonicalLP (n m K : Type*) [Fintype n] [Fintype m] [LinearOrderedField K] where
   /-- Matrix of coefficients -/
   A : Matrix m n K
   /-- Right-hand side -/
@@ -118,7 +121,7 @@ structure CanonicalLP (n m K : Type) [Fintype n] [Fintype m] [LinearOrderedField
   /-- Objective function coefficients -/
   c : n → K
 
-variable {n m K : Type} [Fintype n] [Fintype m] [LinearOrderedField K]
+variable {n m K : Type*} [Fintype n] [Fintype m] [LinearOrderedField K]
 
 /-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and
 its multiplication by matrix `A` from the left yields the vector `b`. -/
@@ -190,7 +193,7 @@ section inequalities_and_equalities
 
 /-- Linear program (where variables are of type `n`) with
 both inequalities (indexed by `m`) and equalities (indexed by `m'`). -/
-structure BothieLP (n m m' K : Type) [Fintype n] [Fintype m] [Fintype m'] [LinearOrderedField K] where
+structure BothieLP (n m m' K : Type*) [Fintype n] [Fintype m] [Fintype m'] [LinearOrderedField K] where
   /-- Matrix of coefficients for inequalities -/
   A : Matrix m n K
   /-- Right-hand side for inequalities -/
@@ -204,7 +207,7 @@ structure BothieLP (n m m' K : Type) [Fintype n] [Fintype m] [Fintype m'] [Linea
 
 /-- Linear program (with nonnegative variables of type `n` and general variables of type `n'`)
 with inequalities (indexed by `m`) only. -/
-structure BothieDualLP (n n' m K : Type) [Fintype n] [Fintype n'] [Fintype m] [LinearOrderedField K] where
+structure BothieDualLP (n n' m K : Type*) [Fintype n] [Fintype n'] [Fintype m] [LinearOrderedField K] where
   /-- Matrix of coefficients (part for nonnegative variables) -/
   A : Matrix m n K
   /-- Matrix of coefficients (part for general variables) -/
@@ -216,7 +219,7 @@ structure BothieDualLP (n n' m K : Type) [Fintype n] [Fintype n'] [Fintype m] [L
   /-- Objective function coefficients for general variables -/
   c' : n' → K
 
-variable {n m m' K : Type} [Fintype n] [Fintype m] [Fintype m'] [LinearOrderedField K]
+variable {n m m' K : Type*} [Fintype n] [Fintype m] [Fintype m'] [LinearOrderedField K]
 
 def BothieLP.IsSolution (P : BothieLP n m m' K) (x : n → K) : Prop :=
   P.A *ᵥ x ≤ P.b ∧ P.A' *ᵥ x = P.b' ∧ 0 ≤ x
