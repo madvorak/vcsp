@@ -9,7 +9,7 @@ structure CanonicalRationalSolution (α : Type*) where
 
 variable {α : Type*}
 
-@[pp_dot]
+-- @[pp_dot] -- put back after the pretty-printer issue gets fixed
 def CanonicalRationalSolution.toFunction (s : CanonicalRationalSolution α) : α → ℚ :=
   fun a : α => (s.numerators a : ℚ) / (s.denominator : ℚ)
 
@@ -21,6 +21,7 @@ def Function.toCanonicalRationalSolution (x : α → ℚ) : CanonicalRationalSol
     (fun a : α => Finset.univ.prod (fun i : α => if i = a then (x i).num.toNat else (x i).den))
     (Finset.univ.prod (fun i : α => (x i).den))
     (Finset.prod_pos (fun i _ => Rat.pos (x i)))
+
 
 lemma Finset.univ.prod_single_hit (g : α → ℚ) (a : α) :
     Finset.univ.prod (fun i : α => if a = i then g i else 1) = g a := by

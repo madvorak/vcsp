@@ -1,6 +1,7 @@
 import Mathlib.Combinatorics.Optimization.ValuedCSP
 import Mathlib.Algebra.Module.BigOperators
 import Mathlib.Data.List.OfFn
+import Mathlib.Data.Sym.Basic
 
 
 /-- Fractional operation is a finite unordered collection of D^m → D possibly with duplicates. -/
@@ -51,6 +52,36 @@ def FractionalOperation.IsFractionalPolymorphismFor (ω : FractionalOperation D 
 /-- Fractional operation is symmetric. -/
 def FractionalOperation.IsSymmetric (ω : FractionalOperation D m) : Prop :=
   ∀ x y : (Fin m → D), List.Perm (List.ofFn x) (List.ofFn y) → ∀ g ∈ ω, g x = g y
+
+def Sym.ofFn (x : Fin m → D) : Sym D m := Sym.ofVector (Vector.ofFn x)
+
+lemma Sym.toMultiset_toList_length (x : Sym D m) : x.toMultiset.toList.length = m := by
+  rw [Multiset.length_toList]
+  exact x.property
+
+noncomputable def Function.ofSym (x : Sym D m) (i : Fin m) : D :=
+  x.toMultiset.toList.get (Fin.cast x.toMultiset_toList_length.symm i)
+
+example (x : Sym D m) : Sym.ofFn (Function.ofSym x) = x := by
+  unfold Function.ofSym
+  simp only [Sym.ofFn, Sym.ofVector]
+  unfold Vector.ofFn
+  sorry
+
+noncomputable def FractionalOperation.IsSymmetric.toSym [Nonempty D] {ω : FractionalOperation D m}
+    (hω : ω.IsSymmetric) :
+    Multiset (Sym D m → D) :=
+  ω.map (fun g : (Fin m → D) → D => g ∘ Function.ofSym)
+
+lemma FractionalOperation.IsSymmetric.toSym_apply [Nonempty D] [DecidableEq D] {ω : FractionalOperation D m}
+    (hω : ω.IsSymmetric) (x : Fin m → D) :
+    hω.toSym.map (fun g => g (Sym.ofFn x)) = ω.map (· x) := by
+  unfold FractionalOperation.IsSymmetric.toSym
+  rw [Multiset.map_map]
+  apply Multiset.map_congr rfl
+  intro g gin
+  rw [Function.comp_apply]
+  sorry
 
 /-- Fractional operation is a symmetric fractional polymorphism for given VCSP template. -/
 def FractionalOperation.IsSymmetricFractionalPolymorphismFor
