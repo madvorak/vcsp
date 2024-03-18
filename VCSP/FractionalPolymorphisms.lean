@@ -4,6 +4,10 @@ import Mathlib.Data.List.OfFn
 import Mathlib.Data.Sym.Basic
 
 
+@[simp]
+abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
+  (s.map f).sum
+
 /-- Fractional operation is a finite unordered collection of D^m → D possibly with duplicates. -/
 abbrev FractionalOperation (D : Type*) (m : ℕ) : Type _ :=
   Multiset ((Fin m → D) → D)
@@ -68,10 +72,19 @@ example (x : Sym D m) : Sym.ofFn (Function.ofSym x) = x := by
   unfold Vector.ofFn
   sorry
 
-noncomputable def FractionalOperation.IsSymmetric.toSym [Nonempty D] {ω : FractionalOperation D m}
+noncomputable def FractionalOperation.IsSymmetric.toSym {ω : FractionalOperation D m}
     (hω : ω.IsSymmetric) :
     Multiset (Sym D m → D) :=
   ω.map (fun g : (Fin m → D) → D => g ∘ Function.ofSym)
+
+/-- TODO Cost function admits given fractional operation, i.e., `ω` improves `f` in the `≤` sense. -/
+def Function.AdmitsSym {n : ℕ} (f : (Fin n → D) → C) (ω : Multiset (Sym D m → D)) : Prop :=
+  ∀ x : (Sym (Fin n → D) m),
+    m • ω.summap (fun g => f (fun i => g (x.map (· i)))) ≤ Multiset.card.toFun ω • x.toMultiset.summap f
+
+/-- TODO Fractional operation is a fractional polymorphism for given VCSP template. -/
+def Multiset.IsFractionalPolymorphismFor (ω : Multiset (Sym D m → D)) (Γ : ValuedCSP D C) : Prop :=
+  ∀ f ∈ Γ, f.snd.AdmitsSym ω
 
 lemma FractionalOperation.IsSymmetric.toSym_apply [Nonempty D] [DecidableEq D] {ω : FractionalOperation D m}
     (hω : ω.IsSymmetric) (x : Fin m → D) :
@@ -87,6 +100,14 @@ lemma FractionalOperation.IsSymmetric.toSym_apply [Nonempty D] [DecidableEq D] {
 def FractionalOperation.IsSymmetricFractionalPolymorphismFor
     (ω : FractionalOperation D m) (Γ : ValuedCSP D C) : Prop :=
   ω.IsFractionalPolymorphismFor Γ ∧ ω.IsSymmetric
+
+lemma FractionalOperation.IsSymmetricFractionalPolymorphismFor.toSym {ω : FractionalOperation D m} {Γ : ValuedCSP D C}
+    (hω : ω.IsSymmetricFractionalPolymorphismFor Γ) :
+    hω.right.toSym.IsFractionalPolymorphismFor Γ := by
+  intro f hf
+  have ass := hω.left f hf
+  intro x
+  sorry
 
 /-- Operation (n-ary) is idempotent. -/
 def Function.IsIdempotentNary (g : (Fin m → D) → D) : Prop :=

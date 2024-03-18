@@ -21,7 +21,37 @@ variable
 private noncomputable abbrev buildColumn (δᵢ : D → ℕ) : List D :=
   (Finset.univ.val.toList.map (fun d : D => List.replicate (δᵢ d) d)).join
 
+private abbrev buildColumn' (δᵢ : D → ℕ) : Multiset D :=
+  (Finset.univ.val.map (fun d : D => Multiset.replicate (δᵢ d) d)).join
+
+private noncomputable def magicList (x : ι → List D) : List (ι → D) := by
+  apply List.ofFn
+  intro i j
+  exact (x j).get ⟨i, sorry⟩
+  sorry
+
+private noncomputable def magic (x : ι → Multiset D) : Multiset (ι → D) :=
+  Multiset.ofList (magicList (fun i : ι => (x i).toList))
+
+private noncomputable def magic' {m : ℕ} (x : ι → Sym D m) : Sym (ι → D) m :=
+  Sym.ofVector (Vector.ofFn (fun i j => (x j).toMultiset.toList.get (Fin.cast sorry i)))
+
 open scoped Matrix
+
+lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymFractionalPolymorphisms_aux
+    (I : Γ.Instance ι) {o : ℚ} (ho : I.RelaxBLP.Reaches o)
+    (hΓ : ∀ m : ℕ, ∃ ω : Multiset (Sym D m → D), /-ω.IsValid ∧-/ ω.IsFractionalPolymorphismFor Γ) :
+    ∃ m : ℕ, ∃ ω : Multiset (Sym D m → D), /-ω.IsValid ∧-/ ∃ X : Sym (ι → D) m,
+      ω.summap (fun g => I.evalSolution (fun i => g (X.map (· i)))) ≤ Multiset.card.toFun ω • o := by
+  obtain ⟨x, x_solu, x_cost⟩ := ho
+  have x_solv := x_solu.toCanonicalRationalSolution
+  use x.toCanonicalRationalSolution.denominator
+  obtain ⟨ω, homega⟩ := hΓ x.toCanonicalRationalSolution.denominator
+  use ω
+  let δ : ι → D → ℕ := fun j : ι => fun d : D => x.toCanonicalRationalSolution.numerators (Sum.inr ⟨j, d⟩)
+  refine ⟨⟨magic (buildColumn' ∘ δ), ?_⟩, ?_⟩
+  · sorry
+  sorry
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms_aux
     (I : Γ.Instance ι) {o : ℚ} (ho : I.RelaxBLP.Reaches o)

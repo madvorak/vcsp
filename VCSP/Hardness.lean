@@ -42,10 +42,6 @@ def Multiset.map.unexpander : Lean.PrettyPrinter.Unexpander
   | `($_ $f $s) => `($(s).$(Lean.mkIdent `map) $f)
   | _ => throw ()
 
-@[simp]
-abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
-  (s.map f).sum
-
 attribute [pp_dot] List.length List.get List.sum Multiset.sum Multiset.summap Finset.sum
   Sigma.fst Sigma.snd
   ValuedCSP.Term.f ValuedCSP.Term.n ValuedCSP.Term.app ValuedCSP.Term.evalSolution
