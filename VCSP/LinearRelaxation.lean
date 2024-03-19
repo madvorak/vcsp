@@ -5,11 +5,11 @@ import Mathlib.Data.Multiset.Fintype
 open scoped Matrix
 
 
--- TODO probably upstream (otherwise rename arguments)
-lemma Matrix.fromBlocks_mulVec_sumType {l m n o R : Type*} [Semiring R]
-    [Fintype l] [Fintype m] [Fintype n] [Fintype o]
-    (A : Matrix n l R) (B : Matrix n m R) (C : Matrix o l R) (D : Matrix o m R)
-    (u : l → R) (v : m → R) :
+
+lemma Matrix.fromBlocks_mulVec_sumType {α β γ δ R : Type*} [Semiring R]
+    [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
+    (A : Matrix α β R) (B : Matrix α γ R) (C : Matrix δ β R) (D : Matrix δ γ R)
+    (u : β → R) (v : γ → R) :
     Matrix.fromBlocks A B C D *ᵥ Sum.elim u v = Sum.elim (A *ᵥ u + B *ᵥ v) (C *ᵥ u + D *ᵥ v) := by
   rw [← Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulVec,
     Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
@@ -32,7 +32,7 @@ lemma indicator_of_neg {α R : Type} [Fintype α] [Ring R] (P : α → Prop) [De
     -(fun x => if P x then -1 else (0 : R)) = (fun x => if P x then 1 else 0) := by
   aesop
 
--- Nonterminal `aesop` (strongly discouraged to use)
+/-- Nonterminal `aesop` (strongly discouraged to use) -/
 macro (name := aesopnt) "aesopnt" : tactic =>
   `(tactic| aesop (config := {warnOnNonterminal := false}))
 

@@ -12,6 +12,11 @@ lemma Sum.elim_eq_right {α β γ : Type*} {u u' : α → γ} {v v' : β → γ}
     v = v' := by
   simp_all [Function.funext_iff]
 
+-- Yaël Dillies proved this lemma:
+lemma Multiset.toList_map_sum {α β : Type*} (s : Multiset α) [AddCommMonoid β] (f : α → β) :
+    (s.toList.map f).sum = (s.map f).sum := by
+  rw [← Multiset.sum_coe, ← Multiset.map_coe, Multiset.coe_toList]
+
 
 variable
   {D : Type} [Fintype D] [DecidableEq D]
@@ -36,20 +41,20 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
   let δ : ι → D → ℕ := fun j : ι => fun d : D => x.toCanonicalRationalSolution.numerators (Sum.inr ⟨j, d⟩)
   use fun i : Fin _ => fun j : ι => (buildColumn (δ j)).get (Fin.cast ?_ i)
   · sorry
-  rw [List.length_join, List.map_map]
   have d_lengths : List.length ∘ (fun d => List.replicate (δ j d) d) = δ j
   · ext d
     rw [Function.comp_apply, List.length_replicate]
-  rw [d_lengths]
-  simp only
-  convert_to
-    x.toCanonicalRationalSolution.denominator =
-      Finset.univ.sum (fun d : D => x.toCanonicalRationalSolution.numerators (Sum.inr ⟨j, d⟩))
-  · sorry
+  rw [List.length_join, List.map_map, d_lengths, Multiset.toList_map_sum]
   qify
-  unfold CanonicalRationalSolution.toFunction at x_solv
-  have equ := congr_fun x_solv (Sum.inr j)
-  simp_rw [ValuedCSP.Instance.RelaxBLP, Sum.elim_inr, Function.toCanonicalRationalSolution] at equ
+  have equ := congr_fun x_solu.left (Sum.inr j)
+  have eqv := congr_fun x_solv (Sum.inr j)
+  unfold CanonicalRationalSolution.toFunction at eqv
+  simp_rw [ValuedCSP.Instance.RelaxBLP, Sum.elim_inr] at equ
+  simp_rw [ValuedCSP.Instance.RelaxBLP, Sum.elim_inr, Function.toCanonicalRationalSolution] at eqv
+  rw [Multiset.map_map, Multiset.map_map]
+  simp_rw [Function.comp_apply, Int.cast_ofNat]
+  rw [Finset.sum_map_val]
+  simp only [δ, Function.toCanonicalRationalSolution]
   sorry
 
 theorem ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms
