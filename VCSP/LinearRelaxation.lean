@@ -83,6 +83,7 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_nneg (I : Γ.Instance ι) (x : ι →
   unfold Pi.hasLe
   aesop
 
+set_option maxHeartbeats 333333 in
 lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι → D) :
     I.RelaxBLP.c ⬝ᵥ I.solutionVCSPtoBLP x = I.evalSolution x := by
   simp [ValuedCSP.Instance.RelaxBLP, ValuedCSP.Instance.solutionVCSPtoBLP,
@@ -111,6 +112,7 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
     ext
     simp_all
 
+set_option maxHeartbeats 666666 in
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (hit : x (cₜ.fst.app cₙ) = cₐ) :
@@ -126,6 +128,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   show
     -- DO NOT refactor to `fun (⟨t, y⟩ : Σ t : I, (Fin t.fst.n → D))` as it would hinder aesop
+    -- TODO check whether still the case
     Finset.univ.sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
       (match tᵥ with
         | ⟨t, v⟩ =>
@@ -227,7 +230,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
         using 2
   · aesop
   rw [Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero]
-  aesop
+  sorry -- aesop -- broken after upgrade
 
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}

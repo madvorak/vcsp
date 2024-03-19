@@ -80,7 +80,7 @@ lemma toCanonicalRationalSolution_toFunction {x : α → ℚ} (hx : 0 ≤ x) :
   exact hxinz hi.right
   · symm
     apply nat_cast_eq_int_cast_of_nneg
-    rw [Rat.num_nonneg_iff_zero_le]
+    rw [Rat.num_nonneg]
     exact hx a
   · intro imposs
     exfalso

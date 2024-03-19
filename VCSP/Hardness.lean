@@ -1,7 +1,8 @@
-import VCSP.FractionalPolymorphisms
 import VCSP.Expressibility
+import VCSP.FractionalOperations
 import Mathlib.Data.Fin.VecNotation
 import Mathlib.Data.Prod.TProd
+import Mathlib.Tactic.Have
 
 
 section better_notation
@@ -41,6 +42,10 @@ def List.map.unexpander : Lean.PrettyPrinter.Unexpander
 def Multiset.map.unexpander : Lean.PrettyPrinter.Unexpander
   | `($_ $f $s) => `($(s).$(Lean.mkIdent `map) $f)
   | _ => throw ()
+
+@[simp]
+abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
+  (s.map f).sum
 
 attribute [pp_dot] List.length List.get List.sum Multiset.sum Multiset.summap Finset.sum
   Sigma.fst Sigma.snd
@@ -94,26 +99,6 @@ lemma Multiset.summap_lt_summap [OrderedCancelAddCommMonoid β] {s : Multiset α
     (hs : s ≠ ∅) {f g : α → β} (hfg : ∀ i ∈ s, f i < g i) :
     s.summap f < s.summap g :=
   Multiset.sum_lt_sum_of_nonempty hs hfg
-
-lemma Finset.nsmul_inf' [LinearOrderedAddCommMonoid β] {s : Finset α}
-    (hs : s.Nonempty) (f : α → β) (n : ℕ) :
-    s.inf' hs (fun a => n • f a) = n • s.inf' hs f := by
-  -- TODO delete after Mathlib bump
-  -- now present in `Mathlib.Data.Finset.Lattice`
-  if nz : n = 0 then
-    rw [nz]
-    simp_rw [zero_smul]
-    apply Finset.inf'_const
-  else
-    obtain ⟨d, hd, hfd⟩ := Finset.exists_mem_eq_inf' hs f
-    obtain ⟨dₙ, hnₙ, hfdₙ⟩ := Finset.exists_mem_eq_inf' hs (fun a => n • f a)
-    have key : n • f dₙ = n • f d
-    · apply eq_of_ge_of_not_gt
-      · rw [← hfd]
-        exact nsmul_le_nsmul_right (Finset.inf'_le f hnₙ) n
-      · rw [not_lt, ← hfdₙ]
-        exact Finset.inf'_le (fun a => n • f a) hd
-    rw [hfd, hfdₙ, key]
 
 end not_VCSP_specific
 
@@ -231,7 +216,6 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.evalMinimize_le_evalMinimi
       m • I.evalPartial (fun j : ι => g (Function.swap x j)) zᵢ ≤
       m • I.evalPartial (fun j : ι => g (Function.swap x j)) (fun i : μ => g _)
   use fun i => g (Function.swap z i)
-  simp
   rfl
 
 lemma FractionalOperation.IsFractionalPolymorphismFor.evalMinimize_le_evalMinimize
@@ -293,20 +277,10 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP
     rw [Finset.nsmul_inf']
     apply nsmul_le_nsmul_right
     simp only [Finset.inf'_le_iff, Finset.mem_univ, true_and]
-    convert_to
-      ∃ d : D,
-        f (Matrix.vecCons d (fun i : Fin n => g (Function.swap x i))) ≤
-        f (fun i : Fin n.succ => g (Function.swap
-            (fun j : Fin m => Matrix.vecCons (z j) (x j))
-            i))
-    · simp
     use g z
     apply le_of_eq
     apply congr_arg
     ext i
-    show
-      (Matrix.vecCons (g z) (fun i₁ : Fin n => g (Function.swap x i₁))) i =
-      g (Function.swap (fun j : Fin m => Matrix.vecCons (z j) (x j)) i)
     match i with
     | 0 => rfl
     | ⟨Nat.succ i', _⟩ => rfl
@@ -324,16 +298,6 @@ end expressiveness
 
 
 section max_cut
-
-/-- Function `f` has Max-Cut property at labels `a` and `b` when `argmin f` is exactly:
-   `{ ![a, b] , ![b, a] }` -/
-def Function.HasMaxCutPropertyAt [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) (a b : D) : Prop :=
-  f ![a, b] = f ![b, a] ∧
-  ∀ x y : D, f ![a, b] ≤ f ![x, y] ∧ (f ![a, b] = f ![x, y] → a = x ∧ b = y ∨ a = y ∧ b = x)
-
-/-- Function `f` has Max-Cut property at some two non-identical labels. -/
-def Function.HasMaxCutProperty [OrderedAddCommMonoid C] (f : (Fin 2 → D) → C) : Prop :=
-  ∃ a b : D, a ≠ b ∧ f.HasMaxCutPropertyAt a b
 
 /-- VCSP template `Γ` can express Max Cut via summation and minimization. -/
 def ValuedCSP.CanExpressMaxCut [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C]
@@ -360,40 +324,6 @@ private lemma Function.HasMaxCutPropertyAt.rows_lt [OrderedCancelAddCommMonoid C
   show o (fun j => ![![a, b], ![b, a]] j 0) = o (fun j => ![![a, b], ![b, a]] j 1)
   rw [column_of_2x2_left, column_of_2x2_right]
   exact symmega ![a, b] ![b, a] (List.Perm.swap b a []) o in_omega
-
-lemma Function.HasMaxCutProperty.forbids_commutativeFractionalPolymorphism [OrderedCancelAddCommMonoid C]
-    {f : (Fin 2 → D) → C} (mcf : f.HasMaxCutProperty)
-    {ω : FractionalOperation D 2} (valid : ω.IsValid) (symmega : ω.IsSymmetric) :
-    ¬ f.AdmitsFractional ω := by
-  intro contr
-  obtain ⟨a, b, hab, mcfab⟩ := mcf
-  specialize contr ![![a, b], ![b, a]]
-  rw [univ_sum_2x2, ←mcfab.left, ←two_nsmul] at contr
-  have sharp :
-    2 • ((ω.tt ![![a, b], ![b, a]]).map (fun _ => f ![a, b])).sum <
-    2 • ((ω.tt ![![a, b], ![b, a]]).map (fun r => f r)).sum
-  · have half_sharp :
-      ((ω.tt ![![a, b], ![b, a]]).map (fun _ => f ![a, b])).sum <
-      ((ω.tt ![![a, b], ![b, a]]).map (fun r => f r)).sum
-    · apply Multiset.sum_lt_sum
-      · intro r rin
-        exact le_of_lt (mcfab.rows_lt hab symmega rin)
-      · obtain ⟨g, _⟩ := valid.contains
-        have hmem : (fun i => g ((Function.swap ![![a, b], ![b, a]]) i)) ∈ ω.tt ![![a, b], ![b, a]]
-        · simp only [FractionalOperation.tt, Multiset.mem_map]
-          use g
-        exact ⟨_, hmem, mcfab.rows_lt hab symmega hmem⟩
-    rw [two_nsmul, two_nsmul]
-    exact add_lt_add half_sharp half_sharp
-  have impos : 2 • (ω.map (fun _ => f ![a, b])).sum < ω.size • 2 • f ![a, b]
-  · convert lt_of_lt_of_le sharp contr
-    simp [FractionalOperation.tt, Multiset.map_map]
-  have rhs_swap : ω.size • 2 • f ![a, b] = 2 • ω.size • f ![a, b]
-  · apply nsmul_left_comm
-  have distrib : (ω.map (fun _ => f ![a, b])).sum = ω.size • f ![a, b]
-  · simp
-  rw [rhs_swap, distrib] at impos
-  exact ne_of_lt impos rfl
 
 theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFractionalPolymorphism
     [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C]
