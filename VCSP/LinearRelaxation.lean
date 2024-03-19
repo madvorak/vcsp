@@ -174,7 +174,6 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
   rw [Finset.eq_singleton_iff_unique_mem]
   constructor <;> aesop
 
-set_option maxHeartbeats 333333 in
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (miss : x (cₜ.fst.app cₙ) ≠ cₐ) :
@@ -229,8 +228,9 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
     (0 : C)
         using 2
   · aesop
-  rw [Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero]
-  sorry -- aesop -- broken after upgrade
+  rw [Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+  intro _ _
+  aesop
 
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}

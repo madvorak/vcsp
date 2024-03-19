@@ -17,16 +17,32 @@ lemma Multiset.toList_map_sum {α β : Type*} (s : Multiset α) [AddCommMonoid �
     (s.toList.map f).sum = (s.map f).sum := by
   rw [← Multiset.sum_coe, ← Multiset.map_coe, Multiset.coe_toList]
 
+lemma Finset.sum_of_sum_div_eq_one {α β : Type*} [Fintype α] [Semifield β] {f : α → β} {z : β}
+    (hfz : Finset.univ.sum (fun a => f a / z) = (1 : β)) :
+    Finset.univ.sum f = z := by
+  if hz : z = 0 then
+    exfalso
+    simp_rw [hz, div_zero, Finset.sum_const_zero, zero_ne_one] at hfz
+  else
+    have one_div_zet_mul : Finset.univ.sum f * (1/z) = z * (1/z)
+    · convert hfz
+      · simp_rw [Finset.sum_mul, mul_one_div]
+      · simp [hz]
+    rw [mul_eq_mul_right_iff] at one_div_zet_mul
+    cases one_div_zet_mul with
+    | inl hyp => exact hyp
+    | inr hyp =>
+      exfalso
+      rw [one_div, inv_eq_zero] at hyp
+      exact hz hyp
 
-variable
-  {D : Type} [Fintype D] [DecidableEq D]
-  {ι : Type} [Fintype ι] [DecidableEq ι]
-  {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
+
+variable {D : Type} [Fintype D]
 
 private noncomputable abbrev buildColumn (δᵢ : D → ℕ) : List D :=
   (Finset.univ.val.toList.map (fun d : D => List.replicate (δᵢ d) d)).join
 
-open scoped Matrix
+variable [DecidableEq D] {ι : Type} [Fintype ι] [DecidableEq ι] {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms_aux
     (I : Γ.Instance ι) {o : ℚ} (ho : I.RelaxBLP.Reaches o)
@@ -46,16 +62,19 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphism
     rw [Function.comp_apply, List.length_replicate]
   rw [List.length_join, List.map_map, d_lengths, Multiset.toList_map_sum]
   qify
-  have equ := congr_fun x_solu.left (Sum.inr j)
-  have eqv := congr_fun x_solv (Sum.inr j)
-  unfold CanonicalRationalSolution.toFunction at eqv
-  simp_rw [ValuedCSP.Instance.RelaxBLP, Sum.elim_inr] at equ
-  simp_rw [ValuedCSP.Instance.RelaxBLP, Sum.elim_inr, Function.toCanonicalRationalSolution] at eqv
   rw [Multiset.map_map, Multiset.map_map]
-  simp_rw [Function.comp_apply, Int.cast_ofNat]
-  rw [Finset.sum_map_val]
-  simp only [δ, Function.toCanonicalRationalSolution]
-  sorry
+  simp_rw [Function.comp_apply, Int.cast_ofNat, Finset.sum_map_val]
+  have eqv := congr_fun x_solv (Sum.inr j)
+  simp_rw [
+    ValuedCSP.Instance.RelaxBLP, Sum.elim_inr,
+    Matrix.fromBlocks_mulVec, Sum.elim_inr,
+    Matrix.zero_mulVec, zero_add,
+    Matrix.mulVec, Matrix.of_apply, Matrix.dotProduct,
+    Function.comp_apply, ite_mul, one_mul, zero_mul, Fintype.sum_prod_type
+  ] at eqv
+  rw [Finset.sum_comm] at eqv -- must not be used in `simp_rw` (cycling forever)
+  simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv
+  exact (Finset.sum_of_sum_div_eq_one eqv).symm
 
 theorem ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms
     (I : Γ.Instance ι) {o : ℚ} (ho : I.RelaxBLP.Reaches o)
