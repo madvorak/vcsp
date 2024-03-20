@@ -25,6 +25,9 @@ lemma Finset.univ_sum_multisetToType {α β : Type*} [DecidableEq α] [AddCommMo
     Finset.univ.sum (fun a : s.ToType => f a.fst) = s.summap f := by
   rw [Finset.sum, Multiset.map_univ]
 
+lemma nsmul_div {β : Type*} [DivisionSemiring β] (n : ℕ) (x y : β) : n • (x / y) = (n • x) / y := by
+  rw [←mul_one_div x y, ←mul_one_div (n • x) y, smul_mul_assoc]
+
 lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield β] {f : α → β} {z : β}
     (hfz : Finset.univ.sum (fun a => f a / z) = (1 : β)) :
     Finset.univ.sum f = z := by
@@ -76,8 +79,6 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height (I : Γ.Instance ι)
   simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv
   exact (Finset.sum_of_sum_div_const_eq_one eqv).symm
 
-lemma smul_div (n : ℕ) (x y : ℚ) : n • (x / y) = (n • x) / y := sorry
-
 lemma Multiset.ToType.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism {I : Γ.Instance ι} (t : I)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
     (x_solu : CanonicalLP.IsSolution I.RelaxBLP x) -- TODO probably delete and use `x_solv`
@@ -108,7 +109,7 @@ lemma Multiset.ToType.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism {I 
     Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator =>
       t.fst.f (Z i ∘ t.fst.app)) / (x.toCanonicalRationalSolution.denominator : ℚ)
   · sorry
-  rw [maybe_rw, smul_div]
+  rw [maybe_rw, nsmul_div]
   have hnz : (x.toCanonicalRationalSolution.denominator : ℚ) ≠ 0
   · sorry
   show
