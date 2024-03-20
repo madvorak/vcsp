@@ -84,11 +84,11 @@ lemma Multiset.summap_summap_swap [AddCommMonoid γ]
     B.summap (fun b => A.summap (fun a => f a b)) :=
   Multiset.sum_map_sum_map A B
 
-lemma Finset.sum_summap_swap [AddCommMonoid γ]
+lemma Finset.sum_summap_swap [AddCommMonoid γ] -- TODO maybe delete
     (A : Finset α) (B : Multiset β) (f : α → β → γ) :
     A.sum (fun a => B.summap (fun b => f a b)) =
-    B.summap (fun b => A.sum (fun a => f a b)) := by
-  apply Multiset.summap_summap_swap
+    B.summap (fun b => A.sum (fun a => f a b)) :=
+  Multiset.summap_summap_swap A.val B f
 
 lemma Multiset.summap_le_summap [OrderedAddCommMonoid β] {s : Multiset α}
     {f g : α → β} (hfg : ∀ i ∈ s, f i ≤ g i) :
