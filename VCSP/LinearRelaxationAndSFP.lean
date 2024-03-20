@@ -2,11 +2,13 @@ import VCSP.LinearRelaxation
 import VCSP.LinearProgrammingQ
 
 
+-- Std4 desperately needs such lemma:
 lemma Sum.elim_eq_left {α β γ : Type*} {u u' : α → γ} {v v' : β → γ}
     (huv : Sum.elim u v = Sum.elim u' v') :
     u = u' := by
   simp_all [Function.funext_iff]
 
+-- Std4 desperately needs such lemma:
 lemma Sum.elim_eq_right {α β γ : Type*} {u u' : α → γ} {v v' : β → γ}
     (huv : Sum.elim u v = Sum.elim u' v') :
     v = v' := by
@@ -74,18 +76,75 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height (I : Γ.Instance ι)
   simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv
   exact (Finset.sum_of_sum_div_const_eq_one eqv).symm
 
+lemma smul_div (n : ℕ) (x y : ℚ) : n • (x / y) = (n • x) / y := sorry
+
 lemma Multiset.ToType.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism {I : Γ.Instance ι} (t : I)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
     (x_solu : CanonicalLP.IsSolution I.RelaxBLP x) -- TODO probably delete and use `x_solv`
     (x_solv : I.RelaxBLP.A *ᵥ x.toCanonicalRationalSolution.toFunction = I.RelaxBLP.b)
     {ω : FractionalOperation D x.toCanonicalRationalSolution.denominator}
-    (valid : FractionalOperation.IsValid ω)
+    (valid : ω.IsValid)
     (sfp : FractionalOperation.IsSymmetricFractionalPolymorphismFor ω Γ) :
     (ω.tt (fun i : Fin _ => fun j : ι =>
         (buildColumn (fun d => x.toCanonicalRationalSolution.numerators (Sum.inr ⟨j, d⟩))).get
           (Fin.cast (I.RelaxBLP_denominator_eq_height x_solv j) i)
       )).summap t.fst.evalSolution ≤
     ω.size • Finset.univ.sum (fun v => t.fst.f v * x (Sum.inl ⟨t, v⟩)) := by
+  let Z : Fin x.toCanonicalRationalSolution.denominator → ι → D := sorry
+  /-
+  each `v : Fin t.fst.n` is written on `x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩)` many
+  rows `i : Fin x.toCanonicalRationalSolution.denominator` such that `v = Z i ∘ t.fst.app`
+  -/
+  have hZ :
+    Finset.univ.sum (fun v : Fin t.fst.n → D => t.fst.f v * x (Sum.inl ⟨t, v⟩)) =
+    Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator =>
+      t.fst.f (Z i ∘ t.fst.app) / (x.toCanonicalRationalSolution.denominator : ℚ))
+  · sorry
+  rw [hZ]
+  unfold ValuedCSP.Term.evalSolution
+  have maybe_rw :
+    Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator =>
+      t.fst.f (Z i ∘ t.fst.app) / (x.toCanonicalRationalSolution.denominator : ℚ)) =
+    Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator =>
+      t.fst.f (Z i ∘ t.fst.app)) / (x.toCanonicalRationalSolution.denominator : ℚ)
+  · sorry
+  rw [maybe_rw, smul_div]
+  have hnz : (x.toCanonicalRationalSolution.denominator : ℚ) ≠ 0
+  · sorry
+  show
+    (ω.tt (fun i : Fin _ => fun j : ι =>
+        (buildColumn (fun d => x.toCanonicalRationalSolution.numerators (Sum.inr (j, d)))).get
+          (Fin.cast (I.RelaxBLP_denominator_eq_height x_solv j) i)
+      )).summap (fun x : ι → D  => t.fst.f (x ∘ t.fst.app)) ≤
+    (ω.size • Finset.univ.sum fun i => t.fst.f (Z i ∘ t.fst.app)) / (x.toCanonicalRationalSolution.denominator : ℚ)
+  suffices :
+    (ω.tt (fun i : Fin _ => fun j : ι =>
+        (buildColumn (fun d => x.toCanonicalRationalSolution.numerators (Sum.inr (j, d)))).get
+          (Fin.cast (I.RelaxBLP_denominator_eq_height x_solv j) i)
+      )).summap (fun x : ι → D  => t.fst.f (x ∘ t.fst.app)) * (x.toCanonicalRationalSolution.denominator : ℚ) ≤
+    (ω.size • Finset.univ.sum fun i => t.fst.f (Z i ∘ t.fst.app))
+  · sorry
+  refine le_trans ?_ (sfp.left ⟨t.fst.n, t.fst.f⟩ t.fst.inΓ (fun i => Z i ∘ t.fst.app))
+  rw [mul_comm]
+  show
+    (x.toCanonicalRationalSolution.denominator : ℚ) *
+    (ω.tt (fun i : Fin _ => fun j : ι =>
+        (buildColumn (fun d => x.toCanonicalRationalSolution.numerators (Sum.inr (j, d)))).get
+          (Fin.cast (I.RelaxBLP_denominator_eq_height x_solv j) i)
+      )).summap (fun x : ι → D => t.fst.f (x ∘ t.fst.app)) ≤
+    x.toCanonicalRationalSolution.denominator • (ω.tt (fun i => Z i ∘ t.fst.app)).summap t.fst.f
+  suffices :
+    (ω.tt (fun i : Fin _ => fun j : ι =>
+        (buildColumn (fun d => x.toCanonicalRationalSolution.numerators (Sum.inr (j, d)))).get
+          (Fin.cast (I.RelaxBLP_denominator_eq_height x_solv j) i)
+      )).summap (fun x : ι → D => t.fst.f (x ∘ t.fst.app)) ≤
+    (ω.tt (fun i => Z i ∘ t.fst.app)).summap t.fst.f
+  · sorry
+  apply le_of_eq
+  -- now isolate `.summap t.fst.f` on the end of both sides
+  -- `congr`
+  -- construct `Z` above
+  -- using `sfp.right` and `x_solv` show that the two `ω`-images are identical
   sorry
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
@@ -93,7 +152,7 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
     (x_solu : CanonicalLP.IsSolution I.RelaxBLP x) -- TODO probably delete and use `x_solv`
     (x_solv : I.RelaxBLP.A *ᵥ x.toCanonicalRationalSolution.toFunction = I.RelaxBLP.b)
     {ω : FractionalOperation D x.toCanonicalRationalSolution.denominator}
-    (valid : FractionalOperation.IsValid ω)
+    (valid : ω.IsValid)
     (sfp : FractionalOperation.IsSymmetricFractionalPolymorphismFor ω Γ) :
     (ω.tt (fun i : Fin _ => fun j : ι =>
         (buildColumn (fun d => x.toCanonicalRationalSolution.numerators (Sum.inr ⟨j, d⟩))).get
@@ -109,9 +168,6 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
   show  _ ≤
     ω.size • (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ => tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ))
   rw [Finset.sum_sigma, Finset.smul_sum]
-  show _ ≤
-    Finset.univ.sum (fun t : I.ToType => ω.size • Finset.univ.sum (fun v : Fin t.fst.n → D =>
-        t.fst.f v * x (Sum.inl ⟨t, v⟩)))
   -- Conversion to per-term inequalities:
   rw [←Finset.univ_sum_multisetToType]
   apply Finset.sum_le_sum
