@@ -17,6 +17,12 @@ lemma Multiset.toList_map_sum {α β : Type*} (s : Multiset α) [AddCommMonoid �
     (s.toList.map f).sum = (s.map f).sum := by
   rw [← Multiset.sum_coe, ← Multiset.map_coe, Multiset.coe_toList]
 
+-- Damiano Testa proved this lemma:
+lemma Finset.univ_sum_multisetToType {α β : Type*} [DecidableEq α] [AddCommMonoid β]
+    (s : Multiset α) (f : α → β) :
+    Finset.univ.sum (fun a : s.ToType => f a.fst) = s.summap f := by
+  rw [Finset.sum, Multiset.map_univ]
+
 lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield β] {f : α → β} {z : β}
     (hfz : Finset.univ.sum (fun a => f a / z) = (1 : β)) :
     Finset.univ.sum f = z := by
@@ -68,6 +74,20 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height (I : Γ.Instance ι)
   simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv
   exact (Finset.sum_of_sum_div_const_eq_one eqv).symm
 
+lemma Multiset.ToType.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism {I : Γ.Instance ι} (t : I)
+    {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
+    (x_solu : CanonicalLP.IsSolution I.RelaxBLP x) -- TODO probably delete and use `x_solv`
+    (x_solv : I.RelaxBLP.A *ᵥ x.toCanonicalRationalSolution.toFunction = I.RelaxBLP.b)
+    {ω : FractionalOperation D x.toCanonicalRationalSolution.denominator}
+    (valid : FractionalOperation.IsValid ω)
+    (sfp : FractionalOperation.IsSymmetricFractionalPolymorphismFor ω Γ) :
+    (ω.tt (fun i : Fin _ => fun j : ι =>
+        (buildColumn (fun d => x.toCanonicalRationalSolution.numerators (Sum.inr ⟨j, d⟩))).get
+          (Fin.cast (I.RelaxBLP_denominator_eq_height x_solv j) i)
+      )).summap t.fst.evalSolution ≤
+    ω.size • Finset.univ.sum (fun v => t.fst.f v * x (Sum.inl ⟨t, v⟩)) := by
+  sorry
+
 lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
     (x_solu : CanonicalLP.IsSolution I.RelaxBLP x) -- TODO probably delete and use `x_solv`
@@ -80,7 +100,23 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
           (Fin.cast (I.RelaxBLP_denominator_eq_height x_solv j) i)
       )).summap I.evalSolution ≤
     ω.size • (I.RelaxBLP.c ⬝ᵥ x) := by
-  sorry
+  -- LHS:
+  unfold ValuedCSP.Instance.evalSolution
+  rw [Multiset.summap_summap_swap]
+  -- RHS:
+  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.dotProduct,
+    Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, zero_mul, Finset.sum_const_zero, add_zero]
+  show  _ ≤
+    ω.size • (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ => tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ))
+  rw [Finset.sum_sigma, Finset.smul_sum]
+  show _ ≤
+    Finset.univ.sum (fun t : I.ToType => ω.size • Finset.univ.sum (fun v : Fin t.fst.n → D =>
+        t.fst.f v * x (Sum.inl ⟨t, v⟩)))
+  -- Conversion to per-term inequalities:
+  rw [←Finset.univ_sum_multisetToType]
+  apply Finset.sum_le_sum
+  intro t _
+  exact t.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism x_solu x_solv valid sfp
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms_aux
     (I : Γ.Instance ι) {o : ℚ} (ho : I.RelaxBLP.Reaches o)
