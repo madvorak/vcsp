@@ -30,7 +30,7 @@ lemma nsmul_div {β : Type*} [DivisionSemiring β] (n : ℕ) (x y : β) : n • 
 
 lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield β] {f : α → β} {z : β}
     (hfz : Finset.univ.sum (fun a => f a / z) = (1 : β)) :
-    Finset.univ.sum f = z := by
+    z = Finset.univ.sum f := by
   if hz : z = 0 then
     exfalso
     simp_rw [hz, div_zero, Finset.sum_const_zero, zero_ne_one] at hfz
@@ -41,7 +41,7 @@ lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield
       · simp [hz]
     rw [mul_eq_mul_right_iff] at mul_one_div_zet
     cases mul_one_div_zet with
-    | inl hyp => exact hyp
+    | inl hyp => exact hyp.symm
     | inr hyp =>
       exfalso
       rw [one_div, inv_eq_zero] at hyp
@@ -78,7 +78,7 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_marginal (I : Γ.Instanc
   ] at eqv
   rw [Finset.sum_comm] at eqv -- must not be used in `simp_rw` (cycling forever)
   simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv
-  exact (Finset.sum_of_sum_div_const_eq_one eqv).symm
+  exact Finset.sum_of_sum_div_const_eq_one eqv
 
 lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
@@ -97,7 +97,31 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance �
     (x.toCanonicalRationalSolution.denominator : ℚ) =
     Finset.univ.sum (fun v : Fin t.fst.n → D =>
       (x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩) : ℚ))
-  sorry -- must prove indirectly
+  have eqv := congr_fun x_solv (Sum.inr (Sum.inr t))
+  simp_rw [
+    ValuedCSP.Instance.RelaxBLP, Sum.elim_inr,
+    Matrix.fromBlocks_mulVec, Sum.elim_inr,
+    Matrix.fromRows_mulVec, Matrix.zero_mulVec, Pi.add_apply, Sum.elim_inr,
+    Pi.zero_apply, add_zero,
+    Matrix.mulVec, Matrix.of_apply, Matrix.dotProduct,
+    Function.comp_apply, ite_mul, one_mul, zero_mul
+  ] at eqv
+  change eqv to
+    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ =>
+      if t = tᵥ.fst then x.toCanonicalRationalSolution.toFunction (Sum.inl tᵥ) else 0) =
+    1
+  rw [Finset.sum_sigma] at eqv
+  have eqv' :
+    Finset.univ.sum (fun cₜ : I =>
+        if t = cₜ then
+          Finset.univ.sum (fun v : Fin cₜ.fst.n → D =>
+            x.toCanonicalRationalSolution.toFunction (Sum.inl ⟨cₜ, v⟩))
+        else 0
+      ) = 1
+  · convert eqv
+    simp
+  simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv'
+  exact Finset.sum_of_sum_div_const_eq_one eqv'
 
 open scoped List in
 lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ.Instance ι} (t : I)
