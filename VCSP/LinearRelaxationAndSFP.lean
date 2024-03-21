@@ -67,11 +67,12 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_marginal (I : Γ.Instanc
   rw [Multiset.toList_map_sum]
   qify
   rw [Multiset.map_map, Multiset.map_map]
-  have eqv := congr_fun x_solv (Sum.inr j)
+  have eqv := congr_fun x_solv (Sum.inr (Sum.inl j))
   simp_rw [
     ValuedCSP.Instance.RelaxBLP, Sum.elim_inr,
     Matrix.fromBlocks_mulVec, Sum.elim_inr,
-    Matrix.zero_mulVec, zero_add,
+    Matrix.fromRows_mulVec, Matrix.zero_mulVec, Pi.add_apply, Sum.elim_inl,
+    Pi.zero_apply, zero_add,
     Matrix.mulVec, Matrix.of_apply, Matrix.dotProduct,
     Function.comp_apply, ite_mul, one_mul, zero_mul, Fintype.sum_prod_type
   ] at eqv

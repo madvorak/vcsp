@@ -49,8 +49,8 @@ instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
 @[pp_dot]
 def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
     CanonicalLP
-      ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) -- variables
-      ((Σ t : I, (Fin t.fst.n × D)) ⊕ ι)     -- equalities
+      ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- variables
+      ((Σ t : I, (Fin t.fst.n × D)) ⊕ (ι ⊕ I)) -- equalities
       C :=
   CanonicalLP.mk
     (Matrix.fromBlocks
@@ -62,11 +62,15 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
           else 0
         else 0)
       (Matrix.of fun ⟨⟨cₜ, _⟩, cₙ, cₐ⟩ => fun ⟨i, a⟩ => if cₜ.app cₙ = i ∧ cₐ = a then -1 else 0)
-      0
-      (Matrix.of fun cᵢ : ι => fun ⟨i, _⟩ => if cᵢ = i then 1 else 0))
+      (Matrix.fromRows
+        0
+        (Matrix.of fun cₜ : I => fun ⟨t, _⟩ => if cₜ = t then 1 else 0))
+      (Matrix.fromRows
+        (Matrix.of fun cᵢ : ι => fun ⟨i, _⟩ => if cᵢ = i then 1 else 0)
+        0))
     (Sum.elim
       (fun _ : (Σ t : I, (Fin t.fst.n × D)) => 0)
-      (fun _ : ι => 1))
+      (fun _ : ι ⊕ I => 1))
     (Sum.elim
       (fun ⟨⟨t, _⟩, x⟩ => t.f x)
       (fun _ => 0))
@@ -258,7 +262,24 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_right (I : Γ.Instanc
   rw [Sum.elim_comp_inr, Matrix.dotProduct]
   simp_rw [mul_ite, mul_one, mul_zero, ←ite_and]
   rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
-  use (cᵢ, x cᵢ)
+  use ⟨cᵢ, x cᵢ⟩
+  aesop
+
+set_option maxHeartbeats 555555 in
+lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_left (I : Γ.Instance ι)
+    (cₜ : I) (x : ι → D) :
+    (fun ⟨t, _⟩ => if cₜ = t then 1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inl) = 1 := by
+  rw [Sum.elim_comp_inl, Matrix.dotProduct]
+  simp_rw [ite_mul, one_mul, zero_mul]
+  show
+    Finset.univ.sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
+      if cₜ = tᵥ.fst then
+        if ∀ (i : Fin tᵥ.fst.fst.n), tᵥ.snd i = x (tᵥ.fst.fst.app i) then 1 else 0
+        else 0) =
+    1
+  simp_rw [←ite_and]
+  rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
+  use ⟨cₜ, fun i : Fin cₜ.fst.n => x (cₜ.fst.app i)⟩
   aesop
 
 theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) :
@@ -269,7 +290,6 @@ theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) 
     constructor
     · ext j
       rw [Matrix.fromBlocks_mulVec_sumType]
-      rw [Matrix.zero_mulVec, zero_add]
       cases j with
       | inl c =>
         obtain ⟨cₜ, cₙ, cₐ⟩ := c
@@ -282,8 +302,15 @@ theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) 
           convert @add_neg_self C _ 0
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss hits
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_right_of_miss hits
-      | inr cᵢ =>
-        rw [Sum.elim_inr, Sum.elim_inr]
-        exact I.RelaxBLP_solutionVCSPtoBLP_bottom_right cᵢ x
+      | inr j' =>
+        rw [Sum.elim_inr, Sum.elim_inr,
+          Matrix.fromRows_mulVec, Matrix.fromRows_mulVec, Matrix.zero_mulVec, Matrix.zero_mulVec, Pi.add_apply]
+        cases j' with
+        | inl cᵢ =>
+          rw [Sum.elim_inl, Sum.elim_inl, Pi.zero_apply, zero_add]
+          exact I.RelaxBLP_solutionVCSPtoBLP_bottom_right cᵢ x
+        | inr cₜ =>
+          rw [Sum.elim_inr, Sum.elim_inr, Pi.zero_apply, add_zero]
+          exact I.RelaxBLP_solutionVCSPtoBLP_bottom_left cₜ x
     · exact I.solutionVCSPtoBLP_nneg x
   · exact I.solutionVCSPtoBLP_cost x
