@@ -210,8 +210,56 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     List.ofFn (fun i : Fin x.toCanonicalRationalSolution.denominator =>
       (buildVertically (fun v : Fin t.fst.n → D => x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩))).get
         (Fin.cast (I.RelaxBLP_denominator_eq_height_joint x_solv t) i) k)
-  rw [List.ofFn_get_fin_cast]
-  sorry -- utilize `x_solv` to show relationship between marginal counts and joint counts
+  convert_to
+    List.ofFn (fun i : Fin x.toCanonicalRationalSolution.denominator =>
+      (buildVertically (fun d : D => x.toCanonicalRationalSolution.numerators (Sum.inr (t.fst.app k, d)))).get
+        (Fin.cast (I.RelaxBLP_denominator_eq_height_marginal x_solv (t.fst.app k)) i)) ~
+    (List.ofFn (fun i : Fin x.toCanonicalRationalSolution.denominator =>
+      (buildVertically (fun v : Fin t.fst.n → D => x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩))).get
+        (Fin.cast (I.RelaxBLP_denominator_eq_height_joint x_solv t) i))).map (· k)
+  · aesop
+  rw [List.ofFn_get_fin_cast, List.ofFn_get_fin_cast]
+  unfold buildVertically
+  rw [List.map_join, List.map_map]
+  show
+    List.join
+      (Finset.univ.val.toList.map (fun d : D =>
+        List.replicate ((fun d_ : D => x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, d_⟩)) d) d)) ~
+    List.join
+      (Finset.univ.val.toList.map
+        (List.map (· k) ∘ (fun v : Fin t.fst.n → D =>
+          List.replicate ((fun v_ : Fin t.fst.n → D => x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v_⟩)) v) v)))
+  convert_to
+    List.join
+      (Finset.univ.val.toList.map (fun d : D =>
+        List.replicate (x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, d⟩)) d)) ~
+    List.join
+      (Finset.univ.val.toList.map (fun v : Fin t.fst.n → D =>
+        List.replicate (x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩)) (v k)))
+  · apply congr_arg
+    aesop
+  symm
+  -- now we need to show that the `k`th joint column and the `t.fst.app k`th marginal column differ only by permuting
+  rw [List.perm_iff_count]
+  intro a
+  rw [List.count_join, List.count_join, List.map_map, List.map_map]
+  show
+    (Finset.univ.val.toList.map (fun v : Fin t.fst.n → D =>
+      List.count a (List.replicate (x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩)) (v k)))).sum =
+    (Finset.univ.val.toList.map (fun d : D =>
+      List.count a (List.replicate (x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, d⟩)) d))).sum
+  rw [Multiset.toList_map_sum, Multiset.toList_map_sum, Finset.sum_map_val, Finset.sum_map_val]
+  simp_rw [List.count_replicate, Finset.sum_ite_eq, Finset.mem_univ, if_true]
+  show
+    Finset.univ.sum (fun v : Fin t.fst.n → D =>
+      if a = v k then x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩) else 0) =
+    x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, a⟩)
+  rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
+  show
+    (Finset.univ.filter (a = · k)).sum (fun v : Fin t.fst.n → D =>
+      x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩)) =
+    x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, a⟩)
+  sorry
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
