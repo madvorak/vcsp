@@ -47,6 +47,10 @@ lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield
       rw [one_div, inv_eq_zero] at hyp
       exact hz hyp
 
+lemma List.ofFn_get_fin_cast {α : Type*} {l : List α} {n : ℕ} (hnl : n = l.length) :
+    List.ofFn (fun i : Fin n => l.get (Fin.cast hnl i)) = l := by
+  rw [←List.ofFn_congr hnl.symm, List.ofFn_get]
+
 
 variable {D : Type} [Fintype D]
 
@@ -169,6 +173,8 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
           (List.join (Finset.univ.val.toList.map (fun v : Fin t.fst.n → D =>
               List.replicate (x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩)) v
             ))).get (Fin.cast (I.RelaxBLP_denominator_eq_height_joint x_solv t) i)))
+    --apply Fintype.sum_bijective
+    --apply Fintype.sum_of_injective
     sorry -- should be easy
   rw [hZ, nsmul_div, le_div_iff hxdQ]
   refine le_trans ?_ (sfp.left ⟨t.fst.n, t.fst.f⟩ t.fst.inΓ Z)
@@ -204,6 +210,7 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     List.ofFn (fun i : Fin x.toCanonicalRationalSolution.denominator =>
       (buildVertically (fun v : Fin t.fst.n → D => x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩))).get
         (Fin.cast (I.RelaxBLP_denominator_eq_height_joint x_solv t) i) k)
+  rw [List.ofFn_get_fin_cast]
   sorry -- utilize `x_solv` to show relationship between marginal counts and joint counts
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
