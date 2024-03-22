@@ -119,17 +119,9 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance �
       if t = tᵥ.fst then x.toCanonicalRationalSolution.toFunction (Sum.inl tᵥ) else 0) =
     1
   rw [Finset.sum_sigma] at eqv
-  have eqv' :
-    Finset.univ.sum (fun cₜ : I =>
-        if t = cₜ then
-          Finset.univ.sum (fun v : Fin cₜ.fst.n → D =>
-            x.toCanonicalRationalSolution.toFunction (Sum.inl ⟨cₜ, v⟩))
-        else 0
-      ) = 1
-  · convert eqv
-    simp
-  simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv'
-  exact Finset.sum_of_sum_div_const_eq_one eqv'
+  simp_rw [Finset.sum_ite_irrel, Finset.sum_const_zero] at eqv
+  simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv
+  exact Finset.sum_of_sum_div_const_eq_one eqv
 
 open scoped List in
 lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ.Instance ι} (t : I)
@@ -254,10 +246,6 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
       List.count a (List.replicate (x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, d⟩)) d))).sum
   rw [Multiset.toList_map_sum, Multiset.toList_map_sum, Finset.sum_map_val, Finset.sum_map_val]
   simp_rw [List.count_replicate, Finset.sum_ite_eq, Finset.mem_univ, if_true]
-  show
-    Finset.univ.sum (fun v : Fin t.fst.n → D =>
-      if a = v k then x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩) else 0) =
-    x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, a⟩)
   rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
   show
     (Finset.univ.filter (a = · k)).sum (fun v : Fin t.fst.n → D =>
@@ -271,16 +259,57 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
   unfold Matrix.fromColumns at key
   simp_rw [Matrix.of_apply] at key
   rw [Sum.fun_elim_index, Matrix.sum_elim_dotProduct_sum_elim] at key
-  unfold Matrix.dotProduct at key
-  simp only [Matrix.of_apply, Function.comp_apply, Fintype.sum_prod_type] at key
+  simp_rw [Matrix.dotProduct, Matrix.of_apply, Function.comp_apply] at key
   change key to
     (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
       (if ht : t = tᵥ.fst then
         if tᵥ.snd (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a then 1 else 0
         else 0) *
-      x.toCanonicalRationalSolution.toFunction (Sum.inl tᵥ)) + _ =
+      x.toCanonicalRationalSolution.toFunction (Sum.inl tᵥ)) +
+    Finset.univ.sum (fun p : ι × D =>
+      (if t.fst.app k = p.fst ∧ a = p.snd then -1 else 0) *
+      x.toCanonicalRationalSolution.toFunction (Sum.inr p)) =
     (0 : ℚ)
-  rw [Finset.sum_sigma] at key
+  have key' :
+    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
+      (if ht : t = tᵥ.fst then
+        if tᵥ.snd (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a then 1 else 0
+        else 0) *
+      x.toCanonicalRationalSolution.toFunction (Sum.inl tᵥ)) +
+    Finset.univ.sum (fun p : ι × D =>
+      (if ⟨t.fst.app k, a⟩ = p then -1 else 0) *
+      x.toCanonicalRationalSolution.toFunction (Sum.inr p)) =
+    (0 : ℚ)
+  · convert key
+    apply Prod.eq_iff_fst_eq_snd_eq
+  simp_rw [ite_mul, neg_mul, one_mul, zero_mul, Finset.sum_ite_eq, Finset.mem_univ] at key'
+  rw [if_true, add_neg_eq_zero, Finset.sum_sigma] at key'
+  change key' to
+    Finset.univ.sum (fun cₜ : I =>
+      (Finset.univ.sum (fun cᵥ : Fin cₜ.fst.n → D =>
+        (if ht : t = cₜ then
+          if cᵥ (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a then 1 else 0
+          else 0) *
+        x.toCanonicalRationalSolution.toFunction (Sum.inl ⟨cₜ, cᵥ⟩)
+      ))) =
+    x.toCanonicalRationalSolution.toFunction (Sum.inr ⟨t.fst.app k, a⟩)
+  have key'' :
+    Finset.univ.sum (fun cₜ : I =>
+      (if ht : t = cₜ then
+        Finset.univ.sum (fun cᵥ : Fin cₜ.fst.n → D =>
+          if cᵥ (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a
+          then x.toCanonicalRationalSolution.toFunction (Sum.inl ⟨cₜ, cᵥ⟩) else 0)
+       else 0
+      )) =
+    x.toCanonicalRationalSolution.toFunction (Sum.inr ⟨t.fst.app k, a⟩)
+  · convert key' with cₜ
+    by_cases hct : t = cₜ <;> simp [hct]
+  have the_key :
+    (Finset.filter (· k = a) Finset.univ).sum (fun v : Fin t.fst.n → D =>
+      x.toCanonicalRationalSolution.toFunction (Sum.inl ⟨t, v⟩)) =
+    x.toCanonicalRationalSolution.toFunction (Sum.inr ⟨t.fst.app k, a⟩)
+  · convert key'' using 1
+    simp [Finset.sum_ite]
   sorry
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
