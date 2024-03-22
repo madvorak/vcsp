@@ -66,7 +66,15 @@ lemma List.ofFn_get_fin_cast {α : Type*} {l : List α} {n : ℕ} (hnl : n = l.l
     List.ofFn (fun i : Fin n => l.get (Fin.cast hnl i)) = l := by
   rw [←List.ofFn_congr hnl.symm, List.ofFn_get]
 
-lemma todo {α : Type} [Fintype α] (f : α → ℚ) (g : α → ℕ) :
+lemma Finset.univ_sum_aux_aux (x : List ℚ) :
+    Finset.univ.sum x.get = x.sum := by
+  induction x with
+  | nil => rfl
+  | cons d l ih =>
+    rw [List.sum_cons, ← ih, Fin.univ_succ]
+    simp
+
+lemma Finset.univ_sum_aux {α : Type} [Fintype α] (f : α → ℚ) (g : α → ℕ) :
     Finset.univ.sum (fun i : Fin _ =>
       f ((List.join (Finset.univ.val.toList.map (fun a : α =>
             List.replicate (g a) a
@@ -86,40 +94,16 @@ lemma todo {α : Type} [Fintype α] (f : α → ℚ) (g : α → ℕ) :
       · intro x y hxy
         ext
         have := congr_arg Fin.val hxy
-        simp at this
-        exact this
+        exact this -- TODO why cannot the previous line be here?
       · intro z
-        use ⟨z.val, by convert z.2; rw [List.length_map]⟩
+        use ⟨z.val, by convert z.isLt; rw [List.length_map]⟩
         rfl
     intro i
     aesop
-  rw [List.map_join, List.map_map, ←Finset.sum_to_list]
-  show
-    (Finset.univ.toList.map (fun i =>
-      (List.join (Finset.univ.val.toList.map (List.map f ∘ fun a => List.replicate (g a) a))).get i)).sum =
-    Finset.univ.sum (fun b : α => f b * g b)
-  show
-    (Finset.univ.toList.map (
-      (List.join (Finset.univ.val.toList.map (List.map f ∘ fun a => List.replicate (g a) a))).get)).sum =
-    Finset.univ.sum (fun b : α => f b * g b)
-  rw [Finset.sum_to_list]
-  show
-    (Finset.univ.sum (
-      (List.join (Finset.univ.val.toList.map (List.map f ∘ fun a => List.replicate (g a) a))).get)) =
-    Finset.univ.sum (fun b : α => f b * g b)
-  rw [show List.map f ∘ (fun a => List.replicate (g a) a) = (fun a => List.replicate (g a) (f a)) by aesop]
-  convert_to
-    (List.join ((Multiset.toList Finset.univ.val).map (fun a => List.replicate (g a) (f a)))).sum =
-    Finset.univ.sum (fun b : α => f b * g b)
-  · sorry
-  rw [List.sum_join]
-  show
-    (((Multiset.toList Finset.univ.val).map (fun a => List.replicate (g a) (f a))).map List.sum).sum =
-    Finset.univ.sum (fun b : α => f b * g b)
-  convert_to
-    ((Multiset.toList Finset.univ.val).map (List.sum ∘ (fun a => List.replicate (g a) (f a)))).sum =
-    Finset.univ.sum (fun b : α => f b * g b)
-  · simp
+  rw [
+    List.map_join, List.map_map, ←Finset.sum_to_list, Finset.sum_to_list,
+    show List.map f ∘ (fun a => List.replicate (g a) a) = (fun a => List.replicate (g a) (f a)) by aesop,
+    Finset.univ_sum_aux_aux, List.sum_join, List.map_map]
   show
     ((Multiset.toList Finset.univ.val).map ((fun a => List.sum (List.replicate (g a) (f a))))).sum =
     Finset.univ.sum (fun b : α => f b * g b)
@@ -130,7 +114,7 @@ lemma todo {α : Type} [Fintype α] (f : α → ℚ) (g : α → ℕ) :
   · simp
   rw [Multiset.toList_map_sum, Finset.sum_map_val]
   congr
-  ext a
+  ext
   apply mul_comm
 
 
@@ -143,7 +127,7 @@ lemma Finset.univ_sum_mul_of_list_replicate {n m : ℕ} (f : (Fin m → D) → �
       f ((List.join (Finset.univ.val.toList.map (fun v : Fin m → D =>
             List.replicate (g v) v
           ))).get (Fin.cast hn i))) := by
-  convert (todo f g).symm using 1
+  convert (Finset.univ_sum_aux f g).symm using 1
   aesop
 
 private noncomputable abbrev buildVertically (p : D → ℕ) : List D :=
