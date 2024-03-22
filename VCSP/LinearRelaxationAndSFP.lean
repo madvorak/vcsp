@@ -1,5 +1,6 @@
 import VCSP.LinearRelaxation
 import VCSP.LinearProgrammingQ
+import Mathlib.Tactic.RewriteSearch
 
 
 lemma Sum.fun_elim_index {α β γ : Type*} (x : α → γ) (y : β → γ) :
@@ -29,9 +30,19 @@ lemma Finset.univ_sum_multisetToType {α β : Type*} [DecidableEq α] [AddCommMo
     Finset.univ.sum (fun a : s.ToType => f a.fst) = s.summap f := by
   rw [Finset.sum, Multiset.map_univ]
 
+lemma div_eq_div {β : Type*} [GroupWithZero β] {x y z : β} (hxy : x / z = y / z) (hz : z ≠ 0) : x = y := by
+  rw [division_def, division_def, mul_eq_mul_right_iff] at hxy
+  cases hxy with
+  | inl hyp => exact hyp
+  | inr hyp =>
+    exfalso
+    rw [inv_eq_zero] at hyp
+    exact hz hyp
+
 lemma nsmul_div {β : Type*} [DivisionSemiring β] (n : ℕ) (x y : β) : n • (x / y) = (n • x) / y := by
   rw [←mul_one_div x y, ←mul_one_div (n • x) y, smul_mul_assoc]
 
+-- TODO refactor using `div_eq_div`
 lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield β] {f : α → β} {z : β}
     (hfz : Finset.univ.sum (fun a => f a / z) = (1 : β)) :
     z = Finset.univ.sum f := by
@@ -55,8 +66,85 @@ lemma List.ofFn_get_fin_cast {α : Type*} {l : List α} {n : ℕ} (hnl : n = l.l
     List.ofFn (fun i : Fin n => l.get (Fin.cast hnl i)) = l := by
   rw [←List.ofFn_congr hnl.symm, List.ofFn_get]
 
+lemma todo {α : Type} [Fintype α] (f : α → ℚ) (g : α → ℕ) :
+    Finset.univ.sum (fun i : Fin _ =>
+      f ((List.join (Finset.univ.val.toList.map (fun a : α =>
+            List.replicate (g a) a
+          ))).get i)) =
+    Finset.univ.sum (fun b : α => f b * g b) := by
+  convert_to
+    Finset.univ.sum (fun i : Fin _ =>
+      (((List.join (Finset.univ.val.toList.map (fun a : α =>
+            List.replicate (g a) a
+          ))).map f).get i)) =
+    Finset.univ.sum (fun b : α => f b * g b)
+  · simp_rw [List.get_map]
+    apply Fintype.sum_bijective (by
+      apply Fin.cast
+      rw [List.length_map])
+    · constructor
+      · intro x y hxy
+        ext
+        have := congr_arg Fin.val hxy
+        simp at this
+        exact this
+      · intro z
+        use ⟨z.val, by convert z.2; rw [List.length_map]⟩
+        rfl
+    intro i
+    aesop
+  rw [List.map_join, List.map_map, ←Finset.sum_to_list]
+  show
+    (Finset.univ.toList.map (fun i =>
+      (List.join (Finset.univ.val.toList.map (List.map f ∘ fun a => List.replicate (g a) a))).get i)).sum =
+    Finset.univ.sum (fun b : α => f b * g b)
+  show
+    (Finset.univ.toList.map (
+      (List.join (Finset.univ.val.toList.map (List.map f ∘ fun a => List.replicate (g a) a))).get)).sum =
+    Finset.univ.sum (fun b : α => f b * g b)
+  rw [Finset.sum_to_list]
+  show
+    (Finset.univ.sum (
+      (List.join (Finset.univ.val.toList.map (List.map f ∘ fun a => List.replicate (g a) a))).get)) =
+    Finset.univ.sum (fun b : α => f b * g b)
+  rw [show List.map f ∘ (fun a => List.replicate (g a) a) = (fun a => List.replicate (g a) (f a)) by aesop]
+  convert_to
+    (List.join ((Multiset.toList Finset.univ.val).map (fun a => List.replicate (g a) (f a)))).sum =
+    Finset.univ.sum (fun b : α => f b * g b)
+  · sorry
+  rw [List.sum_join]
+  show
+    (((Multiset.toList Finset.univ.val).map (fun a => List.replicate (g a) (f a))).map List.sum).sum =
+    Finset.univ.sum (fun b : α => f b * g b)
+  convert_to
+    ((Multiset.toList Finset.univ.val).map (List.sum ∘ (fun a => List.replicate (g a) (f a)))).sum =
+    Finset.univ.sum (fun b : α => f b * g b)
+  · simp
+  show
+    ((Multiset.toList Finset.univ.val).map ((fun a => List.sum (List.replicate (g a) (f a))))).sum =
+    Finset.univ.sum (fun b : α => f b * g b)
+  simp_rw [List.sum_replicate]
+  convert_to
+    (Finset.univ.val.toList.map (fun a => g a * f a)).sum =
+    Finset.univ.sum (fun b : α => f b * g b)
+  · simp
+  rw [Multiset.toList_map_sum, Finset.sum_map_val]
+  congr
+  ext a
+  apply mul_comm
+
 
 variable {D : Type} [Fintype D]
+
+lemma Finset.univ_sum_mul_of_list_replicate {n m : ℕ} (f : (Fin m → D) → ℚ) (g : (Fin m → D) → ℕ)
+    (hn : n = (List.join (Finset.univ.val.toList.map (fun v => List.replicate (g v) v))).length) :
+    Finset.univ.sum (fun v : Fin m → D => f v * g v) =
+    Finset.univ.sum (fun i : Fin n =>
+      f ((List.join (Finset.univ.val.toList.map (fun v : Fin m → D =>
+            List.replicate (g v) v
+          ))).get (Fin.cast hn i))) := by
+  convert (todo f g).symm using 1
+  aesop
 
 private noncomputable abbrev buildVertically (p : D → ℕ) : List D :=
   (Finset.univ.val.toList.map (fun d : D => List.replicate (p d) d)).join
@@ -161,17 +249,7 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     simp_rw [← mul_div_assoc]
     rw [← Finset.sum_div]
     congr 1
-    show
-      Finset.univ.sum (fun v : Fin t.fst.n → D =>
-        t.fst.f v * (x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩) : ℚ)) =
-      Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator =>
-        t.fst.f (
-          (List.join (Finset.univ.val.toList.map (fun v : Fin t.fst.n → D =>
-              List.replicate (x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩)) v
-            ))).get (Fin.cast (I.RelaxBLP_denominator_eq_height_joint x_solv t) i)))
-    --apply Fintype.sum_bijective
-    --apply Fintype.sum_of_injective
-    sorry -- should be easy
+    apply Finset.univ_sum_mul_of_list_replicate
   rw [hZ, nsmul_div, le_div_iff hxdQ]
   refine le_trans ?_ (sfp.left ⟨t.fst.n, t.fst.f⟩ t.fst.inΓ Z)
   rw [mul_comm, nsmul_eq_mul, mul_le_mul_left hxdQ]
@@ -310,7 +388,13 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     x.toCanonicalRationalSolution.toFunction (Sum.inr ⟨t.fst.app k, a⟩)
   · convert key'' using 1
     simp [Finset.sum_ite]
-  sorry
+  qify
+  unfold CanonicalRationalSolution.toFunction at the_key
+  rw [←Finset.sum_div] at the_key
+  rw [←div_eq_div the_key hxdQ.ne.symm]
+  congr
+  ext
+  apply eq_comm
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
@@ -362,3 +446,5 @@ theorem ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphi
     apply Multiset.summap_lt_summap valid.tt_nonempty
     simp [contr]
   exact impos.false
+
+#print axioms ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms
