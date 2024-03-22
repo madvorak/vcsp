@@ -57,7 +57,7 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
       (Matrix.of fun ⟨cₜ, cₙ, cₐ⟩ => fun ⟨t, x⟩ =>
         if ht : cₜ = t
         then
-          if x (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+          if x (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
           then 1
           else 0
         else 0)
@@ -123,7 +123,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
     (fun ⟨t, y⟩ =>
       if ht : cₜ = t
       then
-        if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+        if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
         then 1
         else 0
       else 0
@@ -138,7 +138,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
         | ⟨t, v⟩ =>
           if ht : cₜ = t
           then
-            if v (Fin.cast (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+            if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
             then 1
             else 0
           else 0
@@ -161,7 +161,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
             then
               if ht : cₜ = t
               then
-                if v (Fin.cast (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+                if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
                 then True
                 else False
               else False
@@ -184,7 +184,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
     (fun ⟨t, y⟩ =>
       if ht : cₜ = t
       then
-        if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+        if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
         then 1
         else 0
       else 0
@@ -197,7 +197,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
         | ⟨t, v⟩ =>
           if ht : cₜ = t
           then
-            if v (Fin.cast (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+            if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
             then 1
             else 0
           else 0
@@ -220,7 +220,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
             then
               if ht : cₜ = t
               then
-                if v (Fin.cast (congr_arg (Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+                if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
                 then True
                 else False
               else False

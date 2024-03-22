@@ -2,6 +2,10 @@ import VCSP.LinearRelaxation
 import VCSP.LinearProgrammingQ
 
 
+lemma Sum.fun_elim_index {α β γ : Type*} (x : α → γ) (y : β → γ) :
+    (fun i => Sum.elim x y i) = Sum.elim x y :=
+  rfl
+
 -- Std4 desperately needs such lemma:
 lemma Sum.elim_eq_left {α β γ : Type*} {u u' : α → γ} {v v' : β → γ}
     (huv : Sum.elim u v = Sum.elim u' v') :
@@ -259,10 +263,24 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     (Finset.univ.filter (a = · k)).sum (fun v : Fin t.fst.n → D =>
       x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩)) =
     x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, a⟩)
-  have eqv := congr_fun x_solv (Sum.inl ⟨t, k, a⟩)
-  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.mulVec] at eqv
-  rw [← Matrix.fromRows_fromColumn_eq_fromBlocks, Sum.elim_inl] at eqv
-  simp_rw [Matrix.fromRows_apply_inl] at eqv
+  have key := congr_fun x_solv (Sum.inl ⟨t, k, a⟩)
+  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.mulVec] at key
+  rw [← Matrix.fromRows_fromColumn_eq_fromBlocks, Sum.elim_inl] at key
+  simp_rw [Matrix.fromRows_apply_inl] at key
+  rw [←Sum.elim_comp_inl_inr x.toCanonicalRationalSolution.toFunction] at key
+  unfold Matrix.fromColumns at key
+  simp_rw [Matrix.of_apply] at key
+  rw [Sum.fun_elim_index, Matrix.sum_elim_dotProduct_sum_elim] at key
+  unfold Matrix.dotProduct at key
+  simp only [Matrix.of_apply, Function.comp_apply, Fintype.sum_prod_type] at key
+  change key to
+    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
+      (if ht : t = tᵥ.fst then
+        if tᵥ.snd (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a then 1 else 0
+        else 0) *
+      x.toCanonicalRationalSolution.toFunction (Sum.inl tᵥ)) + _ =
+    (0 : ℚ)
+  rw [Finset.sum_sigma] at key
   sorry
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
