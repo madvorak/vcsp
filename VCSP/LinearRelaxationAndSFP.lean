@@ -259,6 +259,10 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     (Finset.univ.filter (a = · k)).sum (fun v : Fin t.fst.n → D =>
       x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩)) =
     x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, a⟩)
+  have eqv := congr_fun x_solv (Sum.inl ⟨t, k, a⟩)
+  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.mulVec] at eqv
+  rw [← Matrix.fromRows_fromColumn_eq_fromBlocks, Sum.elim_inl] at eqv
+  simp_rw [Matrix.fromRows_apply_inl] at eqv
   sorry
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
