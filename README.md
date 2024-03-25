@@ -6,14 +6,16 @@ My long-term goal is to formalize the dichotomy for fixed-template finite-valued
 
 ## Results
 
-* [If a VCSP template can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/61cacff2ba620f00657091a21fddbd4495a0c746/VCSP/Hardness.lean#L335)
-* [Linear relaxation of a finite-valued instance is a valid relaxation with respect to the VCSP.](https://github.com/madvorak/vcsp/blob/4209830a88cce2c0518b942380c43e8057783de5/VCSP/LinearRelaxation.lean#L260)
+* [If a VCSP template can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/0c56fa679366db730fa428b82acedd041cb82df9/VCSP/Hardness.lean#L151)
+* [Basic LP relaxation for VCSP is valid.](https://github.com/madvorak/vcsp/blob/0c56fa679366db730fa428b82acedd041cb82df9/VCSP/LinearRelaxation.lean#L273)
+* [If a VCSP template over rationals has symmetric fractional polymorphisms of all arities, then Basic LP relaxation is tight.](https://github.com/madvorak/vcsp/blob/0c56fa679366db730fa428b82acedd041cb82df9/VCSP/LinearRelaxationAndSFP.lean#L392)
 
 ## Mathlib contributions
 
-[VCSP definition](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Combinatorics/Optimization/ValuedCSP.lean)
+[ValuedCSP.lean](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Combinatorics/Optimization/ValuedCSP.lean)
 
-### Related PRs
+### VCSP PRs
+* https://github.com/leanprover-community/mathlib4/pull/7404
 * https://github.com/leanprover-community/mathlib4/pull/7893
 * https://github.com/leanprover-community/mathlib4/pull/7894
 * https://github.com/leanprover-community/mathlib4/pull/8707
