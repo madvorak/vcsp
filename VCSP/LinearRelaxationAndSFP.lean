@@ -53,6 +53,9 @@ lemma List.ofFn_get_fin_cast {α : Type*} {l : List α} {n : ℕ} (hnl : n = l.l
     List.ofFn (fun i : Fin n => l.get (Fin.cast hnl i)) = l := by
   rw [←List.ofFn_congr hnl.symm, List.ofFn_get]
 
+lemma Fin_cast_bijective {m n : ℕ} (hmn : m = n) : Function.Bijective (Fin.cast hmn) :=
+  ⟨fun x y hxy => by aesop, fun z => ⟨⟨z.val, hmn ▸ z.isLt⟩, rfl⟩⟩
+
 lemma Finset.univ_sum_list_get (x : List ℚ) :
     Finset.univ.sum x.get = x.sum := by
   induction x with
@@ -74,19 +77,9 @@ lemma Finset.univ_sum_aux {α : Type*} [Fintype α] (f : α → ℚ) (g : α →
           ))).map f).get i)) =
     Finset.univ.sum (fun b : α => f b * g b)
   · simp_rw [List.get_map]
-    apply Fintype.sum_bijective (by
-      apply Fin.cast
-      rw [List.length_map])
-    · constructor -- TODO extract `Function.Bijective (Fin.cast ⋯)` to a lemma
-      · intro x y hxy
-        ext
-        have := congr_arg Fin.val hxy
-        exact this -- TODO why cannot the previous line be here?
-      · intro z
-        use ⟨z.val, by convert z.isLt; rw [List.length_map]⟩
-        rfl
-    intro i
-    aesop
+    apply Fintype.sum_bijective (by apply Fin.cast; rw [List.length_map])
+    · apply Fin_cast_bijective
+    · aesop
   rw [
     List.map_join, List.map_map, ←Finset.sum_to_list, Finset.sum_to_list,
     show List.map f ∘ (fun a => List.replicate (g a) a) = (fun a => List.replicate (g a) (f a)) by aesop,
