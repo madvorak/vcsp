@@ -160,7 +160,7 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance �
   change eqv to
     (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ =>
       if t = tᵥ.fst then x.toCanonicalRationalSolution.toFunction (Sum.inl tᵥ) else 0) =
-    1
+    (1 : ℚ)
   rw [Finset.sum_sigma] at eqv
   simp_rw [Finset.sum_ite_irrel, Finset.sum_const_zero] at eqv
   simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv
@@ -246,9 +246,7 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
       (buildVertically (fun v : Fin t.fst.n → D => x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩))).get
         (Fin.cast (I.RelaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t) i))).map (· k)
   · aesop
-  rw [List.ofFn_get_fin_cast, List.ofFn_get_fin_cast]
-  unfold buildVertically
-  rw [List.map_join, List.map_map]
+  rw [List.ofFn_get_fin_cast, List.ofFn_get_fin_cast, List.map_join, List.map_map]
   show
     List.join
       (Finset.univ.val.toList.map (fun d : D =>
