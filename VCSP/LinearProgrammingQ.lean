@@ -9,7 +9,7 @@ structure CanonicalRationalSolution (α : Type*) where
 
 variable {α : Type*}
 
--- @[pp_dot] -- put back after the pretty-printer issue gets fixed
+-- `@[pp_dot]` -- put back after the pretty-printer issue gets fixed
 def CanonicalRationalSolution.toFunction (s : CanonicalRationalSolution α) : α → ℚ :=
   fun a : α => (s.numerators a : ℚ) / (s.denominator : ℚ)
 
@@ -67,7 +67,7 @@ lemma toCanonicalRationalSolution_toFunction {x : α → ℚ} (hx : 0 ≤ x) :
       Finset.univ.prod (fun i => ((x i).den : ℚ)) = x a
   · simp [CanonicalRationalSolution.toFunction, Function.toCanonicalRationalSolution]
   rw [Finset.univ.prod_with_one_exception', mul_div_assoc, mul_comm, mul_div_assoc]
-  nth_rw 3 [← Rat.num_div_den (x a)]
+  nth_rw 3 [←Rat.num_div_den (x a)]
   convert mul_one _
   apply div_self
   intro contr

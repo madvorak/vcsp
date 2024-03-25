@@ -84,12 +84,6 @@ lemma Multiset.summap_summap_swap [AddCommMonoid γ]
     B.summap (fun b => A.summap (fun a => f a b)) :=
   Multiset.sum_map_sum_map A B
 
-lemma Finset.sum_summap_swap [AddCommMonoid γ] -- TODO maybe delete
-    (A : Finset α) (B : Multiset β) (f : α → β → γ) :
-    A.sum (fun a => B.summap (fun b => f a b)) =
-    B.summap (fun b => A.sum (fun a => f a b)) :=
-  Multiset.summap_summap_swap A.val B f
-
 lemma Multiset.summap_le_summap [OrderedAddCommMonoid β] {s : Multiset α}
     {f g : α → β} (hfg : ∀ i ∈ s, f i ≤ g i) :
     s.summap f ≤ s.summap g :=
@@ -303,27 +297,6 @@ section max_cut
 def ValuedCSP.CanExpressMaxCut [Nonempty D] [Fintype D] [LinearOrderedAddCommMonoid C]
     {Γ : ValuedCSP D C} : Prop :=
   ∃ f : (Fin 2 → D) → C, ⟨2, f⟩ ∈ Γ.expressivePower ∧ f.HasMaxCutProperty
-
-private lemma Function.HasMaxCutPropertyAt.rows_lt [OrderedCancelAddCommMonoid C]
-    {f : (Fin 2 → D) → C} {a b : D} (mcf : f.HasMaxCutPropertyAt a b) (hab : a ≠ b)
-    {ω : FractionalOperation D 2} (symmega : ω.IsSymmetric)
-    {r : Fin 2 → D} (rin : r ∈ (ω.tt ![![a, b], ![b, a]])) :
-    f ![a, b] < f r := by
-  rw [FractionalOperation.tt, Multiset.mem_map] at rin
-  rw [show r = ![r 0, r 1] from List.ofFn_inj.mp rfl]
-  apply lt_of_le_of_ne (mcf.right (r 0) (r 1)).left
-  intro equ
-  have asymm : r 0 ≠ r 1
-  · rcases (mcf.right (r 0) (r 1)).right equ with ⟨ha0, hb1⟩ | ⟨ha1, hb0⟩
-    · rw [ha0, hb1] at hab
-      exact hab
-    · rw [ha1, hb0] at hab
-      exact hab.symm
-  apply asymm
-  obtain ⟨o, in_omega, rfl⟩ := rin
-  show o (fun j => ![![a, b], ![b, a]] j 0) = o (fun j => ![![a, b], ![b, a]] j 1)
-  rw [column_of_2x2_left, column_of_2x2_right]
-  exact symmega ![a, b] ![b, a] (List.Perm.swap b a []) o in_omega
 
 theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFractionalPolymorphism
     [Nonempty D] [Fintype D] [LinearOrderedCancelAddCommMonoid C]

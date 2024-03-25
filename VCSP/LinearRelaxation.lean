@@ -11,7 +11,7 @@ lemma Matrix.fromBlocks_mulVec_sumType {α β γ δ R : Type*} [Semiring R]
     (A : Matrix α β R) (B : Matrix α γ R) (C : Matrix δ β R) (D : Matrix δ γ R)
     (u : β → R) (v : γ → R) :
     Matrix.fromBlocks A B C D *ᵥ Sum.elim u v = Sum.elim (A *ᵥ u + B *ᵥ v) (C *ᵥ u + D *ᵥ v) := by
-  rw [← Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulVec,
+  rw [←Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulVec,
     Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
 
 -- Emilie (Shad Amethyst) stated this lemma:
@@ -24,11 +24,11 @@ lemma Multiset.summap_to_sumFinset {α β : Type*} [DecidableEq α] [OrderedAddC
     S.summap f = Finset.univ.sum (fun a : S => f a.fst) := by
   simp [Multiset.summap, Finset.sum]
 
-lemma neg_finset_univ_sum {α R : Type} [Fintype α] [Ring R] (f : α → R) :
+lemma neg_finset_univ_sum {α R : Type*} [Fintype α] [Ring R] (f : α → R) :
     -(Finset.univ.sum f) = Finset.univ.sum (-f) := by
   simp only [Pi.neg_apply, Finset.sum_neg_distrib]
 
-lemma indicator_of_neg {α R : Type} [Fintype α] [Ring R] (P : α → Prop) [DecidablePred P] :
+lemma indicator_of_neg {α R : Type*} [Fintype α] [Ring R] (P : α → Prop) [DecidablePred P] :
     -(fun x => if P x then -1 else (0 : R)) = (fun x => if P x then 1 else 0) := by
   aesop
 

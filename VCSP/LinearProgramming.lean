@@ -97,7 +97,7 @@ theorem StandardLP.weakDuality {P : StandardLP n m K}
   have hy : P.A *ᵥ x ⬝ᵥ y ≤ P.b ⬝ᵥ y
   · exact Matrix.dotProduct_le_dotProduct_of_nonneg_right hxb h0y
   have hx : P.c ⬝ᵥ x ≤ P.Aᵀ *ᵥ y ⬝ᵥ x
-  · rw [← neg_le_neg_iff, ← Matrix.neg_dotProduct, ← Matrix.neg_dotProduct, ← Matrix.neg_mulVec]
+  · rw [←neg_le_neg_iff, ←Matrix.neg_dotProduct, ←Matrix.neg_dotProduct, ←Matrix.neg_mulVec]
     exact Matrix.dotProduct_le_dotProduct_of_nonneg_right hyc h0x
   rw [Matrix.dotProduct_comm (P.Aᵀ *ᵥ y), Matrix.dotProduct_mulVec, Matrix.vecMul_transpose] at hx
   exact hx.trans hy
