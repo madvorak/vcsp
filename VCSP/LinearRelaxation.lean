@@ -89,8 +89,11 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_nneg (I : Γ.Instance ι) (x : ι →
 set_option maxHeartbeats 333333 in
 lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι → D) :
     I.RelaxBLP.c ⬝ᵥ I.solutionVCSPtoBLP x = I.evalSolution x := by
-  simp [ValuedCSP.Instance.RelaxBLP, ValuedCSP.Instance.solutionVCSPtoBLP,
-        ValuedCSP.Instance.evalSolution, ValuedCSP.Term.evalSolution, Matrix.dotProduct]
+  unfold Matrix.dotProduct
+  unfold ValuedCSP.Instance.RelaxBLP
+  rw [Fintype.sum_sum_type]
+  simp_rw [Sum.elim_inl, Sum.elim_inr, mul_ite, mul_one, mul_zero, ite_self]
+  rw [Finset.sum_const_zero, add_zero]
   show
     Finset.univ.sum
       (fun (⟨⟨t, _⟩, v⟩ : Σ _t : I, (Fin _t.fst.n → D)) =>
@@ -130,45 +133,38 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
     1 := by
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   show
-    -- DO NOT refactor to `fun (⟨t, y⟩ : Σ t : I, (Fin t.fst.n → D))` as it would hinder aesop
-    -- TODO check whether still the case
-    Finset.univ.sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
-      (match tᵥ with
-        | ⟨t, v⟩ =>
-          if ht : cₜ = t
-          then
-            if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-            then 1
-            else 0
-          else 0
-        ) *
-      (match tᵥ with
-        | ⟨t, v⟩ =>
-          if (∀ i : Fin t.fst.n, v i = x (t.fst.app i))
+    Finset.univ.sum (fun (⟨t, v⟩ : Σ _ : I, Fin _ → D) => (
+        if ht : cₜ = t
+        then
+          if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
           then 1
           else 0
-        )
-      ) =
+        else 0
+      ) * (
+        if (∀ i : Fin t.fst.n, v i = x (t.fst.app i))
+        then 1
+        else 0
+      ) ) =
     (1 : C)
   simp_rw [mul_ite, mul_one, mul_zero]
   convert_to
+    -- DO NOT refactor to `fun (⟨t, v⟩ : Σ _ : I, Fin _ → D)` here, as it would hinder aesop
     Finset.univ.sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
-      (match tᵥ with
-        | ⟨t, v⟩ =>
-          if (
-            if (∀ i : Fin t.fst.n, v i = x (t.fst.app i))
+      match tᵥ with
+      | ⟨t, v⟩ =>
+        if (
+          if (∀ i : Fin t.fst.n, v i = x (t.fst.app i))
+          then
+            if ht : cₜ = t
             then
-              if ht : cₜ = t
-              then
-                if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-                then True
-                else False
+              if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+              then True
               else False
             else False
-          )
-          then 1
-          else 0
-      )) =
+          else False)
+        then 1
+        else 0
+      ) =
     (1 : C)
         using 2
   · aesop
@@ -191,43 +187,35 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
     0 := by
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   show
-    Finset.univ.sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
-      (match tᵥ with
-        | ⟨t, v⟩ =>
-          if ht : cₜ = t
-          then
-            if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-            then 1
-            else 0
-          else 0
-        ) *
-      (match tᵥ with
-        | ⟨t, v⟩ =>
-          if (∀ i : Fin t.fst.n, v i = x (t.fst.app i))
+    Finset.univ.sum (fun (⟨t, v⟩ : Σ _ : I, Fin _ → D) => (
+        if ht : cₜ = t
+        then
+          if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
           then 1
           else 0
-        )
-      ) =
+        else 0
+      ) * (
+        if (∀ i : Fin t.fst.n, v i = x (t.fst.app i))
+        then 1
+        else 0
+      ) ) =
     (0 : C)
   simp_rw [mul_ite, mul_one, mul_zero]
   convert_to
-    Finset.univ.sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
-      (match tᵥ with
-        | ⟨t, v⟩ =>
-          if (
-            if (∀ i : Fin t.fst.n, v i = x (t.fst.app i))
+    Finset.univ.sum (fun (⟨t, v⟩ : Σ _ : I, Fin _ → D) =>
+        if (
+          if (∀ i : Fin t.fst.n, v i = x (t.fst.app i))
+          then
+            if ht : cₜ = t
             then
-              if ht : cₜ = t
-              then
-                if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
-                then True
-                else False
+              if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+              then True
               else False
             else False
-          )
-          then 1
-          else 0
-      )) =
+          else False)
+        then 1
+        else 0
+      ) =
     (0 : C)
         using 2
   · aesop
@@ -264,7 +252,6 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_right (I : Γ.Instanc
   use ⟨cᵢ, x cᵢ⟩
   aesop
 
-set_option maxHeartbeats 555555 in
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_left (I : Γ.Instance ι)
     (cₜ : I) (x : ι → D) :
     (fun ⟨t, _⟩ => if cₜ = t then 1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inl) = 1 := by
@@ -279,6 +266,8 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_left (I : Γ.Instance
   simp_rw [←ite_and]
   rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
   use ⟨cₜ, fun i : Fin cₜ.fst.n => x (cₜ.fst.app i)⟩
+  ext
+  simp_rw [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
   aesop
 
 theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) :
