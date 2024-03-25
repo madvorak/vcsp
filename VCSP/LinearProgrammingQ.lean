@@ -59,6 +59,9 @@ lemma Finset.univ.prod_with_one_exception' {f g : α → ℚ} {a : α} (hfg : f 
   convert Finset.univ.prod_with_one_exception hfg using 3
   apply eq_comm
 
+lemma nat_cast_eq_int_cast_of_nneg {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a :=
+  Rat.ext (Int.toNat_of_nonneg ha) rfl
+
 lemma toCanonicalRationalSolution_toFunction {x : α → ℚ} (hx : 0 ≤ x) :
     x.toCanonicalRationalSolution.toFunction = x := by
   ext1 a

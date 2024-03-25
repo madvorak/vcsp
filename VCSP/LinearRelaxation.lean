@@ -5,7 +5,6 @@ import Mathlib.Data.Multiset.Fintype
 open scoped Matrix
 
 
-
 lemma Matrix.fromBlocks_mulVec_sumType {α β γ δ R : Type*} [Semiring R]
     [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
     (A : Matrix α β R) (B : Matrix α γ R) (C : Matrix δ β R) (D : Matrix δ γ R)
@@ -314,3 +313,5 @@ theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) 
           exact I.RelaxBLP_solutionVCSPtoBLP_bottom_left cₜ x
     · exact I.solutionVCSPtoBLP_nneg x
   · exact I.solutionVCSPtoBLP_cost x
+
+#print axioms ValuedCSP.Instance.RelaxBLP_reaches

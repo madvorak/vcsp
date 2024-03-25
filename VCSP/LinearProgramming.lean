@@ -21,9 +21,6 @@ lemma sumElim_le_sumElim_iff {α β γ : Type*} [LE γ] (u u' : α → γ) (v v'
       rw [Sum.elim_inr, Sum.elim_inr]
       exact hyp.right b
 
-lemma nat_cast_eq_int_cast_of_nneg {a : ℤ} (ha : 0 ≤ a) : @Nat.cast ℚ _ (Int.toNat a) = @Int.cast ℚ _ a :=
-  Rat.ext (Int.toNat_of_nonneg ha) rfl
-
 
 /-!
 
