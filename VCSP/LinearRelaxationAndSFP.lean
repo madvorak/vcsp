@@ -29,25 +29,18 @@ lemma div_eq_div_inj {β : Type*} [GroupWithZero β] {x y z : β} (hxy : x / z =
 lemma nsmul_div {β : Type*} [DivisionSemiring β] (n : ℕ) (x y : β) : n • (x / y) = (n • x) / y := by
   rw [←mul_one_div x y, ←mul_one_div (n • x) y, smul_mul_assoc]
 
--- TODO refactor using `div_eq_div_inj`
 lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield β] {f : α → β} {z : β}
     (hfz : Finset.univ.sum (fun a => f a / z) = (1 : β)) :
     z = Finset.univ.sum f := by
   if hz : z = 0 then
     exfalso
-    simp_rw [hz, div_zero, Finset.sum_const_zero, zero_ne_one] at hfz
+    simp_rw [hz, div_zero, Finset.sum_const_zero] at hfz
+    exact zero_ne_one hfz
   else
-    have mul_one_div_zet : Finset.univ.sum f * (1/z) = z * (1/z)
-    · convert hfz
-      · simp_rw [Finset.sum_mul, mul_one_div]
-      · simp [hz]
-    rw [mul_eq_mul_right_iff] at mul_one_div_zet
-    cases mul_one_div_zet with
-    | inl hyp => exact hyp.symm
-    | inr hyp =>
-      exfalso
-      rw [one_div, inv_eq_zero] at hyp
-      exact hz hyp
+    refine (div_eq_div_inj ?_ hz).symm
+    convert hfz
+    rw [sum_div]
+    exact div_self hz
 
 lemma List.ofFn_get_fin_cast {α : Type*} {l : List α} {n : ℕ} (hnl : n = l.length) :
     List.ofFn (fun i : Fin n => l.get (Fin.cast hnl i)) = l := by
