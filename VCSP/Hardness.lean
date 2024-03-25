@@ -1,7 +1,5 @@
 import VCSP.Expressibility
 import VCSP.FractionalOperations
-import Mathlib.Data.Fin.VecNotation
-import Mathlib.Data.Prod.TProd
 import Mathlib.Tactic.Have
 
 
@@ -99,8 +97,10 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP [LinearOrder
   | double _ _ ihf ihg =>
     intro x
     have summed := add_le_add (ihf x) (ihg x)
-    rw [Finset.smul_sum, Finset.smul_sum, ←Finset.sum_add_distrib,
-      Multiset.nsmul_summap, Multiset.nsmul_summap, ←Multiset.sum_map_add] at summed
+    rw [
+      Finset.smul_sum, Finset.smul_sum, ←Finset.sum_add_distrib,
+      Multiset.nsmul_summap, Multiset.nsmul_summap, ←Multiset.sum_map_add
+    ] at summed
     rw [Finset.smul_sum, Multiset.nsmul_summap]
     convert summed using 2 <;> simp
   | @minimize n f _ ih =>

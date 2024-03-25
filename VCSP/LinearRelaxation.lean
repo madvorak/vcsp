@@ -274,7 +274,7 @@ theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) 
     I.RelaxBLP.Reaches (I.evalSolution x) := by
   use I.solutionVCSPtoBLP x
   constructor
-  · simp only [CanonicalLP.IsSolution, ValuedCSP.Instance.RelaxBLP]
+  · simp_rw [CanonicalLP.IsSolution, ValuedCSP.Instance.RelaxBLP]
     constructor
     · ext j
       rw [Matrix.fromBlocks_mulVec_sumType]

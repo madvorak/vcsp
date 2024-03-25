@@ -86,9 +86,7 @@ lemma Finset.univ_sum_aux {α : Type*} [Fintype α] (f : α → ℚ) (g : α →
     Finset.univ.sum (fun b : α => f b * g b)
   · simp
   rw [Multiset.toList_map_sum, Finset.sum_map_val]
-  congr
-  ext
-  apply mul_comm
+  simp_rw [mul_comm]
 
 
 variable {D : Type} [Fintype D]
