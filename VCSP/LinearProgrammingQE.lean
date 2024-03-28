@@ -13,7 +13,7 @@ structure CanonicalRationalSolution (α : Type*) where
 variable {α : Type*}
 
 -- `@[pp_dot]` -- put back after the pretty-printer issue gets fixed
-def CanonicalRationalSolution.toFunction (s : CanonicalRationalSolution α) : α → ℚ∞ :=
+def CanonicalRationalSolution.toFunction (s : CanonicalRationalSolution α) : α → ℚ≥0∞ :=
   fun a : α =>
     match s.numerators a with
     | ⊤ => ⊤
@@ -22,7 +22,7 @@ def CanonicalRationalSolution.toFunction (s : CanonicalRationalSolution α) : α
 variable [Fintype α] [DecidableEq α]
 
 @[pp_dot]
-def Function.toCanonicalRationalSolution (x : α → ℚ∞) : CanonicalRationalSolution α :=
+def Function.toCanonicalRationalSolution (x : α → ℚ≥0∞) : CanonicalRationalSolution α :=
   CanonicalRationalSolution.mk
     (fun a : α => Finset.univ.prod
       (fun i : α =>
@@ -33,7 +33,7 @@ def Function.toCanonicalRationalSolution (x : α → ℚ∞) : CanonicalRational
         else
           match x i with
           | ⊤ => 1
-          | some q => q.den
+          | some q => some q.den
       ))
     (Finset.univ.prod
       (fun i : α =>
@@ -48,7 +48,7 @@ def Function.toCanonicalRationalSolution (x : α → ℚ∞) : CanonicalRational
         | some q => q.den_pos
       ))
 
-lemma toCanonicalRationalSolution_toFunction {x : α → ℚ∞} (hx : 0 ≤ x) :
+lemma toCanonicalRationalSolution_toFunction {x : α → ℚ≥0∞} (hx : 0 ≤ x) :
     x.toCanonicalRationalSolution.toFunction = x := by
   ext1 a
   unfold CanonicalRationalSolution.toFunction
@@ -61,7 +61,8 @@ lemma toCanonicalRationalSolution_toFunction {x : α → ℚ∞} (hx : 0 ≤ x) 
 open scoped Matrix
 variable {β : Type*} [Fintype β]
 
-theorem CanonicalLP.IsSolution.toCanonicalRationalSolution {P : CanonicalLP α β ℚ∞} {x : α → ℚ∞} (hx : P.IsSolution x) :
+theorem CanonicalLP.IsSolution.toCanonicalRationalSolution {P : CanonicalLP α β ℚ≥0∞} {x : α → ℚ≥0∞}
+    (hx : P.IsSolution x) :
     P.A *ᵥ x.toCanonicalRationalSolution.toFunction = P.b := by
   rw [toCanonicalRationalSolution_toFunction hx.right]
   exact hx.left
