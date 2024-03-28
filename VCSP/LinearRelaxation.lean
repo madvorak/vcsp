@@ -39,7 +39,7 @@ macro (name := aesopnt) "aesopnt" : tactic =>
 variable
   {D : Type} [Fintype D] [DecidableEq D]
   {ι : Type} [Fintype ι] [DecidableEq ι]
-  {C : Type} [LinearOrderedField C]
+  {C : Type} [OrderedRing C]
   {Γ : ValuedCSP D C} [DecidableEq (Γ.Term ι)]
 
 instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
@@ -117,6 +117,8 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
     congr
     ext
     simp_all
+
+variable [CharZero C]
 
 set_option maxHeartbeats 666666 in
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Instance ι)
