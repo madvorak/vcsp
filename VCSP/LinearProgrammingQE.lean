@@ -54,9 +54,24 @@ lemma toCanonicalRationalSolution_toFunction {x : α → ℚ≥0∞} (hx : 0 ≤
   unfold CanonicalRationalSolution.toFunction
   unfold Function.toCanonicalRationalSolution
   simp only [Nat.cast_prod]
-  match x a with
-  | ⊤ => sorry
-  | some q => sorry
+  if hxa : x a = ⊤ then
+    rw [hxa]
+    have product_is_infinite :
+      Finset.univ.prod
+        (fun i : α =>
+          if i = a then
+            match x i with
+            | ⊤ => (⊤ : ℕ∞)
+            | some q => (some q.num : ℕ∞)
+          else
+            match x i with
+            | ⊤ => (1 : ℕ∞)
+            | some q => (some q.den : ℕ∞)
+        ) = (⊤ : ℕ∞)
+    · sorry
+    simp [product_is_infinite]
+  else
+    sorry
 
 open scoped Matrix
 variable {β : Type*} [Fintype β]
