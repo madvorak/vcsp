@@ -11,20 +11,22 @@ open Function Set
 
 noncomputable section
 
+
 /-- ERat : The type of extended rationals `[-∞, ∞]` -/
 def ERat := WithBot (WithTop ℚ)
-  deriving Bot, Zero, One, Nontrivial, AddMonoid, PartialOrder
+  deriving Bot, Zero, One, Nontrivial, LinearOrderedAddCommMonoid, PartialOrder
 
 instance : ZeroLEOneClass ERat := inferInstanceAs (ZeroLEOneClass (WithBot (WithTop ℚ)))
-
-instance : LinearOrderedAddCommMonoid ERat :=
-  inferInstanceAs (LinearOrderedAddCommMonoid (WithBot (WithTop ℚ)))
 
 instance : AddCommMonoidWithOne ERat :=
   inferInstanceAs (AddCommMonoidWithOne (WithBot (WithTop ℚ)))
 
 instance : DenselyOrdered ERat :=
   inferInstanceAs (DenselyOrdered (WithBot (WithTop ℚ)))
+
+instance : CharZero ERat :=
+  inferInstanceAs (CharZero (WithBot (WithTop ℚ)))
+
 
 /-- The canonical inclusion from Rats to ERats. Registered as a coercion. -/
 @[coe] def Rat.toERat : ℚ → ERat := some ∘ some
