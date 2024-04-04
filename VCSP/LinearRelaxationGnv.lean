@@ -1,30 +1,18 @@
-import VCSP.Hardness
 import VCSP.ExtendedRationals
-import VCSP.LinearProgrammingE
+import VCSP.Hardness
+import VCSP.LinearProgramming
 import Mathlib.Data.Multiset.Fintype
-import Mathlib.Tactic.RewriteSearch
 
 open scoped Matrix
 
 
-lemma Matrix.fromRows_mulMatVec {α β γ R : Type} [Fintype γ] [OrderedAddCommMonoid R] [Mul R]
-      (A₁ : Matrix α γ R) (A₂ : Matrix β γ R) (v : γ → R) :
-    Matrix.fromRows A₁ A₂ ₘ*ᵥ v = Sum.elim (A₁ ₘ*ᵥ v) (A₂ ₘ*ᵥ v) := by
-  ext (_ | _) <;> rfl
-
-lemma Matrix.fromColumns_mulMatVec_sum_elim {α β γ R : Type} [Fintype β] [Fintype γ] [OrderedAddCommMonoid R] [Mul R]
-    (A₁ : Matrix α β R) (A₂ : Matrix α γ R) (v₁ : β → R) (v₂ : γ → R) :
-    fromColumns A₁ A₂ ₘ*ᵥ Sum.elim v₁ v₂ = A₁ ₘ*ᵥ v₁ + A₂ ₘ*ᵥ v₂ := by
-  ext i
-  simp [mulMatVec, Matrix.fromColumns, Matrix.dotProduct]
-
-lemma Matrix.fromBlocks_mulVec_sumType {α β γ δ R : Type} [OrderedAddCommMonoid R] [Mul R]
+lemma Matrix.fromBlocks_mulVec_sumType {α β γ δ R : Type*} [Semiring R]
     [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
     (A : Matrix α β R) (B : Matrix α γ R) (C : Matrix δ β R) (D : Matrix δ γ R)
     (u : β → R) (v : γ → R) :
-    Matrix.fromBlocks A B C D ₘ*ᵥ Sum.elim u v = Sum.elim (A ₘ*ᵥ u + B ₘ*ᵥ v) (C ₘ*ᵥ u + D ₘ*ᵥ v) := by
-  rw [←Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulMatVec,
-    Matrix.fromColumns_mulMatVec_sum_elim, Matrix.fromColumns_mulMatVec_sum_elim]
+    Matrix.fromBlocks A B C D *ᵥ Sum.elim u v = Sum.elim (A *ᵥ u + B *ᵥ v) (C *ᵥ u + D *ᵥ v) := by
+  rw [←Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulVec,
+    Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
 
 -- Emilie (Shad Amethyst) stated this lemma:
 lemma Finset.filter_univ_eq_image {α : Type*} [Fintype α] [DecidableEq α] {p : α → Prop} [DecidablePred p] :
@@ -36,13 +24,12 @@ lemma Multiset.summap_to_sumFinset {α β : Type*} [DecidableEq α] [OrderedAddC
     S.summap f = Finset.univ.sum (fun a : S => f a.fst) := by
   simp [Multiset.summap, Finset.sum]
 
--- TODO needs an assumption `(hf : ⊥ ∉ Finset.univ.image f)` in order to be correct
-lemma neg_finset_univ_sum {α : Type*} [Fintype α] (f : α → ERat) :
+lemma neg_finset_univ_sum {α R : Type*} [Fintype α] [Ring R] (f : α → R) :
     -(Finset.univ.sum f) = Finset.univ.sum (-f) := by
-  sorry
+  simp only [Pi.neg_apply, Finset.sum_neg_distrib]
 
-lemma indicator_of_neg {α : Type*} [Fintype α] (P : α → Prop) [DecidablePred P] :
-    -(fun x => if P x then -1 else (0 : ERat)) = (fun x => if P x then 1 else 0) := by
+lemma indicator_of_neg {α R : Type*} [Fintype α] [Ring R] (P : α → Prop) [DecidablePred P] :
+    -(fun x => if P x then -1 else (0 : R)) = (fun x => if P x then 1 else 0) := by
   aesop
 
 /-- Nonterminal `aesop` (strongly discouraged to use) -/
@@ -63,7 +50,7 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
     CanonicalLP
       ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- variables
       ((Σ t : I, (Fin t.fst.n × D)) ⊕ (ι ⊕ I)) -- equalities
-      ERat :=
+      ℚ :=
   CanonicalLP.mk
     (Matrix.fromBlocks
       (Matrix.of fun ⟨cₜ, cₙ, cₐ⟩ => fun ⟨t, x⟩ =>
@@ -76,7 +63,7 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
       (Matrix.of fun ⟨⟨cₜ, _⟩, cₙ, cₐ⟩ => fun ⟨i, a⟩ => if cₜ.app cₙ = i ∧ cₐ = a then -1 else 0)
       (Matrix.fromRows
         0
-        (Matrix.of fun cₜ : I => fun ⟨t, _⟩ => if cₜ = t then 1 else 0))
+        (Matrix.of fun cₜ : I => fun ⟨t, x⟩ => if cₜ = t ∧ t.fst.f x ≠ ⊤ then 1 else 0))
       (Matrix.fromRows
         (Matrix.of fun cᵢ : ι => fun ⟨i, _⟩ => if cᵢ = i then 1 else 0)
         0))
@@ -84,12 +71,12 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
       (fun _ : (Σ t : I, (Fin t.fst.n × D)) => 0)
       (fun _ : ι ⊕ I => 1))
     (Sum.elim
-      (fun ⟨⟨t, _⟩, x⟩ => t.f x)
+      (fun ⟨⟨t, _⟩, x⟩ => match t.f x with | ⊥ => 0 | ⊤ => 0 | some (some q) => q)
       (fun _ => 0))
 
 @[pp_dot]
 abbrev ValuedCSP.Instance.solutionVCSPtoBLP (I : Γ.Instance ι) (x : ι → D) :
-    ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) → ERat :=
+    ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) → ℚ :=
   Sum.elim
     (fun ⟨⟨t, _⟩, (v : (Fin t.n → D))⟩ => if ∀ i : Fin t.n, v i = x (t.app i) then 1 else 0)
     (fun ⟨i, d⟩ => if x i = d then 1 else 0)
@@ -102,6 +89,8 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_nneg (I : Γ.Instance ι) (x : ι →
 set_option maxHeartbeats 333333 in
 lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι → D) :
     I.RelaxBLP.c ⬝ᵥ I.solutionVCSPtoBLP x = I.evalSolution x := by
+  sorry
+  /-
   unfold Matrix.dotProduct
   unfold ValuedCSP.Instance.RelaxBLP
   rw [Fintype.sum_sum_type]
@@ -130,6 +119,7 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
     congr
     ext
     simp_all
+    -/
 
 set_option maxHeartbeats 666666 in
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Instance ι)
@@ -144,6 +134,8 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
       else 0
       ) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inl) =
     1 := by
+  sorry
+  /-
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   show
     Finset.univ.sum (fun (⟨t, v⟩ : Σ _ : I, Fin _ → D) => (
@@ -158,7 +150,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
         then 1
         else 0
       ) ) =
-    (1 : ERat)
+    (1 : ℚ)
   simp_rw [mul_ite, mul_one, mul_zero]
   convert_to
     -- DO NOT refactor to `fun (⟨t, v⟩ : Σ _ : I, Fin _ → D)` here, as it would hinder aesop
@@ -178,13 +170,14 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
         then 1
         else 0
       ) =
-    (1 : ERat)
+    (1 : ℚ)
         using 2
   · aesop
   rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
   use ⟨cₜ, x ∘ cₜ.fst.app⟩
   rw [Finset.eq_singleton_iff_unique_mem]
   constructor <;> aesop
+  -/
 
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
@@ -198,6 +191,8 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
       else 0
       ) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inl) =
     0 := by
+  sorry
+  /-
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   show
     Finset.univ.sum (fun (⟨t, v⟩ : Σ _ : I, Fin _ → D) => (
@@ -212,7 +207,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
         then 1
         else 0
       ) ) =
-    (0 : ERat)
+    (0 : ℚ)
   simp_rw [mul_ite, mul_one, mul_zero]
   convert_to
     Finset.univ.sum (fun (⟨t, v⟩ : Σ _ : I, Fin _ → D) =>
@@ -229,12 +224,13 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
         then 1
         else 0
       ) =
-    (0 : ERat)
+    (0 : ℚ)
         using 2
   · aesop
   rw [Finset.sum_boole, Nat.cast_eq_zero, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
   intro _ _
   aesop
+  -/
 
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
@@ -267,24 +263,28 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_right (I : Γ.Instanc
 
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_left (I : Γ.Instance ι)
     (cₜ : I) (x : ι → D) :
-    (fun ⟨t, _⟩ => if cₜ = t then 1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inl) = 1 := by
+    (fun ⟨t, x⟩ => if cₜ = t ∧ t.fst.f x ≠ ⊤ then 1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inl) = 1 := by
   rw [Sum.elim_comp_inl, Matrix.dotProduct]
   simp_rw [ite_mul, one_mul, zero_mul]
   show
     Finset.univ.sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
-      if cₜ = tᵥ.fst then
+      if cₜ = tᵥ.fst ∧ tᵥ.fst.fst.f tᵥ.snd ≠ ⊤ then
         if ∀ (i : Fin tᵥ.fst.fst.n), tᵥ.snd i = x (tᵥ.fst.fst.app i) then 1 else 0
         else 0) =
     1
   simp_rw [←ite_and]
+  sorry
+  /-
   rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
   use ⟨cₜ, fun i : Fin cₜ.fst.n => x (cₜ.fst.app i)⟩
   ext
   simp_rw [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
   aesop
+  -/
 
-theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) :
-    I.RelaxBLP.Reaches (I.evalSolution x) := by
+theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) (q : ℚ) :
+    I.evalSolution x = some (some q) → I.RelaxBLP.Reaches q := by
+  intro hq
   use I.solutionVCSPtoBLP x
   constructor
   · simp_rw [CanonicalLP.IsSolution, ValuedCSP.Instance.RelaxBLP]
@@ -296,32 +296,27 @@ theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) 
         obtain ⟨cₜ, cₙ, cₐ⟩ := c
         rw [Sum.elim_inl, Sum.elim_inl, Pi.add_apply]
         if hits : x (cₜ.fst.app cₙ) = cₐ then
-          convert_to (1 : ERat) + (-1) = 0 using 2
+          convert @add_neg_self ℚ _ 1
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit hits
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit hits
-          norm_cast
         else
-          convert_to (0 : ERat) + (-0) = 0 using 2
+          convert @add_neg_self ℚ _ 0
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss hits
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_right_of_miss hits
-          norm_cast
       | inr j' =>
-        rw [Sum.elim_inr, Sum.elim_inr, Matrix.fromRows_mulMatVec, Matrix.fromRows_mulMatVec]
-        simp [Pi.add_apply]
+        rw [Sum.elim_inr, Sum.elim_inr,
+          Matrix.fromRows_mulVec, Matrix.fromRows_mulVec, Matrix.zero_mulVec, Matrix.zero_mulVec, Pi.add_apply]
         cases j' with
         | inl cᵢ =>
-          rw [Sum.elim_inl, Sum.elim_inl]
-          convert I.RelaxBLP_solutionVCSPtoBLP_bottom_right cᵢ x
-          simp [mulMatVec]
-          convert zero_add _
-          simp [Matrix.dotProduct]
+          rw [Sum.elim_inl, Sum.elim_inl, Pi.zero_apply, zero_add]
+          exact I.RelaxBLP_solutionVCSPtoBLP_bottom_right cᵢ x
         | inr cₜ =>
-          rw [Sum.elim_inr, Sum.elim_inr]
-          convert I.RelaxBLP_solutionVCSPtoBLP_bottom_left cₜ x
-          simp [mulMatVec]
-          convert add_zero _
-          simp [Matrix.dotProduct]
+          rw [Sum.elim_inr, Sum.elim_inr, Pi.zero_apply, add_zero]
+          exact I.RelaxBLP_solutionVCSPtoBLP_bottom_left cₜ x
     · exact I.solutionVCSPtoBLP_nneg x
-  · exact I.solutionVCSPtoBLP_cost x
+  · apply Option.some_injective
+    apply Option.some_injective
+    rw [←hq]
+    exact I.solutionVCSPtoBLP_cost x
 
 #print axioms ValuedCSP.Instance.RelaxBLP_reaches
