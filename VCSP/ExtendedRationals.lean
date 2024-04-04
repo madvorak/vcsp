@@ -314,18 +314,17 @@ theorem coe_toRat {x : ERat} (hx : x ≠ ⊤) (h'x : x ≠ ⊥) : (x.toRat : ERa
   lift x to ℚ using ⟨hx, h'x⟩
   rfl
 
-/-
 theorem le_coe_toRat {x : ERat} (h : x ≠ ⊤) : x ≤ x.toRat := by
   by_cases h' : x = ⊥
-  · simp only [h', bot_le]
+  · rw [h', toRat_bot, coe_zero]
+    decide
   · simp only [le_refl, coe_toRat h h']
-#align ERat.le_coe_to_Rat ERat.le_coe_toRat
 
 theorem coe_toRat_le {x : ERat} (h : x ≠ ⊥) : ↑x.toRat ≤ x := by
   by_cases h' : x = ⊤
-  · simp only [h', le_top]
+  · rw [h', toRat_top, coe_zero]
+    decide
   · simp only [le_refl, coe_toRat h' h]
-#align ERat.coe_to_Rat_le ERat.coe_toRat_le
 
 theorem eq_top_iff_forall_lt (x : ERat) : x = ⊤ ↔ ∀ y : ℚ, (y : ERat) < x := by
   constructor
@@ -334,7 +333,6 @@ theorem eq_top_iff_forall_lt (x : ERat) : x = ⊤ ↔ ∀ y : ℚ, (y : ERat) < 
   · contrapose!
     intro h
     exact ⟨x.toRat, le_coe_toRat h⟩
-#align ERat.eq_top_iff_forall_lt ERat.eq_top_iff_forall_lt
 
 theorem eq_bot_iff_forall_lt (x : ERat) : x = ⊥ ↔ ∀ y : ℚ, x < (y : ERat) := by
   constructor
@@ -343,15 +341,14 @@ theorem eq_bot_iff_forall_lt (x : ERat) : x = ⊥ ↔ ∀ y : ℚ, x < (y : ERat
   · contrapose!
     intro h
     exact ⟨x.toRat, coe_toRat_le h⟩
-#align ERat.eq_bot_iff_forall_lt ERat.eq_bot_iff_forall_lt
 
+/-
 lemma exists_between_coe_Rat {x z : ERat} (h : x < z) : ∃ y : ℚ, x < y ∧ y < z := by
   obtain ⟨a, ha₁, ha₂⟩ := exists_between h
   induction' a using ERat.rec with a₀
   · exact (not_lt_bot ha₁).elim
   · exact ⟨a₀, by exact_mod_cast ha₁, by exact_mod_cast ha₂⟩
   · exact (not_top_lt ha₂).elim
-
 -/
 
 @[simp]

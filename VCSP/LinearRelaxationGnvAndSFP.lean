@@ -369,10 +369,34 @@ lemma uuuuu {α : Type} [Fintype α] {β : α → Type} [∀ a : α, Fintype (β
     Finset.univ.sum f = (Finset.univ.sigma (fun _ => Finset.univ)).sum f :=
   rfl
 
-lemma Multiset.summap_lt_summap_cheating {α β : Type*} [OrderedAddCommMonoid β] {s : Multiset α}
-    (hs : s ≠ ∅) {f g : α → β} (hfg : ∀ i ∈ s, f i < g i) :
-    s.summap f < s.summap g :=
-  sorry -- Multiset.sum_lt_sum_of_nonempty hs hfg
+lemma Multiset.sum_const_Rat_lt_summap_ERat {α : Type*} {s : Multiset α}
+    (hs : s ≠ ∅) {c : ℚ} {f : α → ERat} (hcf : ∀ i ∈ s, c < f i) :
+    s.summap (fun _ => c.toERat) < s.summap f := by
+  if hbot : ⊥ ∈ s.map f then
+    exfalso
+    rw [Multiset.mem_map] at hbot
+    obtain ⟨a, has, hfa⟩ := hbot
+    specialize hcf a has
+    rw [hfa] at hcf
+    exact (hcf.trans (ERat.bot_lt_coe c)).false
+  else if htop : ⊤ ∈ s.map f then
+    convert_to s.summap (fun _ => c.toERat) < ⊤
+    · sorry
+    convert ERat.coe_lt_top (s.summap (fun _ => c))
+    sorry -- TODO cannot prove for `EReal` either
+  else
+    have : s.summap (fun _ => c) < s.summap (fun a : α => (f a).toRat)
+    · apply Multiset.summap_lt_summap hs
+      intro i his
+      have hcf' : c.toERat < (f i).toRat.toERat
+      · convert hcf i his
+        rw [Multiset.mem_map, not_exists] at hbot htop
+        match hfi : f i with
+        | ⊥ => exfalso; exact hbot i ⟨his, hfi⟩
+        | ⊤ => exfalso; exact htop i ⟨his, hfi⟩
+        | some (some q) => rfl
+      sorry
+    sorry
 
 lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
@@ -414,7 +438,7 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
           | some (some q) => q
         ) * x (Sum.inl ⟨t, v⟩))
       ).toERat)
-  · sorry
+  · sorry -- TODO cannot prove for `EReal` either
   apply Finset.sum_le_sum
   intro t _
   exact t.cost_improved_by_isSymmetricFractionalPolymorphism solution sfp
@@ -439,7 +463,7 @@ theorem ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphi
   · apply result.trans_lt
     convert_to ((ω.tt X).map (fun _ => o.toERat)).sum < (ω.tt X).summap I.evalSolution
     · simp [FractionalOperation.tt]
-    apply Multiset.summap_lt_summap_cheating valid.tt_nonempty
+    apply Multiset.sum_const_Rat_lt_summap_ERat valid.tt_nonempty
     simp [contr]
   exact impos.false
 
