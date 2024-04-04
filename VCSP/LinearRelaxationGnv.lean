@@ -71,7 +71,7 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
       (fun _ : (Σ t : I, (Fin t.fst.n × D)) => 0)
       (fun _ : ι ⊕ I => 1))
     (Sum.elim
-      (fun ⟨⟨t, _⟩, x⟩ => match t.f x with | ⊥ => 0 | ⊤ => 0 | some (some q) => q)
+      (fun ⟨⟨t, _⟩, x⟩ => match t.f x with | ⊥ => 0 | ⊤ => 0 | (q : ℚ) => q)
       (fun _ => 0))
 
 @[pp_dot]
@@ -119,7 +119,7 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
     congr
     ext
     simp_all
-    -/
+  -/
 
 set_option maxHeartbeats 666666 in
 lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Instance ι)

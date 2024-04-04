@@ -2,6 +2,7 @@ import VCSP.LinearRelaxationGnv
 import VCSP.LinearProgrammingQ
 
 
+
 lemma Sum.fun_elim_index {α β γ : Type*} (x : α → γ) (y : β → γ) :
     (fun i => Sum.elim x y i) = Sum.elim x y :=
   rfl
@@ -16,6 +17,20 @@ lemma Finset.univ_sum_multisetToType {α β : Type*} [DecidableEq α] [AddCommMo
     (s : Multiset α) (f : α → β) :
     Finset.univ.sum (fun a : s.ToType => f a.fst) = s.summap f := by
   rw [Finset.sum, Multiset.map_univ]
+
+-- Richard Copley provided the main idea of this proof:
+lemma Multiset.sum_toERat (s : Multiset ℚ) :
+    s.sum.toERat = (s.map Rat.toERat).sum := by
+  simp_rw [←Rat.toERatAddHom_apply, AddMonoidHom.map_multiset_sum]
+
+lemma Multiset.summap_toERat {α : Type*} (s : Multiset α) (f : α → ℚ) :
+    (s.summap f) = s.summap (fun a => (f a).toERat) := by
+  convert Multiset.sum_toERat (s.map f)
+  simp
+
+lemma Finset.sum_toERat {α : Type*} (s : Finset α) (f : α → ℚ) :
+    (s.sum f).toERat = s.sum (fun a => (f a).toERat) := by
+  apply Multiset.summap_toERat
 
 lemma div_eq_div_inj {β : Type*} [GroupWithZero β] {x y z : β} (hxy : x / z = y / z) (hz : z ≠ 0) : x = y := by
   rw [division_def, division_def, mul_eq_mul_right_iff] at hxy
@@ -182,26 +197,47 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
         (buildVertically (fun d => x.toCanonicalRationalSolution.numerators (Sum.inr ⟨j, d⟩))).get
           (Fin.cast (I.RelaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution j) i)
       )).summap t.fst.evalSolution ≤
-    ω.size • Finset.univ.sum (fun v => (match t.fst.f v with| ⊥ => 0 | ⊤ => 0 | some (some q) => q) * x (Sum.inl ⟨t, v⟩)) := by
+    ω.size • Finset.univ.sum (fun v : Fin t.fst.n → D => (
+        match t.fst.f v with
+        | ⊥ => 0
+        | ⊤ => 0
+        | (q : ℚ) => q
+      ) * x (Sum.inl ⟨t, v⟩)) := by
   have hxdQ : 0 < (x.toCanonicalRationalSolution.denominator : ℚ)
   · rw [Nat.cast_pos]
     exact x.toCanonicalRationalSolution.denom_pos
   let Z : Fin x.toCanonicalRationalSolution.denominator → Fin t.fst.n → D := fun i : Fin _ =>
     (buildVertically (fun v : Fin t.fst.n → D => x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩))).get
       (Fin.cast (I.RelaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t) i)
-  sorry
-  /-
   have hZ :
-    Finset.univ.sum (fun v : Fin t.fst.n → D => t.fst.f v * x (Sum.inl ⟨t, v⟩)) =
-    Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator => t.fst.f (Z i)) /
-      (x.toCanonicalRationalSolution.denominator : ℚ)
+    Finset.univ.sum (fun v : Fin t.fst.n → D => (
+        match t.fst.f v with
+        | ⊥ => 0
+        | ⊤ => 0
+        | (q : ℚ) => q
+      ) * x (Sum.inl ⟨t, v⟩)) =
+    Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator =>
+        match t.fst.f (Z i) with
+        | ⊥ => 0
+        | ⊤ => 0
+        | (q : ℚ) => q
+      ) / (x.toCanonicalRationalSolution.denominator : ℚ)
   · convert_to
-      Finset.univ.sum (fun v : Fin t.fst.n → D => t.fst.f v * (
+      Finset.univ.sum (fun v : Fin t.fst.n → D => (
+          match t.fst.f v with
+          | ⊥ => 0
+          | ⊤ => 0
+          | (q : ℚ) => q
+        ) * (
           (x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩) : ℚ) /
           (x.toCanonicalRationalSolution.denominator : ℚ)
-        )) =
-      Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator => t.fst.f (Z i)) /
-        (x.toCanonicalRationalSolution.denominator : ℚ)
+        ) ) =
+      Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator =>
+          match t.fst.f (Z i) with
+          | ⊥ => 0
+          | ⊤ => 0
+          | (q : ℚ) => q
+        ) / (x.toCanonicalRationalSolution.denominator : ℚ)
     · apply congr_arg
       ext v
       congr
@@ -211,7 +247,13 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     rw [←Finset.sum_div]
     congr 1
     apply Finset.univ_sum_mul_of_list_replicate
-  rw [hZ, nsmul_div, le_div_iff hxdQ]
+  rw [hZ]
+  norm_cast
+  rw [nsmul_div]
+  --rw [nsmul_eq_mul]
+  sorry
+  /-
+  rw [le_div_iff hxdQ]
   refine le_trans ?_ (sfp.left ⟨t.fst.n, t.fst.f⟩ t.fst.inΓ Z)
   rw [mul_comm, nsmul_eq_mul, mul_le_mul_left hxdQ]
   apply le_of_eq
@@ -365,7 +407,8 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
   -/
 
 -- https://github.com/leanprover-community/mathlib4/pull/11865
-lemma uuuuu {α : Type} [Fintype α] {β : α → Type} [∀ a : α, Fintype (β a)] (f : (Σ a, β a) → ℚ) :
+lemma Finset.univ_sum_to_sigma {α : Type} [Fintype α] {β : α → Type} [∀ a : α, Fintype (β a)]
+    (f : (Σ a, β a) → ℚ) :
     Finset.univ.sum f = (Finset.univ.sigma (fun _ => Finset.univ)).sum f :=
   rfl
 
@@ -383,7 +426,8 @@ lemma Multiset.sum_const_Rat_lt_summap_ERat {α : Type*} {s : Multiset α}
     convert_to s.summap (fun _ => c.toERat) < ⊤
     · sorry
     convert ERat.coe_lt_top (s.summap (fun _ => c))
-    sorry -- TODO cannot prove for `EReal` either
+    symm
+    apply Multiset.summap_toERat
   else
     have : s.summap (fun _ => c) < s.summap (fun a : α => (f a).toRat)
     · apply Multiset.summap_lt_summap hs
@@ -392,9 +436,9 @@ lemma Multiset.sum_const_Rat_lt_summap_ERat {α : Type*} {s : Multiset α}
       · convert hcf i his
         rw [Multiset.mem_map, not_exists] at hbot htop
         match hfi : f i with
-        | ⊥ => exfalso; exact hbot i ⟨his, hfi⟩
-        | ⊤ => exfalso; exact htop i ⟨his, hfi⟩
-        | some (some q) => rfl
+        | ⊥ => exact (hbot i ⟨his, hfi⟩).elim
+        | ⊤ => exact (htop i ⟨his, hfi⟩).elim
+        | (q : ℚ) => rfl
       sorry
     sorry
 
@@ -412,12 +456,8 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
   unfold ValuedCSP.Instance.evalSolution
   rw [Multiset.summap_summap_swap]
   -- RHS:
-  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.dotProduct,
-    Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, zero_mul, Finset.sum_const_zero, add_zero]
-  rw [uuuuu]
-  rw [Finset.sum_sigma]
-  norm_cast
-  rw [Finset.smul_sum]
+  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.dotProduct, Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, zero_mul]
+  rw [Finset.sum_const_zero, add_zero, Finset.univ_sum_to_sigma, Finset.sum_sigma, Finset.smul_sum]
   -- Conversion to per-term inequalities:
   rw [←Finset.univ_sum_multisetToType]
   show _ ≤
@@ -426,7 +466,7 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
           match t.fst.f v with
           | ⊥ => 0
           | ⊤ => 0
-          | some (some q) => q
+          | (q : ℚ) => q
         ) * x (Sum.inl ⟨t, v⟩))
       )).toERat
   convert_to _ ≤
@@ -435,10 +475,10 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
           match t.fst.f v with
           | ⊥ => 0
           | ⊤ => 0
-          | some (some q) => q
+          | (q : ℚ) => q
         ) * x (Sum.inl ⟨t, v⟩))
       ).toERat)
-  · sorry -- TODO cannot prove for `EReal` either
+  · apply Finset.sum_toERat
   apply Finset.sum_le_sum
   intro t _
   exact t.cost_improved_by_isSymmetricFractionalPolymorphism solution sfp

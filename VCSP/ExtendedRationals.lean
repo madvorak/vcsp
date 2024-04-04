@@ -990,3 +990,10 @@ theorem coe_ennRat_pow (x : ℚ≥0∞) (n : ℕ) : (↑(x ^ n) : ERat) = (x : E
 -/
 
 end ERat
+
+-- Richard Copley provided:
+@[simps]
+def Rat.toERatAddHom : ℚ →+ ERat where
+  toFun := Rat.toERat
+  map_zero' := rfl
+  map_add' _ _ := rfl
