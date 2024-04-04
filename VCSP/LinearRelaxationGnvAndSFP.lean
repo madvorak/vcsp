@@ -18,13 +18,13 @@ lemma Finset.univ_sum_multisetToType {α β : Type*} [DecidableEq α] [AddCommMo
     Finset.univ.sum (fun a : s.ToType => f a.fst) = s.summap f := by
   rw [Finset.sum, Multiset.map_univ]
 
--- Richard Copley provided the main idea of this proof:
+-- Edward van de Meent provided the main idea of this proof:
 lemma Multiset.sum_toERat (s : Multiset ℚ) :
     s.sum.toERat = (s.map Rat.toERat).sum := by
   simp_rw [←Rat.toERatAddHom_apply, AddMonoidHom.map_multiset_sum]
 
 lemma Multiset.summap_toERat {α : Type*} (s : Multiset α) (f : α → ℚ) :
-    (s.summap f) = s.summap (fun a => (f a).toERat) := by
+    s.summap f = s.summap (fun a => (f a).toERat) := by
   convert Multiset.sum_toERat (s.map f)
   simp
 
@@ -249,8 +249,24 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     apply Finset.univ_sum_mul_of_list_replicate
   rw [hZ]
   norm_cast
-  rw [nsmul_div]
-  --rw [nsmul_eq_mul]
+  rw [nsmul_div, nsmul_eq_mul]
+  show _ ≤
+    (((ω.size : ℚ) * Finset.univ.sum (fun x =>
+        match t.fst.f (Z x) with
+        | none => 0
+        | some none => 0
+        | some (some q) => q)
+      ) / (x.toCanonicalRationalSolution.denominator : ℚ)
+    ).toERat
+  convert_to _ ≤
+    ((ω.size : ERat) * Finset.univ.sum (fun x => (
+        match t.fst.f (Z x) with
+        | none => 0
+        | some none => 0
+        | some (some q) => q
+      ).toERat)) / (x.toCanonicalRationalSolution.denominator : ERat)
+  · sorry
+  · sorry
   sorry
   /-
   rw [le_div_iff hxdQ]
