@@ -6,6 +6,11 @@ lemma Sum.fun_elim_index {α β γ : Type*} (x : α → γ) (y : β → γ) :
     (fun i => Sum.elim x y i) = Sum.elim x y :=
   rfl
 
+lemma ite_isTrue {α : Type*} {P : Prop} [Decidable P] (hp : P) (a b : α) :
+    (if P then a else b) = a := by
+  simp only [hp]
+  apply ite_true
+
 -- Yaël Dillies proved this lemma:
 lemma Multiset.toList_map_sum {α β : Type*} (s : Multiset α) [AddCommMonoid β] (f : α → β) :
     (s.toList.map f).sum = (s.map f).sum := by
@@ -16,6 +21,18 @@ lemma Finset.univ_sum_multisetToType {α β : Type*} [DecidableEq α] [AddCommMo
     (s : Multiset α) (f : α → β) :
     Finset.univ.sum (fun a : s.ToType => f a.fst) = s.summap f := by
   rw [Finset.sum, Multiset.map_univ]
+
+lemma Finset.sigma_univ_sum_to_aux {α : Type*} [Fintype α] {σ : α → Type} [∀ a : α, Fintype (σ a)]
+    {β : Type*} [AddCommMonoid β]
+    (f : (Σ a, σ a) → β) :
+    Finset.univ.sum f = (Finset.univ.sigma (fun _ => Finset.univ)).sum f :=
+  rfl
+
+lemma Finset.sigma_univ_sum_to_sum_sum {α : Type} [Fintype α] {σ : α → Type} [∀ a : α, Fintype (σ a)]
+    {β : Type*} [AddCommMonoid β]
+    (f : (Σ a, σ a) → β) :
+    Finset.univ.sum f = Finset.univ.sum (fun a : α => Finset.univ.sum (fun s : σ a => f ⟨a, s⟩)) := by
+  rw [Finset.sigma_univ_sum_to_aux, Finset.sum_sigma]
 
 lemma div_eq_div_inj {β : Type*} [GroupWithZero β] {x y z : β} (hxy : x / z = y / z) (hz : z ≠ 0) : x = y := by
   rw [division_def, division_def, mul_eq_mul_right_iff] at hxy
@@ -155,15 +172,11 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance �
     Matrix.fromRows_mulVec, Matrix.zero_mulVec, Pi.add_apply, Sum.elim_inr,
     Pi.zero_apply, add_zero,
     Matrix.mulVec, Matrix.of_apply, Matrix.dotProduct,
-    Function.comp_apply, ite_mul, one_mul, zero_mul
+    Function.comp_apply, ite_mul, one_mul, zero_mul,
+    Finset.sigma_univ_sum_to_sum_sum
   ] at eqv
-  change eqv to
-    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ =>
-      if t = tᵥ.fst then x.toCanonicalRationalSolution.toFunction (Sum.inl tᵥ) else 0) =
-    (1 : ℚ)
-  rw [Finset.sum_sigma] at eqv
-  simp_rw [Finset.sum_ite_irrel, Finset.sum_const_zero] at eqv
-  simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv
+  conv at eqv => lhs; congr; rfl; ext; dsimp only; rw [Finset.sum_ite_irrel, Finset.sum_const_zero]
+  rw [Finset.sum_ite_eq, ite_isTrue (Finset.mem_univ t)] at eqv
   exact Finset.sum_of_sum_div_const_eq_one eqv
 
 open scoped List in
@@ -369,10 +382,8 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
   unfold ValuedCSP.Instance.evalSolution
   rw [Multiset.summap_summap_swap]
   -- RHS:
-  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.dotProduct,
-    Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, zero_mul, Finset.sum_const_zero, add_zero]
-  show  _ ≤ ω.size • (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ => tᵥ.fst.fst.f tᵥ.snd * x (Sum.inl tᵥ))
-  rw [Finset.sum_sigma, Finset.smul_sum]
+  simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.dotProduct, Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, zero_mul]
+  rw [Finset.sum_const_zero, add_zero, Finset.sigma_univ_sum_to_sum_sum, Finset.smul_sum]
   -- Conversion to per-term inequalities:
   rw [←Finset.univ_sum_multisetToType]
   apply Finset.sum_le_sum

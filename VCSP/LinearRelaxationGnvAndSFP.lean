@@ -32,6 +32,18 @@ lemma Finset.sum_toERat {α : Type*} (s : Finset α) (f : α → ℚ) :
     (s.sum f).toERat = s.sum (fun a => (f a).toERat) := by
   apply Multiset.summap_toERat
 
+lemma Finset.sigma_univ_sum_to_aux {α : Type*} [Fintype α] {σ : α → Type} [∀ a : α, Fintype (σ a)]
+    {β : Type*} [AddCommMonoid β]
+    (f : (Σ a, σ a) → β) :
+    Finset.univ.sum f = (Finset.univ.sigma (fun _ => Finset.univ)).sum f :=
+  rfl
+
+lemma Finset.sigma_univ_sum_to_sum_sum {α : Type} [Fintype α] {σ : α → Type} [∀ a : α, Fintype (σ a)]
+    {β : Type*} [AddCommMonoid β]
+    (f : (Σ a, σ a) → β) :
+    Finset.univ.sum f = Finset.univ.sum (fun a : α => Finset.univ.sum (fun s : σ a => f ⟨a, s⟩)) := by
+  rw [Finset.sigma_univ_sum_to_aux, Finset.sum_sigma]
+
 lemma div_eq_div_inj {β : Type*} [GroupWithZero β] {x y z : β} (hxy : x / z = y / z) (hz : z ≠ 0) : x = y := by
   rw [division_def, division_def, mul_eq_mul_right_iff] at hxy
   cases hxy with
@@ -172,20 +184,8 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance �
     Matrix.mulVec, Matrix.of_apply, Matrix.dotProduct,
     Function.comp_apply, ite_mul, one_mul, zero_mul
   ] at eqv
-  change eqv to
-    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun tᵥ =>
-      if t = tᵥ.fst ∧ tᵥ.fst.fst.f tᵥ.snd ≠ ⊤ then
-        x.toCanonicalRationalSolution.toFunction (Sum.inl tᵥ)
-      else
-        0) =
-    (1 : ℚ)
-  rw [Finset.sum_sigma] at eqv
-  sorry
-  /-
-  simp_rw [Finset.sum_ite_irrel, Finset.sum_const_zero] at eqv
-  simp_rw [Finset.sum_ite_eq, Finset.mem_univ, if_true] at eqv
-  exact Finset.sum_of_sum_div_const_eq_one eqv
-  -/
+  rw [Finset.sigma_univ_sum_to_sum_sum] at eqv
+  sorry -- TODO adapt the new version of the proof for the finite-valued version
 
 open scoped List in
 lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ.Instance ι} (t : I)
@@ -422,12 +422,6 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
   rw [←div_eq_div_inj the_key hxdQ.ne.symm]
   -/
 
--- https://github.com/leanprover-community/mathlib4/pull/11865
-lemma Finset.univ_sum_to_sigma {α : Type} [Fintype α] {β : α → Type} [∀ a : α, Fintype (β a)]
-    (f : (Σ a, β a) → ℚ) :
-    Finset.univ.sum f = (Finset.univ.sigma (fun _ => Finset.univ)).sum f :=
-  rfl
-
 lemma Multiset.sum_const_Rat_lt_summap_ERat {α : Type*} {s : Multiset α}
     (hs : s ≠ ∅) {c : ℚ} {f : α → ERat} (hcf : ∀ i ∈ s, c < f i) :
     s.summap (fun _ => c.toERat) < s.summap f := by
@@ -473,7 +467,7 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
   rw [Multiset.summap_summap_swap]
   -- RHS:
   simp_rw [ValuedCSP.Instance.RelaxBLP, Matrix.dotProduct, Fintype.sum_sum_type, Sum.elim_inl, Sum.elim_inr, zero_mul]
-  rw [Finset.sum_const_zero, add_zero, Finset.univ_sum_to_sigma, Finset.sum_sigma, Finset.smul_sum]
+  rw [Finset.sum_const_zero, add_zero, Finset.sigma_univ_sum_to_sum_sum, Finset.smul_sum]
   -- Conversion to per-term inequalities:
   rw [←Finset.univ_sum_multisetToType]
   show _ ≤
