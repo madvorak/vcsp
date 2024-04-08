@@ -255,9 +255,8 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
   convert_to _ ≤
     ((ω.size : ERat) * Finset.univ.sum (fun x => (
         match t.fst.f (Z x) with
-        | none => 0
-        | some none => 0
-        | some (some q) => q
+        | (q : ℚ) => q
+        | _ => 0
       ).toERat)) / (x.toCanonicalRationalSolution.denominator : ERat)
   · sorry
   · sorry
