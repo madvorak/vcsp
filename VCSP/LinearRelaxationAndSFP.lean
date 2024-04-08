@@ -22,17 +22,12 @@ lemma Finset.univ_sum_multisetToType {α β : Type*} [DecidableEq α] [AddCommMo
     Finset.univ.sum (fun a : s.ToType => f a.fst) = s.summap f := by
   rw [Finset.sum, Multiset.map_univ]
 
-lemma Finset.sigma_univ_sum_to_aux {α : Type*} [Fintype α] {σ : α → Type} [∀ a : α, Fintype (σ a)]
-    {β : Type*} [AddCommMonoid β]
-    (f : (Σ a, σ a) → β) :
-    Finset.univ.sum f = (Finset.univ.sigma (fun _ => Finset.univ)).sum f :=
-  rfl
-
 lemma Finset.sigma_univ_sum_to_sum_sum {α : Type} [Fintype α] {σ : α → Type} [∀ a : α, Fintype (σ a)]
     {β : Type*} [AddCommMonoid β]
     (f : (Σ a, σ a) → β) :
     Finset.univ.sum f = Finset.univ.sum (fun a : α => Finset.univ.sum (fun s : σ a => f ⟨a, s⟩)) := by
-  rw [Finset.sigma_univ_sum_to_aux, Finset.sum_sigma]
+  rewrite [←Finset.sum_sigma]
+  rfl
 
 lemma div_eq_div_inj {β : Type*} [GroupWithZero β] {x y z : β} (hxy : x / z = y / z) (hz : z ≠ 0) : x = y := by
   rw [division_def, division_def, mul_eq_mul_right_iff] at hxy
