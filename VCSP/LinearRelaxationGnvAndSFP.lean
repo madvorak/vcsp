@@ -199,9 +199,8 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
       )).summap t.fst.evalSolution ≤
     ω.size • Finset.univ.sum (fun v : Fin t.fst.n → D => (
         match t.fst.f v with
-        | ⊥ => 0
-        | ⊤ => 0
         | (q : ℚ) => q
+        | _ => 0
       ) * x (Sum.inl ⟨t, v⟩)) := by
   have hxdQ : 0 < (x.toCanonicalRationalSolution.denominator : ℚ)
   · rw [Nat.cast_pos]
@@ -212,31 +211,27 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
   have hZ :
     Finset.univ.sum (fun v : Fin t.fst.n → D => (
         match t.fst.f v with
-        | ⊥ => 0
-        | ⊤ => 0
         | (q : ℚ) => q
+        | _ => 0
       ) * x (Sum.inl ⟨t, v⟩)) =
     Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator =>
         match t.fst.f (Z i) with
-        | ⊥ => 0
-        | ⊤ => 0
         | (q : ℚ) => q
+        | _ => 0
       ) / (x.toCanonicalRationalSolution.denominator : ℚ)
   · convert_to
       Finset.univ.sum (fun v : Fin t.fst.n → D => (
           match t.fst.f v with
-          | ⊥ => 0
-          | ⊤ => 0
           | (q : ℚ) => q
+          | _ => 0
         ) * (
           (x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩) : ℚ) /
           (x.toCanonicalRationalSolution.denominator : ℚ)
         ) ) =
       Finset.univ.sum (fun i : Fin x.toCanonicalRationalSolution.denominator =>
           match t.fst.f (Z i) with
-          | ⊥ => 0
-          | ⊤ => 0
           | (q : ℚ) => q
+          | _ => 0
         ) / (x.toCanonicalRationalSolution.denominator : ℚ)
     · apply congr_arg
       ext v
@@ -253,9 +248,8 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
   show _ ≤
     (((ω.size : ℚ) * Finset.univ.sum (fun x =>
         match t.fst.f (Z x) with
-        | none => 0
-        | some none => 0
-        | some (some q) => q)
+        | (q : ℚ) => q
+        | _ => 0)
       ) / (x.toCanonicalRationalSolution.denominator : ℚ)
     ).toERat
   convert_to _ ≤
@@ -474,18 +468,16 @@ lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism 
     (Finset.univ.sum (fun t => ω.size •
         Finset.univ.sum (fun v => (
           match t.fst.f v with
-          | ⊥ => 0
-          | ⊤ => 0
           | (q : ℚ) => q
+          | _ => 0
         ) * x (Sum.inl ⟨t, v⟩))
       )).toERat
   convert_to _ ≤
     Finset.univ.sum (fun t => (ω.size •
         Finset.univ.sum (fun v => (
           match t.fst.f v with
-          | ⊥ => 0
-          | ⊤ => 0
           | (q : ℚ) => q
+          | _ => 0
         ) * x (Sum.inl ⟨t, v⟩))
       ).toERat)
   · apply Finset.sum_toERat

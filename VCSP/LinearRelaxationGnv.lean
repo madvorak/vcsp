@@ -53,17 +53,17 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
       ℚ :=
   CanonicalLP.mk
     (Matrix.fromBlocks
-      (Matrix.of fun ⟨cₜ, cₙ, cₐ⟩ => fun ⟨t, x⟩ =>
+      (Matrix.of fun ⟨cₜ, cₙ, cₐ⟩ => fun ⟨t, v⟩ =>
         if ht : cₜ = t
         then
-          if x (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+          if v (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
           then 1
           else 0
         else 0)
       (Matrix.of fun ⟨⟨cₜ, _⟩, cₙ, cₐ⟩ => fun ⟨i, a⟩ => if cₜ.app cₙ = i ∧ cₐ = a then -1 else 0)
       (Matrix.fromRows
         0
-        (Matrix.of fun cₜ : I => fun ⟨t, x⟩ => if cₜ = t ∧ t.fst.f x ≠ ⊤ then 1 else 0))
+        (Matrix.of fun cₜ : I => fun ⟨t, v⟩ => if cₜ = t ∧ t.fst.f v ≠ ⊤ then 1 else 0))
       (Matrix.fromRows
         (Matrix.of fun cᵢ : ι => fun ⟨i, _⟩ => if cᵢ = i then 1 else 0)
         0))
@@ -71,7 +71,7 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
       (fun _ : (Σ t : I, (Fin t.fst.n × D)) => 0)
       (fun _ : ι ⊕ I => 1))
     (Sum.elim
-      (fun ⟨⟨t, _⟩, x⟩ => match t.f x with | ⊥ => 0 | ⊤ => 0 | (q : ℚ) => q)
+      (fun ⟨⟨t, _⟩, v⟩ => match t.f v with | (q : ℚ) => q | _ => 0)
       (fun _ => 0))
 
 @[pp_dot]
