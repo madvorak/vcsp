@@ -25,7 +25,7 @@ def Function.toCanonicalRationalSolution (x : α → ℚ) : CanonicalRationalSol
 
 lemma Finset.univ.prod_single_hit (g : α → ℚ) (a : α) :
     Finset.univ.prod (fun i : α => if a = i then g i else 1) = g a := by
-  simp_rw [prod_ite_eq, mem_univ, if_true]
+  simp_rw [Finset.prod_ite_eq, Finset.mem_univ, if_true]
 
 lemma Finset.univ.prod_mul_single_hit (f g : α → ℚ) (a : α) :
     Finset.univ.prod (fun i : α => f i * if a = i then g i else 1) = Finset.univ.prod f * g a := by
@@ -46,12 +46,12 @@ lemma Finset.univ.prod_with_one_exception {f g : α → ℚ} {a : α} (hfg : f a
     convert_to (0 : ℚ) = (0 : ℚ)
     · rw [Finset.prod_eq_zero_iff]
       use z
-      exact ⟨mem_univ z, by aesop⟩
+      exact ⟨Finset.mem_univ z, by aesop⟩
     · rw [mul_div_assoc]
       convert zero_mul _
       rw [Finset.prod_eq_zero_iff]
       use z
-      exact ⟨mem_univ z, hz⟩
+      exact ⟨Finset.mem_univ z, hz⟩
     rfl
 
 lemma Finset.univ.prod_with_one_exception' {f g : α → ℚ} {a : α} (hfg : f a = 0 → g a = 0) :
