@@ -34,3 +34,22 @@ example (A : Matrix m n ℚ) (b : m → ℚ) :
 theorem generalizedFarkas [NonUnitalNonAssocSemiring EReal] (A : Matrix m n EReal) (b : m → EReal) :
     (∃ x : n → EReal, A *ᵥ x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → EReal, 0 ≤ Aᵀ *ᵥ y ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y) := by
   sorry -- very very very cheating
+/-
+
+Does not work!
+Counterexample:
+
+A := ![ ![⊤], ![⊥] ]
+b := ![ 3, -2 ]
+
+⊤ * x ≤ 3
+⊥ * x ≤ -2
+x ≥ 0
+... not satisfiable
+
+⊤ * y + ⊥ * y' ≥ 0
+3 * y - 2 * y' < 0
+y, y' ≥ 0
+... not satisfiable
+
+-/
