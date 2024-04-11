@@ -52,4 +52,23 @@ x ≥ 0
 y, y' ≥ 0
 ... not satisfiable
 
+
+Does not even work when ⊥ is forbidden!
+Counterexample:
+
+A := ![ ![⊤, -1], ![-1, 0] ]
+b := ![ 0, -1 ]
+
+⊤ * p + (-1) * q ≤ 0         ... ⊤ * p ≤ q    →  ⊤ ≤ q
+(-1) * p + 0 * q ≤ -1        ... p ≥ 1
+p, q ≥ 0
+... not satisfiable
+
+⊤ * r + (-1) * s ≥ 0         ... ⊤ * r ≥ s              →  0 ≥ s  →  s = 0
+(-1) * r + 0 * s ≥ 0         ... r ≤ 0        →  r = 0
+0 * r + (-1) * s < 0         ... s > 0                                      → 0 > 0
+r, s ≥ 0
+... not satisfiable
+
+
 -/
