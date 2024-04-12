@@ -62,15 +62,16 @@ abbrev Function.evalOnWeights {α β : Type*} [Fintype α] [AddCommMonoid β]
     (f : α → β) (w : α → ℕ) : β :=
   Finset.univ.sum (fun i : α => w i • f i)
 
-def Functions_evalOnWeightsLE {α β : Type*} [Fintype α] [OrderedAddCommMonoid β]
-    (f₁ f₂ : α → β) (w₁ w₂ : α → ℕ) : Prop :=
+def Functions_averages_LE {α₁ α₂ β : Type*} [Fintype α₁] [Fintype α₂] [OrderedAddCommMonoid β]
+    (f₁ : α₁ → β) (f₂ : α₂ → β) (w₁ : α₁ → ℕ) (w₂ : α₂ → ℕ) : Prop :=
   Finset.univ.sum w₂ • f₁.evalOnWeights w₁ ≤ Finset.univ.sum w₁ • f₂.evalOnWeights w₂
 
-example {α : Type*} [Fintype α] (f₁ f₂ : α → ℚ) (w₁ w₂ : α → ℕ)
-    (hw₁ : ∃ i : α, w₁ i > 0) (hw₂ : ∃ i : α, w₂ i > 0) :
-    Functions_evalOnWeightsLE f₁ f₂ w₁ w₂ ↔ f₁˛w₁ ≤ f₂˛w₂ := by
+example {α₁ α₂ : Type*} [Fintype α₁] [Fintype α₂]
+    (f₁ : α₁ → ℚ) (f₂ : α₂ → ℚ) (w₁ : α₁ → ℕ) (w₂ : α₂ → ℕ)
+    (hw₁ : ∃ i : α₁, w₁ i > 0) (hw₂ : ∃ i : α₂, w₂ i > 0) :
+    Functions_averages_LE f₁ f₂ w₁ w₂ ↔ f₁˛w₁ ≤ f₂˛w₂ := by
   simp only [
-    Functions_evalOnWeightsLE, Function.evalOnWeights, Function.evalOnWeighted, Function.evalOnDistribution,
+    Functions_averages_LE, Function.evalOnWeights, Function.evalOnWeighted, Function.evalOnDistribution,
     nsmul_eq_mul, Nat.cast_sum, Function.comp_apply, smul_eq_mul, div_eq_mul_inv]
   conv =>
     rhs
@@ -100,12 +101,18 @@ example {α : Type*} [Fintype α] (f₁ f₂ : α → ℚ) (w₁ w₂ : α → �
   conv =>
     rhs
     congr <;> rw [mul_comm, ←div_eq_mul_inv]
-  constructor <;> intro hyp
+  constructor <;>
   · rw [div_le_div_iff]
+    intro hyp
     convert hyp using 1 <;> apply mul_comm
     · apply Finset.sum_pos' <;> aesop
     · apply Finset.sum_pos' <;> aesop
-  · rw [div_le_div_iff] at hyp
-    convert hyp using 1 <;> apply mul_comm
-    · apply Finset.sum_pos' <;> aesop
-    · apply Finset.sum_pos' <;> aesop
+
+def Function.AdmitsFractional_alt {D C : Type*} [Fintype D] {k m n : ℕ} [OrderedAddCommMonoid C]
+    (f : (Fin n → D) → C) (ω : Fin k → ((Fin m → D) → D)) : Prop :=
+  ∀ x : Fin m → Fin n → D,
+    Functions_averages_LE
+      (fun iₖ : Fin k => f (fun iₙ : Fin n => (ω iₖ) (Function.swap x iₙ)))
+      (fun iₘ : Fin m => f (x iₘ))
+      (fun _ : Fin k => 1)
+      (fun _ : Fin m => 1)
