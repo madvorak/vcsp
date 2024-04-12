@@ -51,7 +51,7 @@ lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield
   else
     refine (div_eq_div_inj ?_ hz).symm
     convert hfz
-    rw [sum_div]
+    rw [Finset.sum_div]
     exact div_self hz
 
 lemma List.ofFn_get_fin_cast {α : Type*} {l : List α} {n : ℕ} (hnl : n = l.length) :
