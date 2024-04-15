@@ -1,15 +1,6 @@
 import Mathlib.Combinatorics.Optimization.ValuedCSP
 
 
-/-
-abbrev Function.evalOnDistribution {α β : Type*} [Fintype α] [DivisionSemiring β] (f : α → β) (w : α → ℕ) : β :=
-  Finset.univ.sum (fun i : α => w i • f i) / Finset.univ.sum w
-
-abbrev Function.evalOnDistribution {α β : Type*} [Fintype α] [AddCommMonoid β] [SMul ℚ β]
-    (f : α → β) (w : α → ℚ) : β :=
-  (Finset.univ.sum w)⁻¹ • Finset.univ.sum (fun i : α => w i • f i)
--/
-
 abbrev Function.evalOnDistribution {α β : Type*} [Fintype α] [AddCommMonoid β] [SMul ℚ β]
     (f : α → β) (w : α → ℚ) : β :=
   Finset.univ.sum (fun i : α => (w i / Finset.univ.sum w) • f i)
@@ -63,13 +54,15 @@ abbrev Function.evalOnWeights {α β : Type*} [Fintype α] [AddCommMonoid β]
   Finset.univ.sum (fun i : α => w i • f i)
 
 def Functions_averages_LE {α₁ α₂ β : Type*} [Fintype α₁] [Fintype α₂] [OrderedAddCommMonoid β]
-    (f₁ : α₁ → β) (f₂ : α₂ → β) (w₁ : α₁ → ℕ) (w₂ : α₂ → ℕ) : Prop :=
-  Finset.univ.sum w₂ • f₁.evalOnWeights w₁ ≤ Finset.univ.sum w₁ • f₂.evalOnWeights w₂
+    (a₁ : (α₁ → β) × (α₁ → ℕ)) (a₂ : (α₂ → β) × (α₂ → ℕ)) : Prop :=
+  Finset.univ.sum a₂.snd • a₁.fst.evalOnWeights a₁.snd ≤ Finset.univ.sum a₁.snd • a₂.fst.evalOnWeights a₂.snd
+
+infix:50 " ⊑ " => Functions_averages_LE
 
 example {α₁ α₂ : Type*} [Fintype α₁] [Fintype α₂]
     (f₁ : α₁ → ℚ) (f₂ : α₂ → ℚ) (w₁ : α₁ → ℕ) (w₂ : α₂ → ℕ)
     (hw₁ : ∃ i : α₁, w₁ i > 0) (hw₂ : ∃ i : α₂, w₂ i > 0) :
-    Functions_averages_LE f₁ f₂ w₁ w₂ ↔ f₁˛w₁ ≤ f₂˛w₂ := by
+    (f₁, w₁) ⊑ (f₂, w₂) ↔ f₁˛w₁ ≤ f₂˛w₂ := by
   simp only [
     Functions_averages_LE, Function.evalOnWeights, Function.evalOnWeighted, Function.evalOnDistribution,
     nsmul_eq_mul, Nat.cast_sum, Function.comp_apply, smul_eq_mul, div_eq_mul_inv]
@@ -111,8 +104,4 @@ example {α₁ α₂ : Type*} [Fintype α₁] [Fintype α₂]
 def Function.AdmitsFractional_alt {D C : Type*} [Fintype D] {k m n : ℕ} [OrderedAddCommMonoid C]
     (f : (Fin n → D) → C) (ω : Fin k → ((Fin m → D) → D)) : Prop :=
   ∀ x : Fin m → Fin n → D,
-    Functions_averages_LE
-      (fun iₖ : Fin k => f (fun iₙ : Fin n => (ω iₖ) (Function.swap x iₙ)))
-      (fun iₘ : Fin m => f (x iₘ))
-      (fun _ : Fin k => 1)
-      (fun _ : Fin m => 1)
+    ((fun iₖ : Fin k => f (fun iₙ : Fin n => ω iₖ (Function.swap x iₙ))), 1) ⊑ ((fun iₘ : Fin m => f (x iₘ)), 1)
