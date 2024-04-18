@@ -1,0 +1,82 @@
+\documentclass[]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\pagenumbering{gobble}
+
+\begin{document}
+
+\section {Extended fields}
+
+Let $F$ be a totally ordered field.
+Let $F_\infty = F \cup \{ \bot, \top \}$.
+We define operations $+$ and $\cdot$ on $F_\infty$
+so that
+(for all $a \in F_\infty$ and for all $p \in F, p > 0$)
+from top down:
+\begin{align*}
+	\bot <& \;a\, < \top \\
+	\bot + a =& \;\bot = a + \bot \text{\qquad(includes $\bot + \top = \bot$)} \\
+	\top + a =& \;\top = a + \top \\
+	\bot \cdot\, p =& \;\bot = p \,\cdot \bot \\
+	\top \cdot\, p =& \;\top = p \,\cdot \top \\
+	\bot \cdot\, 0 =& \;\bot = 0 \,\cdot \bot \text{\qquad(the ``weird'' rule)} \\
+	\top \cdot\, 0 =& \;\,0\, = 0 \,\cdot \top
+\end{align*}
+All other cases of all operations and relations
+preserve their behavior from $F$.
+We keep the product between negative numbers and
+$\{ \bot, \top \}$ undefined.
+
+%\section {Notation}
+%
+%If $x$ and $y$ are vectors of the same length,
+%$x \leqq y$ is elementwise comparison,
+%and we write $x \le y$ to denote that
+%$x \leqq y$ and $x_i < y_i$ for some index $i$.
+
+\section{Farkas-like conjecture}
+
+Let $A \in F_\infty^{m \times n}$ and $b \in F^m$.
+Exactly one of the following is true:
+\begin{itemize}
+	\item $\exists x \in F^n$ such that
+	$0 \leqq x$ and $A x \leqq b$
+	\item $\exists y \in F^m$ such that
+	$0 \leqq y$ and $(-A^T) y \leqq 0$ and $b^T y < 0$
+\end{itemize}
+
+\section{Counterexample}
+
+$$
+A =
+\begin{pmatrix}
+	\bot & \top\\
+	\top & \bot
+\end{pmatrix}
+\qquad \qquad
+b =
+\begin{pmatrix}
+	-1 \\
+	-1
+\end{pmatrix}
+$$
+Both are true.
+
+\section{Remark}
+
+For all other versions of Farkas lemma
+that I tried to generalize to $F_\infty$
+similar counterexample still applies.
+However, they might work if it was forbidden
+for a row of $A$ to contain both $\bot$ and $\top$
+and alike for a column.
+
+The problem is when the conversion to the finite
+version requires us to delete both rows and columns,
+the rows must be deleted first both in the primar
+and in the dual, and so, if deleting a row stops
+deleting a column from triggering, it leads to a
+different result in the primar than in the dual
+because of the matrix transposition.
+
+\end{document}
