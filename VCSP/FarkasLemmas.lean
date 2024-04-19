@@ -5,7 +5,7 @@ import VCSP.ExtendedRationals
 
 open scoped Matrix
 
-variable {n m : Type*} [Fintype n] [Fintype m]
+variable {n m : Type} [Fintype n] [Fintype m]
 
 
 lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix m n R) (b : m → R) :
@@ -118,9 +118,44 @@ example (A : Matrix m n ERat) (b : m → ERat) :
     _ = b ⬝ᵥ y := Matrix.dotProduct_comm'' y b
     _ < 0 := hby
 
+def Matrix.Good (A : Matrix m n ERat) : Prop :=
+  ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ (∃ j : n, A i j = ⊥))
+
+lemma Matrix.Good.row {A : Matrix m n ERat} (hA : A.Good) (i : m) :
+    (∃ a : n → ℚ, ∀ j : n, A i j = some (some (a j))) ∨ (∃ j, A i j = ⊤) ∨ (∃ j, A i j = ⊥) := by
+  sorry
 /-
 The following should hold since we have changed the definition of `*` on `ERat` so that `⊥ * 0 = ⊥`.
 -/
-theorem generalizedFarkas (A : Matrix m n ERat) (b : m → ERat) :
+theorem generalizedFarkas {A : Matrix m n ERat} {b : m → ERat}
+    (hA : A.Good) (hAT : Aᵀ.Good) (hb : ∀ i : m, ∃ q : ℚ, b i = some (some q)) :
     (∃ x : n → ERat, A ₘ*ᵥ x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ERat, -Aᵀ ₘ*ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y) := by
-  sorry
+  let m' : Type := { i : m // ∀ j : n, A i j ≠ ⊥ }
+  let n' : Type := { j : n // ∀ i : m, A i j ≠ ⊤ }
+  let A' : Matrix m' n' ℚ :=
+    Matrix.of (fun i : m' => fun j : n' =>
+      match matcha : A i.val j.val with
+      | (q : ℚ) => q
+      | ⊥ => False.elim (i.property j matcha)
+      | ⊤ => False.elim (j.property i matcha)
+    )
+  let b' : m' → ℚ := fun i : m' => (hb i).choose --match b i.val with | (q : ℚ) => q | ⊥ | ⊤ => False.elim sorry
+  convert FarkasLemma A' b'
+  · constructor <;> intro ⟨x, ineqalities, hx⟩
+    · sorry
+    · use (fun j : n => if hj : (∀ i : m, A i j ≠ ⊤) then x ⟨j, hj⟩ else 0)
+      constructor
+      · intro i
+        if hi : (∀ j : n, A i j ≠ ⊥) then
+          have inequality := ineqalities ⟨i, hi⟩
+          sorry
+        else
+          convert_to ⊥ ≤ b i
+          · sorry
+          sorry
+      · intro j
+        by_cases hj : (∀ i : m, A i j ≠ ⊤) <;> simp [hj]
+        exact hx ⟨j, hj⟩
+  · constructor <;> intro ⟨y, ineqalities, sharpine, hy⟩
+    · sorry
+    · sorry
