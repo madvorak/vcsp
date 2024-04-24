@@ -50,7 +50,16 @@ lemma Matrix.neg_mulVec'' {α : Type} [Mul α] [AddCommMonoid α] [Neg α] [Fint
   sorry
 
 lemma Matrix.zero_dotProduct'' {α : Type} [Mul α] [AddCommMonoid α] (x : m → α) : 0 ⬝ᵥ x = 0 :=
-  sorry
+  sorry -- TODO `x` cannot contain `⊥`
+
+lemma Matrix.dotProduct_zero'' {α : Type} [Mul α] [AddCommMonoid α] (x : m → α) : x ⬝ᵥ 0 = 0 :=
+  sorry -- TODO `x` cannot contain `⊥`
+
+-- In fact `x ⬝ᵥ 0 = (if ∃ j, x j = ⊥ then ⊥ else 0) = 0 ⬝ᵥ x` TODO!
+
+lemma Matrix.mulVec_zero'' {α : Type} [Mul α] [AddCommMonoid α] (A : Matrix m n α) : A ₘ*ᵥ 0 = 0 := by
+  ext -- TODO `A` cannot contain `⊥`
+  apply Matrix.dotProduct_zero''
 
 lemma Matrix.dotProduct_mulVec'' {α : Type} [Mul α] [AddCommMonoid α]
     (v : m → α) (A : Matrix m n α) (w : n → α) : v ⬝ᵥ A ₘ*ᵥ w = v ᵥ*ₘ A ⬝ᵥ w :=
@@ -122,40 +131,70 @@ def Matrix.Good (A : Matrix m n ERat) : Prop :=
   ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ (∃ j : n, A i j = ⊥))
 
 lemma Matrix.Good.row {A : Matrix m n ERat} (hA : A.Good) (i : m) :
-    (∃ a : n → ℚ, ∀ j : n, A i j = some (some (a j))) ∨ (∃ j, A i j = ⊤) ∨ (∃ j, A i j = ⊥) := by
+    (∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j))) ∨ (∃ j, A i j = ⊤) ∨ (∃ j, A i j = ⊥) := by
   sorry
-/-
-The following should hold since we have changed the definition of `*` on `ERat` so that `⊥ * 0 = ⊥`.
--/
-theorem generalizedFarkas {A : Matrix m n ERat} {b : m → ERat}
-    (hA : A.Good) (hAT : Aᵀ.Good) (hb : ∀ i : m, ∃ q : ℚ, b i = some (some q)) :
+
+theorem generalizedFarkas {A : Matrix m n ERat} {b : m → ERat} (hA : A.Good) (hAT : Aᵀ.Good) :
+    -- TODO should probably talk about `x : n → ℚ` and `y : m → ℚ` instead
     (∃ x : n → ERat, A ₘ*ᵥ x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ERat, -Aᵀ ₘ*ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y) := by
-  let m' : Type := { i : m // ∀ j : n, A i j ≠ ⊥ }
-  let n' : Type := { j : n // ∀ i : m, A i j ≠ ⊤ }
-  let A' : Matrix m' n' ℚ :=
+  -- filter rows and columns
+  let m' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥ } -- non-tautological rows
+  let n' : Type := { j : n // ∀ i : m', A i j ≠ ⊤ } -- columns that allow non-zero values
+  let A' : Matrix m' n' ℚ := -- the new matrix
     Matrix.of (fun i : m' => fun j : n' =>
       match matcha : A i.val j.val with
       | (q : ℚ) => q
-      | ⊥ => False.elim (i.property j matcha)
+      | ⊥ => False.elim (i.property.right j matcha)
       | ⊤ => False.elim (j.property i matcha)
     )
-  let b' : m' → ℚ := fun i : m' => (hb i).choose --match b i.val with | (q : ℚ) => q | ⊥ | ⊤ => False.elim sorry
-  convert FarkasLemma A' b'
-  · constructor <;> intro ⟨x, ineqalities, hx⟩
-    · sorry
-    · use (fun j : n => if hj : (∀ i : m, A i j ≠ ⊤) then x ⟨j, hj⟩ else 0)
+  if hbot : ∃ i : m', b i.val = ⊥ then
+    obtain ⟨i, hi⟩ := hbot
+    convert false_ne_true
+    · rw [iff_false, not_exists]
+      intro x ⟨hAxb, hx⟩
+      specialize hAxb i.val
+      rw [hi] at hAxb
+      -- the `i`th line does not contain `⊥` → contradiction with `hAxb`
+      sorry
+    · rw [iff_true]
+      use 0
       constructor
-      · intro i
-        if hi : (∀ j : n, A i j ≠ ⊥) then
-          have inequality := ineqalities ⟨i, hi⟩
-          sorry
-        else
-          convert_to ⊥ ≤ b i
-          · sorry
-          sorry
-      · intro j
-        by_cases hj : (∀ i : m, A i j ≠ ⊤) <;> simp [hj]
-        exact hx ⟨j, hj⟩
-  · constructor <;> intro ⟨y, ineqalities, sharpine, hy⟩
-    · sorry
-    · sorry
+      · rw [Matrix.mulVec_zero'']
+      constructor
+      · sorry -- `⊥ < 0` OK
+      · rfl
+  else
+    let b' : m' → ℚ := -- the new RHS
+      fun i : m' =>
+        match hbi : b i.val with
+        | (q : ℚ) => q
+        | ⊥ => False.elim (hbot ⟨i, hbi⟩)
+        | ⊤ => False.elim (i.property.left hbi)
+    convert FarkasLemma A' b'
+    · constructor <;> intro ⟨x, ineqalities, hx⟩
+      · sorry
+      · use (fun j : n => if hj : (∀ i : m', A i j ≠ ⊤) then x ⟨j, hj⟩ else 0)
+        constructor
+        · intro i
+          if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
+            have inequality := ineqalities ⟨i, hi⟩
+            sorry
+          else
+            push_neg at hi
+            if hbi : b i = ⊤ then
+              rw [hbi]
+              apply le_top
+            else
+              obtain ⟨j, hAij⟩ := hi hbi
+              convert_to ⊥ ≤ b i
+              · sorry
+              apply bot_le
+        · intro j
+          if hj : (∀ i : m', A i j ≠ ⊤) then
+            convert hx ⟨j, hj⟩
+            simp [hj]
+          else
+            aesop
+    · constructor <;> intro ⟨y, ineqalities, sharpine, hy⟩
+      · sorry
+      · sorry

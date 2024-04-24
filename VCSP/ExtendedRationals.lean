@@ -18,14 +18,14 @@ def ERat := WithBot (WithTop ℚ)
 
 instance : ZeroLEOneClass ERat := inferInstanceAs (ZeroLEOneClass (WithBot (WithTop ℚ)))
 
-instance : AddCommMonoidWithOne ERat :=
-  inferInstanceAs (AddCommMonoidWithOne (WithBot (WithTop ℚ)))
+instance : OrderBot ERat := inferInstanceAs (OrderBot (WithBot (WithTop ℚ)))
+instance : OrderTop ERat := inferInstanceAs (OrderTop (WithBot (WithTop ℚ)))
 
-instance : DenselyOrdered ERat :=
-  inferInstanceAs (DenselyOrdered (WithBot (WithTop ℚ)))
+instance : AddCommMonoidWithOne ERat := inferInstanceAs (AddCommMonoidWithOne (WithBot (WithTop ℚ)))
 
-instance : CharZero ERat :=
-  inferInstanceAs (CharZero (WithBot (WithTop ℚ)))
+instance : DenselyOrdered ERat := inferInstanceAs (DenselyOrdered (WithBot (WithTop ℚ)))
+
+instance : CharZero ERat := inferInstanceAs (CharZero (WithBot (WithTop ℚ)))
 
 
 /-- The canonical inclusion from Rats to ERats. Registered as a coercion. -/
@@ -37,7 +37,7 @@ namespace ERat
 instance decidableLT : DecidableRel ((· < ·) : ERat → ERat → Prop) :=
   WithBot.decidableLT
 
--- TODO: Provide explicitly, otherwise it is inferred noncomputably from `CompleteLinearOrder`
+-- TODO: Provide explicitly, otherwise it is inferred noncomputably from `CompleteLinearOrder` ??????????????
 instance : Top ERat := ⟨some ⊤⟩
 
 instance : Coe ℚ ERat := ⟨Rat.toERat⟩
