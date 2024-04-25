@@ -8,6 +8,8 @@ open scoped Matrix
 variable {n m : Type} [Fintype n] [Fintype m]
 
 
+section basicFarkas
+
 lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix m n R) (b : m → R) :
     (∃ x : n → R, A *ᵥ x ≤ b ∧ 0 ≤ x) ∧ (∃ y : m → R, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y) →
       False := by
@@ -23,64 +25,46 @@ lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix m n R) (b : m → R
     _ = b ⬝ᵥ y := Matrix.dotProduct_comm y b
     _ < 0 := hby
 
-axiom FarkasLemma (A : Matrix m n ℚ) (b : m → ℚ) :
+axiom standardFarkas (A : Matrix m n ℚ) (b : m → ℚ) :
     (∃ x : n → ℚ, A *ᵥ x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y)
 
 example (A : Matrix m n ℚ) (b : m → ℚ) :
     (∃ x : n → ℚ, A *ᵥ x ≤ b ∧ 0 ≤ x) ∧ (∃ y : m → ℚ, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y) →
       False := by
   intro ⟨hx, hy⟩
-  simpa [hx, hy] using FarkasLemma A b
+  simpa [hx, hy] using standardFarkas A b
+
+end basicFarkas
 
 
-def Matrix.mulVec'' {α : Type} [Mul α] [AddCommMonoid α] (M : Matrix m n α) (v : n → α) : m → α
-  | i => (fun j => M i j) ⬝ᵥ v
-infixr:73 " ₘ*ᵥ " => Matrix.mulVec''
+section instERatSMul
 
-def Matrix.vecMul'' {α : Type} [Mul α] [AddCommMonoid α] [Fintype m] (v : m → α) (M : Matrix m n α) : n → α
-  | j => v ⬝ᵥ fun i => M i j
-infixl:73 " ᵥ*ₘ " => Matrix.vecMul''
+notation "ℚ∞" => ERat
 
-lemma Matrix.mulVec_transpose'' {α : Type} [Mul α] [AddCommMonoid α] [Fintype m] (A : Matrix m n α) (x : m → α) :
-    Aᵀ ₘ*ᵥ x = x ᵥ*ₘ A :=
-  sorry
+instance : Module ℚ ℚ∞ where
+  smul (c : ℚ) (a : ℚ∞) := c.toERat * a
+  one_smul (a : ℚ∞) := by
+    match a with
+    | ⊥ => rfl
+    | ⊤ => rfl
+    | (q : ℚ) =>
+      show ((1 : ℚ) * (q : ℚ)).toERat = q.toERat
+      rw [one_mul]
+  mul_smul (x y : ℚ) (a : ℚ∞) := by
+    match a with
+    | ⊥ => sorry -- broken because `(0 * (-1)) * ⊥ = ⊥` but `0 * ((-1) * ⊥) = 0`
+    | ⊤ => sorry -- broken because `(0 * (-1)) * ⊤ = 0` but `0 * ((-1) * ⊤) = ⊥`
+    | (q : ℚ) =>
+      show (x * y * q).toERat = (x * (y * q)).toERat
+      rw [mul_assoc]
+  smul_zero := sorry
+  smul_add := sorry
+  add_smul := sorry
+  zero_smul := sorry
 
-lemma Matrix.neg_mulVec'' {α : Type} [Mul α] [AddCommMonoid α] [Neg α] [Fintype m] (A : Matrix m n α) (x : n → α) :
-    (-A) ₘ*ᵥ x = - (A ₘ*ᵥ x) :=
-  sorry
+example (c a : ℚ) : c • a.toERat = (c * a).toERat := rfl
 
-lemma Matrix.zero_dotProduct'' {α : Type} [Mul α] [AddCommMonoid α] (x : m → α) : 0 ⬝ᵥ x = 0 :=
-  sorry -- TODO `x` cannot contain `⊥`
-
-lemma Matrix.dotProduct_zero'' {α : Type} [Mul α] [AddCommMonoid α] (x : m → α) : x ⬝ᵥ 0 = 0 :=
-  sorry -- TODO `x` cannot contain `⊥`
-
--- In fact `x ⬝ᵥ 0 = (if ∃ j, x j = ⊥ then ⊥ else 0) = 0 ⬝ᵥ x` TODO!
-
-lemma Matrix.mulVec_zero'' {α : Type} [Mul α] [AddCommMonoid α] (A : Matrix m n α) : A ₘ*ᵥ 0 = 0 := by
-  ext -- TODO `A` cannot contain `⊥`
-  apply Matrix.dotProduct_zero''
-
-lemma Matrix.dotProduct_mulVec'' {α : Type} [Mul α] [AddCommMonoid α]
-    (v : m → α) (A : Matrix m n α) (w : n → α) : v ⬝ᵥ A ₘ*ᵥ w = v ᵥ*ₘ A ⬝ᵥ w :=
-  sorry
-
-lemma Matrix.dotProduct_le_dotProduct_of_nonneg_right'' {α : Type} [Mul α] [OrderedAddCommMonoid α] {u v w : n → α}
-    (huv : u ≤ v) (hw : 0 ≤ w) :
-    u ⬝ᵥ w ≤ v ⬝ᵥ w :=
-  sorry
-
-lemma Matrix.dotProduct_le_dotProduct_of_nonneg_left'' {α : Type} [Mul α] [OrderedAddCommMonoid α] {u v w : n → α}
-    (huv : u ≤ v) (hw : 0 ≤ w) :
-    w ⬝ᵥ u ≤ w ⬝ᵥ v :=
-  sorry
-
--- TODO require commutative multiplication, like `[CommSemigroup α]`
-lemma Matrix.dotProduct_comm'' {α : Type} [Mul α] [OrderedAddCommMonoid α] (v w : n → α) :
-    v ⬝ᵥ w = w ⬝ᵥ v :=
-  sorry
-
-lemma neg_nonpos'' (x : n → ERat) : -x ≤ 0 ↔ 0 ≤ x := by
+lemma neg_nonpos'' (x : n → ℚ∞) : -x ≤ 0 ↔ 0 ≤ x := by
   constructor <;> intro hx i <;> specialize hx i
   · rw [Pi.neg_apply] at hx
     rw [Pi.zero_apply] at *
@@ -112,31 +96,108 @@ lemma neg_nonpos'' (x : n → ERat) : -x ≤ 0 ↔ 0 ≤ x := by
       rw [ERat.neg_le, neg_zero]
       exact hx
 
-example (A : Matrix m n ERat) (b : m → ERat) :
-    (∃ x : n → ERat, A ₘ*ᵥ x ≤ b ∧ 0 ≤ x) ∧ (∃ y : m → ERat, -Aᵀ ₘ*ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y) →
+end instERatSMul
+
+
+section heteroMatrixProducts
+
+variable {α γ : Type*} [AddCommMonoid α] [SMul γ α]
+
+/-- `Matrix.dotProduct'' v w` is the sum of the element-wise products `w i • v i`
+    (mnemonic: "vector times weights"). -/
+def Matrix.dotProduct'' (v : m → α) (w : m → γ) : α :=
+  Finset.univ.sum (fun i : m => w i • v i)
+
+/- The precedence of 72 comes immediately after ` • ` for `SMul.smul`
+   and ` ₘ*ᵥ ` for `Matrix.mulVec''` and ` ᵥ*ₘ ` for `Matrix.vecMul''`
+   so that `a • v ᵥ⬝ᵥ c • w` is parsed as `(a • v) ᵥ⬝ᵥ (c • w)` and
+   that `A ₘ*ᵥ v ᵥ⬝ᵥ w` is parsed as `(A ₘ*ᵥ v) ᵥ⬝ᵥ w` and
+   that `v ᵥ*ₘ A ᵥ⬝ᵥ w` is parsed as `(v ᵥ*ₘ A) ᵥ⬝ᵥ w` and
+   that `v ᵥ⬝ᵥ C *ᵥ w` is parsed as `v ᵥ⬝ᵥ (C *ᵥ w)` and
+   that `v ᵥ⬝ᵥ w ᵥ* C` is parsed as `v ᵥ⬝ᵥ (w ᵥ* C)` here. -/
+infixl:72 " ᵥ⬝ᵥ " => Matrix.dotProduct''
+
+def Matrix.mulVec'' (M : Matrix m n α) (v : n → γ) (i : m) : α :=
+  (fun j : n => M i j) ᵥ⬝ᵥ v
+infixr:73 " ₘ*ᵥ " => Matrix.mulVec''
+
+def Matrix.vecMul'' (v : m → γ) (M : Matrix m n α) (j : n) : α :=
+  (fun i : m => M i j) ᵥ⬝ᵥ v
+infixl:73 " ᵥ*ₘ " => Matrix.vecMul''
+-- TODO deprecate ` ᵥ*ₘ `
+
+lemma Matrix.mulVec_transpose'' [Fintype m] (A : Matrix m n α) (x : m → γ) :
+    Aᵀ ₘ*ᵥ x = x ᵥ*ₘ A :=
+  rfl
+
+lemma Matrix.neg_mulVec'' [Neg α] [Neg γ] [Fintype m] (A : Matrix m n α) (x : n → γ) :
+    (-A) ₘ*ᵥ x = - (A ₘ*ᵥ x) := by -- TODO require relationship between `[Neg α]` and `[Neg γ]`
+  ext i
+  sorry
+
+lemma Matrix.zero_dotProduct'' [Zero γ] (v : m → α) : v ᵥ⬝ᵥ (0 : m → γ) = (0 : α) := by
+  sorry
+
+lemma Matrix.dotProduct_zero'' (w : m → γ) : (0 : m → α) ᵥ⬝ᵥ w = (0 : α) := by
+  sorry
+
+lemma Matrix.mulVec_zero'' [Zero γ] (A : Matrix m n α) : A ₘ*ᵥ (0 : n → γ) = (0 : m → α) := by
+  ext
+  apply Matrix.zero_dotProduct''
+
+lemma Matrix.dotProduct_le_dotProduct_of_nonneg_right'' [PartialOrder α] [PartialOrder γ]
+    {u : n → α} (hu : 0 ≤ u) {v w : n → γ} (hvw : v ≤ w) : -- TODO orderings respect something
+    u ᵥ⬝ᵥ v ≤ u ᵥ⬝ᵥ w := by
+  sorry
+
+lemma Matrix.dotProduct_le_dotProduct_of_nonneg_left'' [PartialOrder α] [NonUnitalNonAssocSemiring γ] [PartialOrder γ]
+    {u v : n → α} (huv : u ≤ v) {w : n → γ} (hw : 0 ≤ w) : -- TODO orderings respect something
+    u ᵥ⬝ᵥ w ≤ v ᵥ⬝ᵥ w := by
+  sorry
+
+example (A : Matrix m n ℚ∞) (b : m → ℚ∞) :
+    (∃ x : n → ℚ, A ₘ*ᵥ x ≤ b ∧ 0 ≤ x) ∧ (∃ y : m → ℚ, -Aᵀ ₘ*ᵥ y ≤ 0 ∧ b ᵥ⬝ᵥ y < 0 ∧ 0 ≤ y) →
       False := by
   intro ⟨⟨x, hAx, hx⟩, ⟨y, hAy, hby, hy⟩⟩
   have hAy' : 0 ≤ y ᵥ*ₘ A
   · rwa [Matrix.neg_mulVec'', Matrix.mulVec_transpose'', neg_nonpos''] at hAy
   exfalso
-  rw [← lt_self_iff_false (0 : ERat)]
-  calc 0 = 0 ⬝ᵥ x := (Matrix.zero_dotProduct'' x).symm
-    _ ≤ (y ᵥ*ₘ A) ⬝ᵥ x := Matrix.dotProduct_le_dotProduct_of_nonneg_right'' hAy' hx
-    _ = y ⬝ᵥ (A ₘ*ᵥ x) := (Matrix.dotProduct_mulVec'' y A x).symm
-    _ ≤ y ⬝ᵥ b := Matrix.dotProduct_le_dotProduct_of_nonneg_left'' hAx hy
-    _ = b ⬝ᵥ y := Matrix.dotProduct_comm'' y b
+  rw [← lt_self_iff_false (0 : ℚ∞)]
+  calc 0 = 0 ᵥ⬝ᵥ x := sorry
+    _ ≤ (y ᵥ*ₘ A) ᵥ⬝ᵥ x := sorry
+    _ = (A ₘ*ᵥ x) ᵥ⬝ᵥ y := sorry
+    _ ≤ b ᵥ⬝ᵥ y := sorry
     _ < 0 := hby
 
-def Matrix.Good (A : Matrix m n ERat) : Prop :=
+-- notation test
+
+variable (v : Fin 3 → ℚ∞) (w : Fin 3 → ℚ) (a : ℚ∞) (c : ℚ)
+  (A : Matrix (Fin 3) (Fin 3) ℚ∞) (C : Matrix (Fin 3) (Fin 3) ℚ)
+
+example : a • v ᵥ⬝ᵥ c • w = (a • v) ᵥ⬝ᵥ (c • w) := rfl
+example : A ₘ*ᵥ v ᵥ⬝ᵥ w = (A ₘ*ᵥ v) ᵥ⬝ᵥ w := rfl
+example : v ᵥ*ₘ A ᵥ⬝ᵥ w = (v ᵥ*ₘ A) ᵥ⬝ᵥ w := rfl
+example : v ᵥ⬝ᵥ C ₘ*ᵥ w = v ᵥ⬝ᵥ (C ₘ*ᵥ w) := rfl
+example : v ᵥ⬝ᵥ w ᵥ*ₘ C = v ᵥ⬝ᵥ (w ᵥ*ₘ C) := rfl
+example : v ᵥ⬝ᵥ w ᵥ* C = v ᵥ⬝ᵥ (w ᵥ*ₘ C) := rfl
+example : v ᵥ⬝ᵥ w ᵥ*ₘ C = v ᵥ⬝ᵥ (w ᵥ* C) := rfl
+example : v ᵥ⬝ᵥ w ᵥ* C = v ᵥ⬝ᵥ (w ᵥ* C) := rfl
+example : v ᵥ⬝ᵥ C *ᵥ w = v ᵥ⬝ᵥ (C *ᵥ w) := rfl
+
+end heteroMatrixProducts
+
+
+section extendedFarkas
+
+def Matrix.Good (A : Matrix m n ℚ∞) : Prop :=
   ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ (∃ j : n, A i j = ⊥))
 
-lemma Matrix.Good.row {A : Matrix m n ERat} (hA : A.Good) (i : m) :
+lemma Matrix.Good.row {A : Matrix m n ℚ∞} (hA : A.Good) (i : m) :
     (∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j))) ∨ (∃ j, A i j = ⊤) ∨ (∃ j, A i j = ⊥) := by
   sorry
 
-theorem generalizedFarkas {A : Matrix m n ERat} {b : m → ERat} (hA : A.Good) (hAT : Aᵀ.Good) :
-    -- TODO should probably talk about `x : n → ℚ` and `y : m → ℚ` instead
-    (∃ x : n → ERat, A ₘ*ᵥ x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ERat, -Aᵀ ₘ*ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y) := by
+theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAT : Aᵀ.Good) :
+    (∃ x : n → ℚ, A ₘ*ᵥ x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ*ᵥ y ≤ 0 ∧ b ᵥ⬝ᵥ y < 0 ∧ 0 ≤ y) := by
   -- filter rows and columns
   let m' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥ } -- non-tautological rows
   let n' : Type := { j : n // ∀ i : m', A i j ≠ ⊤ } -- columns that allow non-zero values
@@ -170,7 +231,7 @@ theorem generalizedFarkas {A : Matrix m n ERat} {b : m → ERat} (hA : A.Good) (
         | (q : ℚ) => q
         | ⊥ => False.elim (hbot ⟨i, hbi⟩)
         | ⊤ => False.elim (i.property.left hbi)
-    convert FarkasLemma A' b'
+    convert standardFarkas A' b'
     · constructor <;> intro ⟨x, ineqalities, hx⟩
       · sorry
       · use (fun j : n => if hj : (∀ i : m', A i j ≠ ⊤) then x ⟨j, hj⟩ else 0)
@@ -198,3 +259,5 @@ theorem generalizedFarkas {A : Matrix m n ERat} {b : m → ERat} (hA : A.Good) (
     · constructor <;> intro ⟨y, ineqalities, sharpine, hy⟩
       · sorry
       · sorry
+
+end extendedFarkas
