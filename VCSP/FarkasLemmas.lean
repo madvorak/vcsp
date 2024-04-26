@@ -1,8 +1,8 @@
 import Mathlib.Data.Matrix.ColumnRowPartitioned
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.Tactic.Have
+import VCSP.Basic
 import VCSP.ExtendedRationals
-import VCSP.Hardness
 
 
 section typeclasses

@@ -1,4 +1,4 @@
-import VCSP.Hardness
+import VCSP.Basic
 import VCSP.LinearProgramming
 import Mathlib.Data.Multiset.Fintype
 
@@ -30,10 +30,6 @@ lemma neg_finset_univ_sum {α R : Type*} [Fintype α] [Ring R] (f : α → R) :
 lemma indicator_of_neg {α R : Type*} [Fintype α] [Ring R] (P : α → Prop) [DecidablePred P] :
     -(fun x => if P x then -1 else (0 : R)) = (fun x => if P x then 1 else 0) := by
   aesop
-
-/-- Nonterminal `aesop` (strongly discouraged to use) -/
-macro (name := aesopnt) "aesopnt" : tactic =>
-  `(tactic| aesop (config := {warnOnNonterminal := false}))
 
 
 variable
