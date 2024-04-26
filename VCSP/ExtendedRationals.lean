@@ -84,8 +84,7 @@ protected def rec {C : ERat → Sort*} (h_bot : C ⊥) (h_Rat : ∀ a : ℚ, C a
   | (a : ℚ) => h_Rat a
   | ⊤ => h_top
 
-/-- The multiplication on `ERat`. Our definition satisfies `0 * x = x * 0 = 0` for any `x`, and
-picks the only sensible value elsewhere. -/
+/-- The multiplication on `ERat`. -/
 protected def mul : ERat → ERat → ERat
   | ⊥, ⊥ => ⊤
   | ⊥, ⊤ => ⊥
@@ -755,16 +754,25 @@ theorem toRat_sub {x y : ERat} (hx : x ≠ ⊤) (h'x : x ≠ ⊥) (hy : y ≠ �
 theorem coe_mul_top_of_pos {x : ℚ} (h : 0 < x) : (x : ERat) * ⊤ = ⊤ :=
   if_pos h
 
-theorem coe_mul_top_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊤ = ⊥ :=
-  (if_neg h.not_lt).trans (if_neg h.ne)
-
 theorem top_mul_coe_of_pos {x : ℚ} (h : 0 < x) : (⊤ : ERat) * x = ⊤ :=
   if_pos h
+
+theorem coe_mul_bot_of_pos {x : ℚ} (h : 0 ≤ x) : (x : ERat) * ⊥ = ⊥ :=
+  if_pos h
+
+theorem bot_mul_coe_of_pos {x : ℚ} (h : 0 ≤ x) : (⊥ : ERat) * x = ⊥ :=
+  if_pos h
+
+theorem coe_mul_top_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊤ = ⊥ :=
+  (if_neg h.not_lt).trans (if_neg h.ne)
 
 theorem top_mul_coe_of_neg {x : ℚ} (h : x < 0) : (⊤ : ERat) * x = ⊥ :=
   (if_neg h.not_lt).trans (if_neg h.ne)
 
 /-
+theorem coe_mul_bot_of_neg {x : ℚ} (h : x ≤ 0) : (x : ERat) * ⊥ = ⊤ :=
+  (if_neg h.not_lt).trans (if_neg h.ne)
+
 theorem mul_top_of_pos : ∀ {x : ERat}, 0 < x → x * ⊤ = ⊤
   | ⊥, h => absurd h not_lt_bot
   | (x : ℚ), h => coe_mul_top_of_pos (ERat.coe_pos.1 h)
@@ -786,15 +794,6 @@ theorem top_mul_of_neg {x : ERat} (h : x < 0) : ⊤ * x = ⊥ := by
   rw [ERat.mul_comm]
   exact mul_top_of_neg h
 #align ERat.top_mul_of_neg ERat.top_mul_of_neg
-
-theorem coe_mul_bot_of_pos {x : ℚ} (h : 0 < x) : (x : ERat) * ⊥ = ⊥ :=
-  if_pos h
-
-theorem coe_mul_bot_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊥ = ⊤ :=
-  (if_neg h.not_lt).trans (if_neg h.ne)
-
-theorem bot_mul_coe_of_pos {x : ℚ} (h : 0 < x) : (⊥ : ERat) * x = ⊥ :=
-  if_pos h
 
 theorem bot_mul_coe_of_neg {x : ℚ} (h : x < 0) : (⊥ : ERat) * x = ⊤ :=
   (if_neg h.not_lt).trans (if_neg h.ne)
@@ -914,7 +913,6 @@ theorem sign_mul (x y : ERat) : sign (x * y) = sign x * sign y := by
   | top_top => rfl
   | symm h => rwa [mul_comm, ERat.mul_comm]
   | coe_coe => simp only [← coe_mul, sign_coe, _root_.sign_mul]
-               sorry
   | top_pos _ h =>
     rw [top_mul_coe_of_pos h, sign_top, one_mul, sign_pos (ERat.coe_pos.2 h)]
   | neg_left h => rw [neg_mul, sign_neg, sign_neg, h, neg_mul]
