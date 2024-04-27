@@ -770,10 +770,12 @@ theorem coe_mul_top_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊤ = ⊥ :=
 theorem top_mul_coe_of_neg {x : ℚ} (h : x < 0) : (⊤ : ERat) * x = ⊥ :=
   (if_neg h.not_lt).trans (if_neg h.ne)
 
-/-
-theorem coe_mul_bot_of_neg {x : ℚ} (h : x ≤ 0) : (x : ERat) * ⊥ = ⊤ :=
-  (if_neg h.not_lt).trans (if_neg h.ne)
+theorem coe_mul_bot_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊥ = ⊤ := by
+  apply if_neg
+  intro cont
+  exact (h.trans_le cont).false
 
+/-
 theorem mul_top_of_pos : ∀ {x : ERat}, 0 < x → x * ⊤ = ⊤
   | ⊥, h => absurd h not_lt_bot
   | (x : ℚ), h => coe_mul_top_of_pos (ERat.coe_pos.1 h)

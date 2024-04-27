@@ -150,11 +150,46 @@ instance : AlmostOrderedSMul ℚ ℚ∞ where
       rw [ERat.coe_lt_coe_iff] at hab ⊢
       rwa [mul_lt_mul_left hc] at hab
 
--- TODO make something useful out of this
+-- TODO find a replacement for this!
 example (c : ℚ) (a : ℚ∞) : -(c • a) = (-c) • a := by
   match a with
-  | ⊤ => sorry
-  | ⊥ => sorry
+  | ⊤ =>
+    show -(c.toERat * ⊤) = (-c).toERat * ⊤
+    if c_neg : c < 0 then
+      rw [ERat.coe_mul_top_of_neg c_neg, ERat.neg_bot, ERat.coe_mul_top_of_pos]
+      rwa [Left.neg_pos_iff]
+    else if c_zero : c = 0 then
+      rewrite [c_zero]
+      rfl
+    else
+      have c_pos : 0 < c
+      · apply lt_of_not_le
+        intro contr
+        cases contr.eq_or_lt with
+        | inl hc => exact c_zero hc
+        | inr hc => exact c_neg hc
+      rw [ERat.coe_mul_top_of_pos c_pos, ERat.neg_top, ERat.coe_mul_top_of_neg]
+      rwa [Left.neg_neg_iff]
+  | ⊥ =>
+    show -(c.toERat * ⊥) = (-c).toERat * ⊥
+    if c_neg : c < 0 then
+      rw [ERat.coe_mul_bot_of_neg c_neg, ERat.neg_top, ERat.coe_mul_bot_of_nng]
+      apply le_of_lt
+      rwa [Left.neg_pos_iff]
+    else if c_zero : c = 0 then
+      rewrite [c_zero]
+      show -(0 * ⊥) = 0 * ⊥
+      show -⊥ = ⊥
+      sorry -- broken
+    else
+      have c_pos : 0 < c
+      · apply lt_of_not_le
+        intro contr
+        cases contr.eq_or_lt with
+        | inl hc => exact c_zero hc
+        | inr hc => exact c_neg hc
+      rw [ERat.coe_mul_bot_of_nng c_pos.le, ERat.neg_bot, ERat.coe_mul_bot_of_neg]
+      rwa [Left.neg_neg_iff]
   | (q : ℚ) =>
     show (-(c * q)).toERat = ((-c) * q).toERat
     rw [neg_mul]
@@ -220,8 +255,8 @@ infixr:73 " ₘ* " => Matrix.mulWei
 lemma Matrix.zero_dot [AddCommMonoid α] [SMulZeroClass γ α] (w : m → γ) :
     (0 : m → α) ᵥ⬝ w = (0 : α) := by
   apply Finset.sum_eq_zero
-  intro x _
-  exact smul_zero (w x)
+  intro i _
+  exact smul_zero (w i)
 
 lemma Matrix.no_bot_dot_zero {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     v ᵥ⬝ (0 : m → ℚ) = (0 : ℚ∞) := by
@@ -264,15 +299,22 @@ lemma Matrix.dot_le_dot_of_nng_right [OrderedAddCommMonoid α] [OrderedSemiring 
   · exact huv i
   · exact hw i
 
+-- TODO add assumptions or remove!
 lemma Matrix.neg_mulWei [AddCommMonoid α] [SMul γ α] [Neg α] [Neg γ] [Fintype m] (A : Matrix m n α) (x : n → γ) :
     (-A) ₘ* x = -(A ₘ* x) := by -- TODO require relationship between `[Neg α]` and `[Neg γ]`
   ext i
-  unfold Matrix.mulWei Matrix.dot
+  --simp_rw [neg_smul] -- would require `Module` which we cannot have
   show
     Finset.univ.sum (fun j : n => x j • -(A i j)) =
     -(Finset.univ.sum (fun j : n => x j • A i j))
-  --simp_rw [neg_smul] -- would require `Module` which we cannot have
-  sorry
+  have outer :
+    Finset.univ.sum (fun j : n => -(x j • A i j)) =
+    -(Finset.univ.sum (fun j : n => x j • A i j))
+  · sorry --apply Finset.sum_neg_distrib -- seems `SubtractionCommMonoid` is missing
+  rw [←outer]
+  congr
+  ext j
+  sorry -- Does not hold!
 
 lemma Matrix.no_bot_mulWei_zero {A : Matrix m n ℚ∞} (hA : ∀ i, ∀ j, A i j ≠ ⊥) :
     A ₘ* (0 : n → ℚ) = (0 : m → ℚ∞) := by
@@ -292,11 +334,12 @@ lemma Matrix.tranpose_mulWei_dot [AddCommMonoid α] [SMul γ α] (A : Matrix m n
   --rw [Finset.sum_comm]
   sorry
 
+-- TODO already for weak duality we need `A` to be "good"
 example (A : Matrix m n ℚ∞) (b : m → ℚ∞) :
     (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ∧ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) →
       False := by
   intro ⟨⟨x, hAx, hx⟩, ⟨y, hAy, hby, hy⟩⟩
-  have hAy' : 0 ≤ Aᵀ ₘ* y
+  have hAy' : 0 ≤ Aᵀ ₘ* y -- TODO handle negations here!!
   · rwa [Matrix.neg_mulWei, Function.neg_le_zero_ERat] at hAy
   rw [← lt_self_iff_false (0 : ℚ∞)]
   calc 0 = 0 ᵥ⬝ x := (Matrix.zero_dot x).symm
@@ -324,19 +367,19 @@ section extendedFarkas
 def Matrix.Good (A : Matrix m n ℚ∞) : Prop :=
   ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ (∃ j : n, A i j = ⊥))
 
-def Matrix.GoodWith (A : Matrix m n ℚ∞) (b : m → ℚ∞) : Prop :=
+def Matrix.Good' (A : Matrix m n ℚ∞) (b : m → ℚ∞) : Prop :=
   ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ b i = ⊥)
 
 lemma Matrix.Good.row {A : Matrix m n ℚ∞} (hA : A.Good) (i : m) :
     (∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j))) ∨ (∃ j, A i j = ⊤) ∨ (∃ j, A i j = ⊥) := by
   sorry
 
-lemma Matrix.GoodWith.row {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hAb : A.GoodWith b) (i : m) :
+lemma Matrix.Good'.row {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hAb : A.Good' b) (i : m) :
     b i = ⊥ → ∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j)) := by
   sorry
 
 set_option maxHeartbeats 333333 in
-theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.GoodWith b) :
+theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.Good' b) :
     (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) := by
   -- filter rows and columns
   let m' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥ } -- non-tautological rows
