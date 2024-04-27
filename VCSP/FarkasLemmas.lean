@@ -236,8 +236,8 @@ lemma Matrix.no_bot_dot_zero {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     rewrite [zero_mul]
     rfl
 
-lemma Matrix.has_bot_dot {v : m → ℚ∞} {i : m} (hvi : v i = ⊥) :
-    v ᵥ⬝ (0 : m → ℚ) = (⊥ : ℚ∞) := by
+lemma Matrix.has_bot_dot_nng {v : m → ℚ∞} {i : m} (hvi : v i = ⊥) {w : m → ℚ} (hw : 0 ≤ w) :
+    v ᵥ⬝ w = (⊥ : ℚ∞) := by
   sorry
 
 lemma Matrix.no_bot_dot_nng {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : m → ℚ} (hw : 0 ≤ w) :
@@ -272,7 +272,7 @@ lemma Matrix.no_bot_mulWei_zero {A : Matrix m n ℚ∞} (hA : ∀ i, ∀ j, A i 
 lemma Matrix.tranpose_mulWei_dot [AddCommMonoid α] [SMul γ α] (A : Matrix m n α) (x : n → γ) (y : m → γ) :
     Aᵀ ₘ* y ᵥ⬝ x = A ₘ* x ᵥ⬝ y := by
   unfold Matrix.mulWei Matrix.dot Matrix.transpose
-  --simp_rw [←Finset.smul_sum]
+  --simp_rw [←Finset.smul_sum] -- missing `DistribSMul`
   --rw [Finset.sum_comm]
   sorry
 
@@ -314,6 +314,7 @@ lemma Matrix.Good.row {A : Matrix m n ℚ∞} (hA : A.Good) (i : m) :
 
 -- TODO is `hAT` necessary?
 -- TODO require that `b i ≠ ⊥` when `⊥ ∈ A i`
+set_option maxHeartbeats 333333 in
 theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAT : Aᵀ.Good) :
     (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) := by
   -- filter rows and columns
@@ -345,7 +346,7 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
         change contr to A i j = ⊤
         sorry
       constructor
-      · rw [Matrix.has_bot_dot hi]
+      · rw [Matrix.has_bot_dot_nng hi (by rfl)]
         exact ERat.bot_lt_zero
       · rfl
   else
@@ -372,7 +373,9 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
             else
               obtain ⟨j, hAij⟩ := hi hbi
               convert_to ⊥ ≤ b i
-              · sorry -- apply Matrix.has_bot_dot hAij
+              · apply Matrix.has_bot_dot_nng hAij
+                intro _
+                aesop
               apply bot_le
         · intro j
           if hj : (∀ i : m', A i j ≠ ⊤) then
