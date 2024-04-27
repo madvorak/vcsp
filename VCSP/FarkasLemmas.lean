@@ -244,6 +244,17 @@ lemma Matrix.no_bot_dot_nng {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : m 
     v ᵥ⬝ w ≠ (⊥ : ℚ∞) := by
   sorry
 
+lemma Matrix.dot_zero_le_zero (v : m → ℚ∞) :
+    v ᵥ⬝ (0 : m → ℚ) ≤ (0 : ℚ∞) := by -- the result is either `0` or `⊥`
+  if hv : ∀ i, v i ≠ ⊥ then
+    rw [Matrix.no_bot_dot_zero hv]
+  else
+    push_neg at hv
+    rw [Matrix.has_bot_dot_nng]
+    · apply bot_le
+    · exact hv.choose_spec
+    · rfl
+
 lemma Matrix.dot_le_dot_of_nng_right [OrderedAddCommMonoid α] [OrderedSemiring γ] [SMulZeroClass γ α] [AlmostOrderedSMul γ α]
     {u v : n → α} (huv : u ≤ v) {w : n → γ} (hw : 0 ≤ w) :
     u ᵥ⬝ w ≤ v ᵥ⬝ w := by
@@ -268,6 +279,11 @@ lemma Matrix.no_bot_mulWei_zero {A : Matrix m n ℚ∞} (hA : ∀ i, ∀ j, A i 
   ext
   apply Matrix.no_bot_dot_zero
   apply hA
+
+lemma Matrix.mulWei_zero_le_zero (A : Matrix m n ℚ∞) :
+    A ₘ* (0 : n → ℚ) ≤ (0 : m → ℚ∞) := by
+  intro i
+  apply Matrix.dot_zero_le_zero
 
 lemma Matrix.tranpose_mulWei_dot [AddCommMonoid α] [SMul γ α] (A : Matrix m n α) (x : n → γ) (y : m → γ) :
     Aᵀ ₘ* y ᵥ⬝ x = A ₘ* x ᵥ⬝ y := by
@@ -338,13 +354,7 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
     · rw [iff_true]
       use 0
       constructor
-      · rw [Matrix.no_bot_mulWei_zero]
-        intro j i -- what was `i'`
-        show -(Aᵀ j i) ≠ ⊥
-        intro contr
-        rw [neg_eq_iff_eq_neg, ERat.neg_bot] at contr
-        change contr to A i j = ⊤
-        sorry
+      · apply Matrix.mulWei_zero_le_zero
       constructor
       · rw [Matrix.has_bot_dot_nng hi (by rfl)]
         exact ERat.bot_lt_zero
