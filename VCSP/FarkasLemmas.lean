@@ -245,7 +245,7 @@ lemma Matrix.no_bot_dot_nng {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : m 
   sorry
 
 lemma Matrix.dot_zero_le_zero (v : m → ℚ∞) :
-    v ᵥ⬝ (0 : m → ℚ) ≤ (0 : ℚ∞) := by -- the result is either `0` or `⊥`
+    v ᵥ⬝ (0 : m → ℚ) ≤ (0 : ℚ∞) := by
   if hv : ∀ i, v i ≠ ⊥ then
     rw [Matrix.no_bot_dot_zero hv]
   else
@@ -324,14 +324,19 @@ section extendedFarkas
 def Matrix.Good (A : Matrix m n ℚ∞) : Prop :=
   ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ (∃ j : n, A i j = ⊥))
 
+def Matrix.GoodWith (A : Matrix m n ℚ∞) (b : m → ℚ∞) : Prop :=
+  ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ b i = ⊥)
+
 lemma Matrix.Good.row {A : Matrix m n ℚ∞} (hA : A.Good) (i : m) :
     (∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j))) ∨ (∃ j, A i j = ⊤) ∨ (∃ j, A i j = ⊥) := by
   sorry
 
--- TODO is `hAT` necessary?
--- TODO require that `b i ≠ ⊥` when `⊥ ∈ A i`
+lemma Matrix.GoodWith.row {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hAb : A.GoodWith b) (i : m) :
+    b i = ⊥ → ∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j)) := by
+  sorry
+
 set_option maxHeartbeats 333333 in
-theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAT : Aᵀ.Good) :
+theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.GoodWith b) :
     (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) := by
   -- filter rows and columns
   let m' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥ } -- non-tautological rows
@@ -374,6 +379,8 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
         · intro i
           if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
             have inequality := ineqalities ⟨i, hi⟩
+            unfold Matrix.mulWei
+            unfold Matrix.mulVec at inequality
             sorry
           else
             push_neg at hi
