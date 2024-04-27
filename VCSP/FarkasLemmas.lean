@@ -57,7 +57,7 @@ notation "ℚ∞" => ERat
 instance : SMulZeroClass ℚ ℚ∞ where
   smul (c : ℚ) (a : ℚ∞) := c.toERat * a
   smul_zero (c : ℚ) := by
-    show (c * 0).toERat = 0
+    show (c * 0).toERat = (0 : ℚ∞)
     rewrite [mul_zero]
     rfl
 
@@ -65,7 +65,37 @@ lemma smul_toERat_eq_mul_toERat (c a : ℚ) : c • a.toERat = (c * a).toERat :=
 
 instance : AlmostOrderedSMul ℚ ℚ∞ where
   smul_le_smul_of_le_of_nng (a b : ℚ∞) (c : ℚ) (hab : a ≤ b) (hc : 0 ≤ c) := by
-    sorry
+    match ha : a with
+    | ⊤ =>
+      match b with
+      | ⊤ => rfl
+      | ⊥ => exact (hab.trans_lt bot_lt_top).false.elim
+      | (_ : ℚ) =>
+        exfalso
+        rw [top_le_iff] at hab
+        cases hab
+    | ⊥ =>
+      show c.toERat * ⊥ ≤ c.toERat * b
+      rw [ERat.coe_mul_bot_of_nng hc]
+      apply bot_le
+    | (p : ℚ) =>
+    match hb : b with
+    | ⊤ =>
+      show (c * p).toERat ≤ c.toERat * ⊤
+      if c_pos : 0 < c then
+        rw [ERat.coe_mul_top_of_pos c_pos]
+        apply le_top
+      else
+        rewrite [←eq_of_le_of_not_lt hc c_pos, zero_mul]
+        rfl
+    | ⊥ =>
+      exfalso
+      rw [le_bot_iff] at hab
+      cases hab
+    | (q : ℚ) =>
+      show (c * p).toERat ≤ (c * q).toERat
+      rw [ERat.coe_le_coe_iff] at hab ⊢
+      exact mul_le_mul_of_nonneg_left hab hc
   smul_lt_smul_of_lt_of_pos (a b : ℚ∞) (c : ℚ) (hab : a < b) (hc : 0 < c) := by
     show c.toERat * a < c.toERat * b
     match ha : a with
@@ -74,7 +104,7 @@ instance : AlmostOrderedSMul ℚ ℚ∞ where
       exact not_top_lt hab
     | ⊥ =>
       convert_to ⊥ < c.toERat * b
-      · exact ERat.coe_mul_bot_of_pos hc.le
+      · exact ERat.coe_mul_bot_of_nng hc.le
       rw [bot_lt_iff_ne_bot] at hab ⊢
       match b with
       | ⊤ => rwa [ERat.coe_mul_top_of_pos hc]
@@ -113,7 +143,7 @@ instance : AlmostOrderedSMul ℚ ℚ∞ where
     | ⊥ =>
       exfalso
       change hab to c.toERat * p.toERat < c.toERat * ⊥
-      rw [ERat.coe_mul_bot_of_pos hc.le] at hab
+      rw [ERat.coe_mul_bot_of_nng hc.le] at hab
       exact not_lt_bot hab
     | (q : ℚ) =>
       change hab to (c * p).toERat < (c * q).toERat
@@ -196,9 +226,15 @@ lemma Matrix.zero_dot [AddCommMonoid α] [SMulZeroClass γ α] (w : m → γ) :
 lemma Matrix.no_bot_dot_zero {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     v ᵥ⬝ (0 : m → ℚ) = (0 : ℚ∞) := by
   apply Finset.sum_eq_zero
-  intro x _
+  intro i _
   rw [Pi.zero_apply]
-  sorry
+  match hvi : v i with
+  | ⊤ => rfl
+  | ⊥ => exact False.elim (hv i hvi)
+  | (q : ℚ) =>
+    show (0 * q).toERat = (0 : ℚ∞)
+    rewrite [zero_mul]
+    rfl
 
 lemma Matrix.has_bot_dot {v : m → ℚ∞} {i : m} (hvi : v i = ⊥) :
     v ᵥ⬝ (0 : m → ℚ) = (⊥ : ℚ∞) := by

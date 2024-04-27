@@ -20,6 +20,7 @@ instance : ZeroLEOneClass ERat := inferInstanceAs (ZeroLEOneClass (WithBot (With
 
 instance : OrderBot ERat := inferInstanceAs (OrderBot (WithBot (WithTop ℚ)))
 instance : OrderTop ERat := inferInstanceAs (OrderTop (WithBot (WithTop ℚ)))
+instance : BoundedOrder ERat := inferInstanceAs (BoundedOrder (WithBot (WithTop ℚ)))
 
 instance : AddCommMonoidWithOne ERat := inferInstanceAs (AddCommMonoidWithOne (WithBot (WithTop ℚ)))
 
@@ -757,10 +758,10 @@ theorem coe_mul_top_of_pos {x : ℚ} (h : 0 < x) : (x : ERat) * ⊤ = ⊤ :=
 theorem top_mul_coe_of_pos {x : ℚ} (h : 0 < x) : (⊤ : ERat) * x = ⊤ :=
   if_pos h
 
-theorem coe_mul_bot_of_pos {x : ℚ} (h : 0 ≤ x) : (x : ERat) * ⊥ = ⊥ :=
+theorem coe_mul_bot_of_nng {x : ℚ} (h : 0 ≤ x) : (x : ERat) * ⊥ = ⊥ :=
   if_pos h
 
-theorem bot_mul_coe_of_pos {x : ℚ} (h : 0 ≤ x) : (⊥ : ERat) * x = ⊥ :=
+theorem bot_mul_coe_of_nng {x : ℚ} (h : 0 ≤ x) : (⊥ : ERat) * x = ⊥ :=
   if_pos h
 
 theorem coe_mul_top_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊤ = ⊥ :=
