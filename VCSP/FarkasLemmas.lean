@@ -9,7 +9,7 @@ section typeclasses
 
 class AlmostOrderedSMul (R M : Type*) [OrderedSemiring R] [OrderedAddCommMonoid M] [SMulZeroClass R M] : Prop where
   /-- Scalar multiplication by positive elements preserves the order. -/
-  smul_lt_smul_of_pos : ∀ a b : M, ∀ c : R, a < b → 0 < c → c • a < c • b
+  smul_lt_smul_of_lt_of_pos : ∀ a b : M, ∀ c : R, a < b → 0 < c → c • a < c • b
   /-- And the opposite direction also holds. -/
   lt_of_smul_lt_smul_of_pos : ∀ a b : M, ∀ c : R, c • a < c • b → 0 < c → a < b
 
@@ -60,8 +60,10 @@ instance : SMulZeroClass ℚ ℚ∞ where
     rewrite [mul_zero]
     rfl
 
+lemma smul_toERat_eq_mul_toERat (c a : ℚ) : c • a.toERat = (c * a).toERat := rfl
+
 instance : AlmostOrderedSMul ℚ ℚ∞ where
-  smul_lt_smul_of_pos (a b : ℚ∞) (c : ℚ) (hab : a < b) (hc : 0 < c) := by
+  smul_lt_smul_of_lt_of_pos (a b : ℚ∞) (c : ℚ) (hab : a < b) (hc : 0 < c) := by
     show c.toERat * a < c.toERat * b
     match ha : a with
     | ⊤ =>
@@ -115,7 +117,29 @@ instance : AlmostOrderedSMul ℚ ℚ∞ where
       rw [ERat.coe_lt_coe_iff] at hab ⊢
       rwa [mul_lt_mul_left hc] at hab
 
-lemma smul_toERat_eq_mul_toERat (c a : ℚ) : c • a.toERat = (c * a).toERat := rfl
+-- TODO almost certainly delete!
+instance : DistribMulAction ℚ ℚ∞ where
+  one_smul := sorry
+  mul_smul (c d : ℚ) (a : ℚ∞) := by
+    show (c * d).toERat * a = c.toERat * (d.toERat * a)
+    match a with
+    | ⊤ => sorry -- does not hold
+    | ⊥ => sorry -- does not hold
+    | (q : ℚ) =>
+      show ((c * d) * q).toERat = (c * (d * q)).toERat
+      rw [mul_assoc]
+  smul_add (c : ℚ) (a b : ℚ∞) := by
+    sorry
+  smul_zero := sorry
+
+-- TODO make something useful out of this
+example (c : ℚ) (a : ℚ∞) : -(c • a) = (-c) • a := by
+  match a with
+  | ⊤ => sorry
+  | ⊥ => sorry
+  | (q : ℚ) =>
+    show (-(c * q)).toERat = ((-c) * q).toERat
+    rw [neg_mul]
 
 lemma Function.neg_nonpos_ERat (x : n → ℚ∞) : -x ≤ 0 ↔ 0 ≤ x := by
   constructor <;> intro hx i <;> specialize hx i
@@ -174,33 +198,28 @@ def Matrix.mulVec'' [AddCommMonoid α] [SMul γ α] (M : Matrix m n α) (w : n �
 infixr:73 " ₘ*ᵥ " => Matrix.mulVec''
 
 
-lemma Matrix.neg_mulVec'' [AddCommMonoid α] [SMul γ α] [Neg α] [Neg γ] [Fintype m] (A : Matrix m n α) (x : n → γ) :
-    (-A) ₘ*ᵥ x = - (A ₘ*ᵥ x) := by -- TODO require relationship between `[Neg α]` and `[Neg γ]`
-  ext i
-  unfold Matrix.mulVec'' Matrix.dotProduct''
-  show
-    Finset.univ.sum (fun j : n => x j • -(A i j)) =
-    -(Finset.univ.sum (fun j : n => x j • A i j))
-  --simp_rw [neg_smul] -- would require `Module` which we cannot have
-  sorry
-
-lemma Matrix.zero_dotProduct'' [AddCommMonoid α] [SMul γ α] [Zero γ] (v : m → α) : v ᵥ⬝ᵥ (0 : m → γ) = (0 : α) := by
-  apply Finset.sum_eq_zero
-  intro x _
-  rw [Pi.zero_apply]
-  --rw [zero_smul] -- TODO require `⊥ ∉ v`
-  sorry
-
-lemma Matrix.dotProduct_zero'' [AddCommMonoid α] [SMulZeroClass γ α] (w : m → γ) : (0 : m → α) ᵥ⬝ᵥ w = (0 : α) := by
+lemma Matrix.zero_dotProduct'' [AddCommMonoid α] [SMulZeroClass γ α] (w : m → γ) :
+    (0 : m → α) ᵥ⬝ᵥ w = (0 : α) := by
   apply Finset.sum_eq_zero
   intro x _
   exact smul_zero (w x)
 
-lemma Matrix.mulVec_zero'' [AddCommMonoid α] [SMul γ α] [Zero γ] (A : Matrix m n α) : A ₘ*ᵥ (0 : n → γ) = (0 : m → α) := by
-  ext -- TODO require `⊥ ∉ A`
-  apply Matrix.zero_dotProduct''
+lemma Matrix.no_bot_dotProduct_zero'' {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
+    v ᵥ⬝ᵥ (0 : m → ℚ) = (0 : ℚ∞) := by
+  apply Finset.sum_eq_zero
+  intro x _
+  rw [Pi.zero_apply]
+  sorry
 
-lemma Matrix.dotProduct_le_dotProduct_of_nonneg_left'' [OrderedAddCommMonoid α] [OrderedSemiring γ]
+lemma Matrix.contains_bot_dotProduct'' {v : m → ℚ∞} {i : m} (hvi : v i = ⊥) :
+    v ᵥ⬝ᵥ (0 : m → ℚ) = (⊥ : ℚ∞) := by
+  sorry
+
+lemma Matrix.no_bot_dotProduct_nonneg'' {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : m → ℚ} (hw : 0 ≤ w) :
+    v ᵥ⬝ᵥ w ≠ (⊥ : ℚ∞) := by
+  sorry
+
+lemma Matrix.dotProduct_le_dotProduct_of_nonneg_right'' [OrderedAddCommMonoid α] [OrderedSemiring γ]
     [SMulZeroClass γ α] [AlmostOrderedSMul γ α]
     {u v : n → α} (huv : u ≤ v) {w : n → γ} (hw : 0 ≤ w) : -- TODO orderings respect something
     u ᵥ⬝ᵥ w ≤ v ᵥ⬝ᵥ w := by
@@ -214,9 +233,25 @@ lemma Matrix.dotProduct_le_dotProduct_of_nonneg_left'' [OrderedAddCommMonoid α]
       sorry -- since we don't have `zero_smul`, we possibly need `≤` axioms in addition to `<` axioms
     else
       apply le_of_lt
-      apply AlmostOrderedSMul.smul_lt_smul_of_pos
+      apply AlmostOrderedSMul.smul_lt_smul_of_lt_of_pos
       · exact lt_of_le_of_ne (huv i) huvi
       · exact lt_of_le_of_ne (hw i) (Ne.symm hwi)
+
+lemma Matrix.neg_mulVec'' [AddCommMonoid α] [SMul γ α] [Neg α] [Neg γ] [Fintype m] (A : Matrix m n α) (x : n → γ) :
+    (-A) ₘ*ᵥ x = - (A ₘ*ᵥ x) := by -- TODO require relationship between `[Neg α]` and `[Neg γ]`
+  ext i
+  unfold Matrix.mulVec'' Matrix.dotProduct''
+  show
+    Finset.univ.sum (fun j : n => x j • -(A i j)) =
+    -(Finset.univ.sum (fun j : n => x j • A i j))
+  --simp_rw [neg_smul] -- would require `Module` which we cannot have
+  sorry
+
+lemma Matrix.no_bot_mulVec_zero'' {A : Matrix m n ℚ∞} (hA : ∀ i, ∀ j, A i j ≠ ⊥) :
+    A ₘ*ᵥ (0 : n → ℚ) = (0 : m → ℚ∞) := by
+  ext
+  apply Matrix.no_bot_dotProduct_zero''
+  apply hA
 
 lemma Matrix.tranpose_mulVec_dotProduct'' [AddCommMonoid α] [SMul γ α] (A : Matrix m n α) (x : n → γ) (y : m → γ) :
     Aᵀ ₘ*ᵥ y ᵥ⬝ᵥ x = A ₘ*ᵥ x ᵥ⬝ᵥ y := by
@@ -232,10 +267,10 @@ example (A : Matrix m n ℚ∞) (b : m → ℚ∞) :
   have hAy' : 0 ≤ Aᵀ ₘ*ᵥ y
   · rwa [Matrix.neg_mulVec'', Function.neg_nonpos_ERat] at hAy
   rw [← lt_self_iff_false (0 : ℚ∞)]
-  calc 0 = 0 ᵥ⬝ᵥ x := (Matrix.dotProduct_zero'' x).symm
-    _ ≤ (Aᵀ ₘ*ᵥ y) ᵥ⬝ᵥ x := Matrix.dotProduct_le_dotProduct_of_nonneg_left'' hAy' hx
+  calc 0 = 0 ᵥ⬝ᵥ x := (Matrix.zero_dotProduct'' x).symm
+    _ ≤ (Aᵀ ₘ*ᵥ y) ᵥ⬝ᵥ x := Matrix.dotProduct_le_dotProduct_of_nonneg_right'' hAy' hx
     _ = (A ₘ*ᵥ x) ᵥ⬝ᵥ y := Matrix.tranpose_mulVec_dotProduct'' ..
-    _ ≤ b ᵥ⬝ᵥ y := Matrix.dotProduct_le_dotProduct_of_nonneg_left'' hAx hy
+    _ ≤ b ᵥ⬝ᵥ y := Matrix.dotProduct_le_dotProduct_of_nonneg_right'' hAx hy
     _ < 0 := hby
 
 -- notation test
@@ -261,6 +296,8 @@ lemma Matrix.Good.row {A : Matrix m n ℚ∞} (hA : A.Good) (i : m) :
     (∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j))) ∨ (∃ j, A i j = ⊤) ∨ (∃ j, A i j = ⊥) := by
   sorry
 
+-- TODO is `hAT` necessary?
+-- TODO require that `b i ≠ ⊥` when `⊥ ∈ A i`
 theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAT : Aᵀ.Good) :
     (∃ x : n → ℚ, A ₘ*ᵥ x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ*ᵥ y ≤ 0 ∧ b ᵥ⬝ᵥ y < 0 ∧ 0 ≤ y) := by
   -- filter rows and columns
@@ -279,15 +316,21 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
     · rw [iff_false, not_exists]
       intro x ⟨hAxb, hx⟩
       specialize hAxb i.val
-      rw [hi] at hAxb
-      -- the `i`th line does not contain `⊥` → contradiction with `hAxb`
-      sorry
+      rw [hi, le_bot_iff] at hAxb
+      exact Matrix.no_bot_dotProduct_nonneg'' i.property.right hx hAxb
     · rw [iff_true]
       use 0
       constructor
-      · rw [Matrix.mulVec_zero'']
+      · rw [Matrix.no_bot_mulVec_zero'']
+        intro j i -- what was `i'`
+        show -(Aᵀ j i) ≠ ⊥
+        intro contr
+        rw [neg_eq_iff_eq_neg, ERat.neg_bot] at contr
+        change contr to A i j = ⊤
+        sorry
       constructor
-      · sorry -- `⊥ < 0` OK
+      · rw [Matrix.contains_bot_dotProduct'' hi]
+        exact ERat.bot_lt_zero
       · rfl
   else
     let b' : m' → ℚ := -- the new RHS
@@ -313,7 +356,7 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
             else
               obtain ⟨j, hAij⟩ := hi hbi
               convert_to ⊥ ≤ b i
-              · sorry
+              · sorry -- apply Matrix.contains_bot_dotProduct'' hAij
               apply bot_le
         · intro j
           if hj : (∀ i : m', A i j ≠ ⊤) then
