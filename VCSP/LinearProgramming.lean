@@ -145,7 +145,7 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP n
     constructor
     · apply le_antisymm ineqPos
       intro i
-      have almost : - ((P.A *ᵥ x) i) ≤ - (P.b i)
+      have almost : -((P.A *ᵥ x) i) ≤ -(P.b i)
       · specialize ineqNeg i
         rwa [Matrix.neg_mulVec] at ineqNeg
       rwa [neg_le_neg_iff] at almost
@@ -160,7 +160,7 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP n
       · exact equ.le
       rw [Matrix.neg_mulVec]
       intro i
-      show - ((P.A *ᵥ x) i) ≤ - (P.b i)
+      show -((P.A *ᵥ x) i) ≤ -(P.b i)
       rw [neg_le_neg_iff]
       exact equ.symm.le i
     · exact nonneg
