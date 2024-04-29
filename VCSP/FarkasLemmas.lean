@@ -72,10 +72,7 @@ instance : AlmostOrderedSMul ℚ ℚ∞ where
       match b with
       | ⊤ => rfl
       | ⊥ => exact (hab.trans_lt bot_lt_top).false.elim
-      | (_ : ℚ) =>
-        exfalso
-        rw [top_le_iff] at hab
-        cases hab
+      | (_ : ℚ) => simp [top_le_iff] at hab
     | ⊥ =>
       show c.toERat * ⊥ ≤ c.toERat * b
       rw [ERat.coe_mul_bot_of_nng hc]
@@ -151,12 +148,6 @@ instance : AlmostOrderedSMul ℚ ℚ∞ where
       change hab to (c * p).toERat < (c * q).toERat
       rw [ERat.coe_lt_coe_iff] at hab ⊢
       rwa [mul_lt_mul_left hc] at hab
-
-lemma toERat_le_toERat {x y : ℚ} (hxy : x ≤ y) : x.toERat ≤ y.toERat := by
-  rwa [ERat.coe_le_coe_iff]
-
-lemma toERat_lt_toERat {x y : ℚ} (hxy : x < y) : x.toERat < y.toERat := by
-  rwa [ERat.coe_lt_coe_iff]
 
 lemma Function.neg_le_zero_ERat (x : n → ℚ∞) : -x ≤ 0 ↔ 0 ≤ x := by
   constructor <;> intro hx i <;> specialize hx i
@@ -351,7 +342,7 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
         constructor
         · intro i
           if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
-            convert toERat_le_toERat (ineqalities ⟨i, hi⟩)
+            convert ERat.coe_le_coe_iff.mpr (ineqalities ⟨i, hi⟩)
             · unfold Matrix.mulVec Matrix.dotProduct Matrix.mulWeig Matrix.dotProd
               simp_rw [dite_smul]
               rw [Finset.sum_dite]
@@ -363,12 +354,8 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
               · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
                 apply Finset.subtype_univ_sum_eq_subtype_univ_sum
                 · simp [Finset.mem_filter]
-                · intro j hj _
-                  convert_to
-                    (A' ⟨i, hi⟩ ⟨j, hj⟩ * x ⟨j, hj⟩).toERat =
-                    (x ⟨j, _⟩).toERat * A i j
+                · intros
                   rw [mul_comm, ERat.coe_mul]
-                  congr
                   simp only [A', Matrix.of_apply]
                   split <;> rename_i hAij <;> simp only [hAij]
                   · rfl
