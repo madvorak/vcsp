@@ -159,6 +159,12 @@ protected theorem one_mul : ∀ x : ERat, 1 * x = x
   | ⊥ => rfl
   | (x : ℚ) => congr_arg Rat.toERat (one_mul x)
 
+theorem zero_mul {x : ERat} (hx : x ≠ ⊥) : 0 * x = 0 :=
+  match x with
+  | ⊤ => rfl
+  | ⊥ => False.elim (hx rfl)
+  | (x : ℚ) => congr_arg Rat.toERat (Rat.zero_mul x)
+
 /-protected theorem zero_mul : ∀ x : ERat, 0 * x = 0
   | ⊤ => rfl
   | ⊥ => rfl

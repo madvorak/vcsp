@@ -1,5 +1,6 @@
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.Tactic.Have
+import Mathlib.Data.Finset.Pointwise
 import VCSP.Basic
 import VCSP.ExtendedRationals
 
@@ -62,6 +63,8 @@ instance : SMulZeroClass ℚ ℚ∞ where
     rfl
 
 lemma smul_toERat_eq_mul_toERat (c a : ℚ) : c • a.toERat = (c * a).toERat := rfl
+
+lemma zero_smul_ERat_neq_bot {a : ℚ∞} (ha : a ≠ ⊥) : (0 : ℚ) • a = 0 := ERat.zero_mul ha
 
 instance : AlmostOrderedSMul ℚ ℚ∞ where
   smul_le_smul_of_le_of_nng (a b : ℚ∞) (c : ℚ) (hab : a ≤ b) (hc : 0 ≤ c) := by
@@ -189,6 +192,10 @@ lemma Function.neg_le_zero_ERat (x : n → ℚ∞) : -x ≤ 0 ↔ 0 ≤ x := by
       rw [ERat.neg_le, neg_zero]
       exact hx
 
+lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (f : ι → ℚ) (s : Finset ι) :
+    (s.sum f).toERat = s.sum (fun i : ι => (f i).toERat) := by
+  sorry
+
 end instERat
 
 
@@ -196,31 +203,31 @@ section heteroMatrixProducts
 
 variable {α γ : Type*}
 
-/-- `Matrix.dot v w` is the sum of the element-wise products `w i • v i`
+/-- `Matrix.dotProd v w` is the sum of the element-wise products `w i • v i`
     (mnemonic: "vector times weights"). -/
-def Matrix.dot [AddCommMonoid α] [SMul γ α] (v : m → α) (w : m → γ) : α :=
+def Matrix.dotProd [AddCommMonoid α] [SMul γ α] (v : m → α) (w : m → γ) : α :=
   Finset.univ.sum (fun i : m => w i • v i)
 
 /- The precedence of 72 comes immediately after ` • ` for `SMul.smul`
-   and ` ₘ* ` for `Matrix.mulWei` (both have precedence of 73)
+   and ` ₘ* ` for `Matrix.mulWeig` (both have precedence of 73)
    so that `a • v ᵥ⬝ c • w` is parsed as `(a • v) ᵥ⬝ (c • w)` and
    that `A ₘ* v ᵥ⬝ w` is parsed as `(A ₘ* v) ᵥ⬝ w` and
    that `v ᵥ⬝ C *ᵥ w` is parsed as `v ᵥ⬝ (C *ᵥ w)` and
    that `v ᵥ⬝ w ᵥ* C` is parsed as `v ᵥ⬝ (w ᵥ* C)` here. -/
-infixl:72 " ᵥ⬝ " => Matrix.dot
+infixl:72 " ᵥ⬝ " => Matrix.dotProd
 
-def Matrix.mulWei [AddCommMonoid α] [SMul γ α] (M : Matrix m n α) (w : n → γ) (i : m) : α :=
+def Matrix.mulWeig [AddCommMonoid α] [SMul γ α] (M : Matrix m n α) (w : n → γ) (i : m) : α :=
   (fun j : n => M i j) ᵥ⬝ w
-infixr:73 " ₘ* " => Matrix.mulWei
+infixr:73 " ₘ* " => Matrix.mulWeig
 
 
-lemma Matrix.zero_dot [AddCommMonoid α] [SMulZeroClass γ α] (w : m → γ) :
+lemma Matrix.zero_dotProd [AddCommMonoid α] [SMulZeroClass γ α] (w : m → γ) :
     (0 : m → α) ᵥ⬝ w = (0 : α) := by
   apply Finset.sum_eq_zero
   intro i _
   exact smul_zero (w i)
 
-lemma Matrix.no_bot_dot_zero {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
+lemma Matrix.no_bot_dotProd_zero {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     v ᵥ⬝ (0 : m → ℚ) = (0 : ℚ∞) := by
   apply Finset.sum_eq_zero
   intro i _
@@ -233,26 +240,26 @@ lemma Matrix.no_bot_dot_zero {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     rewrite [zero_mul]
     rfl
 
-lemma Matrix.has_bot_dot_nng {v : m → ℚ∞} {i : m} (hvi : v i = ⊥) {w : m → ℚ} (hw : 0 ≤ w) :
+lemma Matrix.has_bot_dotProd_nng {v : m → ℚ∞} {i : m} (hvi : v i = ⊥) {w : m → ℚ} (hw : 0 ≤ w) :
     v ᵥ⬝ w = (⊥ : ℚ∞) := by
   sorry
 
-lemma Matrix.no_bot_dot_nng {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : m → ℚ} (hw : 0 ≤ w) :
+lemma Matrix.no_bot_dotProd_nng {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : m → ℚ} (hw : 0 ≤ w) :
     v ᵥ⬝ w ≠ (⊥ : ℚ∞) := by
   sorry
 
-lemma Matrix.dot_zero_le_zero (v : m → ℚ∞) :
+lemma Matrix.dotProd_zero_le_zero (v : m → ℚ∞) :
     v ᵥ⬝ (0 : m → ℚ) ≤ (0 : ℚ∞) := by
   if hv : ∀ i, v i ≠ ⊥ then
-    rw [Matrix.no_bot_dot_zero hv]
+    rw [Matrix.no_bot_dotProd_zero hv]
   else
     push_neg at hv
-    rw [Matrix.has_bot_dot_nng]
+    rw [Matrix.has_bot_dotProd_nng]
     · apply bot_le
     · exact hv.choose_spec
     · rfl
 
-lemma Matrix.dot_le_dot_of_nng_right [OrderedAddCommMonoid α] [OrderedSemiring γ] [SMulZeroClass γ α] [AlmostOrderedSMul γ α]
+lemma Matrix.dotProd_le_dotProd_of_nng_right [OrderedAddCommMonoid α] [OrderedSemiring γ] [SMulZeroClass γ α] [AlmostOrderedSMul γ α]
     {u v : n → α} (huv : u ≤ v) {w : n → γ} (hw : 0 ≤ w) :
     u ᵥ⬝ w ≤ v ᵥ⬝ w := by
   apply Finset.sum_le_sum
@@ -261,16 +268,16 @@ lemma Matrix.dot_le_dot_of_nng_right [OrderedAddCommMonoid α] [OrderedSemiring 
   · exact huv i
   · exact hw i
 
-lemma Matrix.no_bot_mulWei_zero {A : Matrix m n ℚ∞} (hA : ∀ i, ∀ j, A i j ≠ ⊥) :
+lemma Matrix.no_bot_mulWeig_zero {A : Matrix m n ℚ∞} (hA : ∀ i, ∀ j, A i j ≠ ⊥) :
     A ₘ* (0 : n → ℚ) = (0 : m → ℚ∞) := by
   ext
-  apply Matrix.no_bot_dot_zero
+  apply Matrix.no_bot_dotProd_zero
   apply hA
 
-lemma Matrix.mulWei_zero_le_zero (A : Matrix m n ℚ∞) :
+lemma Matrix.mulWeig_zero_le_zero (A : Matrix m n ℚ∞) :
     A ₘ* (0 : n → ℚ) ≤ (0 : m → ℚ∞) := by
   intro i
-  apply Matrix.dot_zero_le_zero
+  apply Matrix.dotProd_zero_le_zero
 
 -- notation test
 
@@ -302,8 +309,6 @@ lemma Matrix.Good'.row {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hAb : A.Good'
     b i = ⊥ → ∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j)) := by
   sorry
 
-
-
 set_option maxHeartbeats 333333 in
 theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.Good' b) :
     (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) := by
@@ -324,13 +329,13 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
       intro x ⟨hAxb, hx⟩
       specialize hAxb i.val
       rw [hi, le_bot_iff] at hAxb
-      exact Matrix.no_bot_dot_nng i.property.right hx hAxb
+      exact Matrix.no_bot_dotProd_nng i.property.right hx hAxb
     · rw [iff_true]
       use 0
       constructor
-      · apply Matrix.mulWei_zero_le_zero
+      · apply Matrix.mulWeig_zero_le_zero
       constructor
-      · rw [Matrix.has_bot_dot_nng hi (by rfl)]
+      · rw [Matrix.has_bot_dotProd_nng hi (by rfl)]
         exact ERat.bot_lt_zero
       · rfl
   else
@@ -348,7 +353,18 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
         · intro i
           if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
             convert toERat_le_toERat (ineqalities ⟨i, hi⟩)
-            · sorry
+            · unfold Matrix.mulVec Matrix.dotProduct Matrix.mulWeig Matrix.dotProd
+              simp_rw [dite_smul]
+              rw [Finset.sum_dite]
+              convert add_zero _
+              · apply Finset.sum_eq_zero
+                intro j _
+                apply zero_smul_ERat_neq_bot
+                exact hi.right j.val
+              · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
+                apply todo
+                intro _
+                simp [Finset.mem_filter]
             · simp only [b']
               split <;> rename_i hbi <;> simp only [hbi]
               · rfl
@@ -367,7 +383,7 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
             else
               obtain ⟨j, hAij⟩ := hi hbi
               convert_to ⊥ ≤ b i
-              · apply Matrix.has_bot_dot_nng hAij
+              · apply Matrix.has_bot_dotProd_nng hAij
                 intro _
                 aesop
               apply bot_le

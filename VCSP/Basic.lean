@@ -75,6 +75,12 @@ lemma Multiset.summap_lt_summap [OrderedCancelAddCommMonoid β] {s : Multiset α
     s.summap f < s.summap g :=
   Multiset.sum_lt_sum_of_nonempty hs hfg
 
+lemma todo [Fintype α] [AddCommMonoid β] {p q : α → Prop} (hpq : ∀ a : α, p a ↔ q a)
+    [Fintype { a // p a }] [Fintype { a // q a }] -- TODO automate
+    (f : { a : α // p a } → β) (g : { a : α // q a } → β) :
+    Finset.univ.sum f = Finset.univ.sum g := by
+  sorry
+
 end multiset_utils
 
 
