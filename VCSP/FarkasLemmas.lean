@@ -150,6 +150,12 @@ instance : AlmostOrderedSMul ℚ ℚ∞ where
       rw [ERat.coe_lt_coe_iff] at hab ⊢
       rwa [mul_lt_mul_left hc] at hab
 
+lemma toERat_le_toERat {x y : ℚ} (hxy : x ≤ y) : x.toERat ≤ y.toERat := by
+  rwa [ERat.coe_le_coe_iff]
+
+lemma toERat_lt_toERat {x y : ℚ} (hxy : x < y) : x.toERat < y.toERat := by
+  rwa [ERat.coe_lt_coe_iff]
+
 lemma Function.neg_le_zero_ERat (x : n → ℚ∞) : -x ≤ 0 ↔ 0 ≤ x := by
   constructor <;> intro hx i <;> specialize hx i
   · rw [Pi.neg_apply] at hx
@@ -296,6 +302,8 @@ lemma Matrix.Good'.row {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hAb : A.Good'
     b i = ⊥ → ∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j)) := by
   sorry
 
+
+
 set_option maxHeartbeats 333333 in
 theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.Good' b) :
     (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) := by
@@ -339,10 +347,18 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
         constructor
         · intro i
           if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
-            have inequality := ineqalities ⟨i, hi⟩
-            unfold Matrix.mulWei
-            unfold Matrix.mulVec at inequality
-            sorry
+            convert toERat_le_toERat (ineqalities ⟨i, hi⟩)
+            · sorry
+            · simp only [b']
+              split <;> rename_i hbi <;> simp only [hbi]
+              · rfl
+              · exfalso
+                apply hbot
+                use ⟨i, hi⟩
+                exact hbi
+              · exfalso
+                apply hi.left
+                exact hbi
           else
             push_neg at hi
             if hbi : b i = ⊤ then
