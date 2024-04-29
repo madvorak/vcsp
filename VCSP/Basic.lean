@@ -1,4 +1,5 @@
 import Mathlib.Combinatorics.Optimization.ValuedCSP
+import Mathlib.Tactic.Have
 
 
 section better_notation
@@ -75,12 +76,15 @@ lemma Multiset.summap_lt_summap [OrderedCancelAddCommMonoid β] {s : Multiset α
     s.summap f < s.summap g :=
   Multiset.sum_lt_sum_of_nonempty hs hfg
 
-lemma todo [Fintype α] [AddCommMonoid β] {p q : α → Prop} (hpq : ∀ a : α, p a ↔ q a)
-    [Fintype { a // p a }] [Fintype { a // q a }] -- TODO automate
+lemma Finset.subtype_univ_sum_eq_subtype_univ_sum {p q : α → Prop} (hpq : p = q)
+    [Fintype { a : α // p a }] [Fintype { a : α // q a }] [AddCommMonoid β]
     {f : { a : α // p a } → β} {g : { a : α // q a } → β}
     (hfg : ∀ a : α, ∀ hpa : p a, ∀ hqa : q a, f ⟨a, hpa⟩ = g ⟨a, hqa⟩) :
     Finset.univ.sum f = Finset.univ.sum g := by
-  sorry
+  subst hpq
+  convert rfl
+  ext
+  simp_all only
 
 end multiset_utils
 

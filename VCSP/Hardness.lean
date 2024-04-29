@@ -1,6 +1,5 @@
 import VCSP.Basic
 import VCSP.Expressibility
-import Mathlib.Tactic.Have
 
 
 variable {D C : Type*} [Nonempty D] [Fintype D]

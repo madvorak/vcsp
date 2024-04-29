@@ -1,5 +1,4 @@
 import Mathlib.LinearAlgebra.Matrix.DotProduct
-import Mathlib.Tactic.Have
 import Mathlib.Data.Finset.Pointwise
 import VCSP.Basic
 import VCSP.ExtendedRationals
@@ -362,12 +361,11 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
                 apply zero_smul_ERat_neq_bot
                 exact hi.right j.val
               · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
-                apply todo
-                · intro _
-                  simp [Finset.mem_filter]
-                · intro j hjl hjr
+                apply Finset.subtype_univ_sum_eq_subtype_univ_sum
+                · simp [Finset.mem_filter]
+                · intro j hj _
                   convert_to
-                    (A' ⟨i, hi⟩ ⟨j, hjl⟩ * x ⟨j, hjl⟩).toERat =
+                    (A' ⟨i, hi⟩ ⟨j, hj⟩ * x ⟨j, hj⟩).toERat =
                     (x ⟨j, _⟩).toERat * A i j
                   rw [mul_comm, ERat.coe_mul]
                   congr

@@ -1,6 +1,6 @@
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.Data.Matrix.ColumnRowPartitioned
-import Mathlib.Tactic.Have
+import VCSP.Basic
 
 open scoped Matrix
 
