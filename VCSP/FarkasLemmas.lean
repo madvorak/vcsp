@@ -309,7 +309,7 @@ lemma Matrix.Good'.row {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hAb : A.Good'
     b i = ⊥ → ∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j)) := by
   sorry
 
-set_option maxHeartbeats 333333 in
+set_option maxHeartbeats 555555 in
 theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.Good' b) :
     (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) := by
   -- filter rows and columns
@@ -363,8 +363,22 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
                 exact hi.right j.val
               · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
                 apply todo
-                intro _
-                simp [Finset.mem_filter]
+                · intro _
+                  simp [Finset.mem_filter]
+                · intro j hjl hjr
+                  convert_to
+                    (A' ⟨i, hi⟩ ⟨j, hjl⟩ * x ⟨j, hjl⟩).toERat =
+                    (x ⟨j, _⟩).toERat * A i j
+                  rw [mul_comm, ERat.coe_mul]
+                  congr
+                  simp only [A', Matrix.of_apply]
+                  split <;> rename_i hAij <;> simp only [hAij]
+                  · rfl
+                  · exfalso
+                    apply hi.right
+                    exact hAij
+                  · exfalso
+                    aesop
             · simp only [b']
               split <;> rename_i hbi <;> simp only [hbi]
               · rfl

@@ -77,7 +77,8 @@ lemma Multiset.summap_lt_summap [OrderedCancelAddCommMonoid β] {s : Multiset α
 
 lemma todo [Fintype α] [AddCommMonoid β] {p q : α → Prop} (hpq : ∀ a : α, p a ↔ q a)
     [Fintype { a // p a }] [Fintype { a // q a }] -- TODO automate
-    (f : { a : α // p a } → β) (g : { a : α // q a } → β) :
+    {f : { a : α // p a } → β} {g : { a : α // q a } → β}
+    (hfg : ∀ a : α, ∀ hpa : p a, ∀ hqa : q a, f ⟨a, hpa⟩ = g ⟨a, hqa⟩) :
     Finset.univ.sum f = Finset.univ.sum g := by
   sorry
 
