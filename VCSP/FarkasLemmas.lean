@@ -283,7 +283,7 @@ example : A ₘ* v ᵥ⬝ w = (A ₘ* v) ᵥ⬝ w := rfl
 end heteroMatrixProducts
 
 
-section extendedFarkas
+section generalizedFarkas
 
 def Matrix.Good (A : Matrix m n ℚ∞) : Prop :=
   ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ (∃ j : n, A i j = ⊥))
@@ -300,7 +300,7 @@ lemma Matrix.Good'.row {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hAb : A.Good'
   sorry
 
 set_option maxHeartbeats 555555 in
-theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.Good' b) :
+theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.Good' b) :
     (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) := by
   -- filter rows and columns
   let m' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥ } -- non-tautological rows
@@ -337,63 +337,91 @@ theorem generalizedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Goo
         | ⊤ => False.elim (i.property.left hbi)
     convert standardFarkas A' b'
     · constructor <;> intro ⟨x, ineqalities, hx⟩
-      · sorry
+      · use (fun j : n' => x j.val)
+        constructor; swap
+        · intro j
+          exact hx j.val
+        intro i
+        rw [← ERat.coe_le_coe_iff]
+        convert ineqalities i.val; swap
+        simp only [b']
+        split <;> rename_i hbi <;> simp only [hbi]
+        · rfl
+        · exfalso
+          apply hbot
+          use i
+          exact hbi
+        · exfalso
+          apply i.property.left
+          exact hbi
+        simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
+        rw [Finset.sum_toERat]
+        /-
+        TODO
+        1. show which summands on the RHS are forced to be zero
+        2. make it a `Finset.sum` of `dite` of ...
+        3. split the `Finset.sum` into two `Finset.sum`s
+        4. `convert add_zero _`
+        5. discharge the trivial goal
+        6. `apply Finset.subtype_univ_sum_eq_subtype_univ_sum`
+        -/
+        sorry
       · use (fun j : n => if hj : (∀ i : m', A i j ≠ ⊤) then x ⟨j, hj⟩ else 0)
-        constructor
-        · intro i
-          if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
-            convert ERat.coe_le_coe_iff.mpr (ineqalities ⟨i, hi⟩)
-            · unfold Matrix.mulVec Matrix.dotProduct Matrix.mulWeig Matrix.dotProd
-              simp_rw [dite_smul]
-              rw [Finset.sum_dite]
-              convert add_zero _
-              · apply Finset.sum_eq_zero
-                intro j _
-                apply zero_smul_ERat_neq_bot
-                exact hi.right j.val
-              · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
-                apply Finset.subtype_univ_sum_eq_subtype_univ_sum
-                · simp [Finset.mem_filter]
-                · intros
-                  rw [mul_comm, ERat.coe_mul]
-                  simp only [A', Matrix.of_apply]
-                  split <;> rename_i hAij <;> simp only [hAij]
-                  · rfl
-                  · exfalso
-                    apply hi.right
-                    exact hAij
-                  · exfalso
-                    aesop
-            · simp only [b']
-              split <;> rename_i hbi <;> simp only [hbi]
-              · rfl
-              · exfalso
-                apply hbot
-                use ⟨i, hi⟩
-                exact hbi
-              · exfalso
-                apply hi.left
-                exact hbi
-          else
-            push_neg at hi
-            if hbi : b i = ⊤ then
-              rw [hbi]
-              apply le_top
-            else
-              obtain ⟨j, hAij⟩ := hi hbi
-              convert_to ⊥ ≤ b i
-              · apply Matrix.has_bot_dotProd_nng hAij
-                intro _
-                aesop
-              apply bot_le
+        constructor; swap
         · intro j
           if hj : (∀ i : m', A i j ≠ ⊤) then
             convert hx ⟨j, hj⟩
             simp [hj]
           else
             aesop
+        intro i
+        if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
+          convert ERat.coe_le_coe_iff.mpr (ineqalities ⟨i, hi⟩)
+          · unfold Matrix.mulVec Matrix.dotProduct Matrix.mulWeig Matrix.dotProd
+            simp_rw [dite_smul]
+            rw [Finset.sum_dite]
+            convert add_zero _
+            · apply Finset.sum_eq_zero
+              intro j _
+              apply zero_smul_ERat_neq_bot
+              exact hi.right j.val
+            · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
+              apply Finset.subtype_univ_sum_eq_subtype_univ_sum
+              · simp [Finset.mem_filter]
+              · intros
+                rw [mul_comm, ERat.coe_mul]
+                simp only [A', Matrix.of_apply]
+                split <;> rename_i hAij <;> simp only [hAij]
+                · rfl
+                · exfalso
+                  apply hi.right
+                  exact hAij
+                · exfalso
+                  aesop
+          · simp only [b']
+            split <;> rename_i hbi <;> simp only [hbi]
+            · rfl
+            · exfalso
+              apply hbot
+              use ⟨i, hi⟩
+              exact hbi
+            · exfalso
+              apply hi.left
+              exact hbi
+        else
+          push_neg at hi
+          if hbi : b i = ⊤ then
+            rw [hbi]
+            apply le_top
+          else
+            obtain ⟨j, hAij⟩ := hi hbi
+            convert_to ⊥ ≤ b i
+            · apply Matrix.has_bot_dotProd_nng hAij
+              intro _
+              aesop
+            apply bot_le
     · constructor <;> intro ⟨y, ineqalities, sharpine, hy⟩
       · sorry
       · sorry
 
-end extendedFarkas
+end generalizedFarkas
