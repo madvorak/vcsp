@@ -355,18 +355,33 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
         intro i
         rw [← ERat.coe_le_coe_iff]
         convert ineqalities i.val; swap
-        simp only [b']
-        split <;> rename_i hbi <;> simp only [hbi]
-        · rfl
-        · exfalso
-          apply hbot
-          use i
-          exact hbi
-        · exfalso
-          apply i.property.left
-          exact hbi
+        · simp only [b']
+          split <;> rename_i hbi <;> simp only [hbi]
+          · rfl
+          · exfalso
+            apply hbot
+            use i
+            exact hbi
+          · exfalso
+            apply i.property.left
+            exact hbi
         simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
         rw [Finset.sum_toERat]
+        show
+          Finset.univ.sum (fun j' : n' => (A' i j' * x j'.val).toERat) =
+          Finset.univ.sum (fun j : n => (x j).toERat * A i.val j)
+        --conv => rhs; congr; rfl; ext; rw [mul_comm]
+        have zeroes : ∀ j : n, A i.val j = ⊤ → x j = 0
+        · intro j hyp
+          obtain ⟨_, hq⟩ : ∃ q : ℚ, b i = q.toERat
+          · sorry
+          apply Matrix.no_bot_has_top_dotProd_nng_le
+          · sorry
+          · exact hyp
+          · exact hx
+          · exact hq ▸ ineqalities i
+        --rw [←Finset.sum_dite]
+        sorry
         /-
         TODO
         1. show which summands on the RHS are forced to be zero
@@ -376,7 +391,6 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
         5. discharge the trivial goal
         6. `apply Finset.subtype_univ_sum_eq_subtype_univ_sum`
         -/
-        sorry
       · use (fun j : n => if hj : (∀ i : m', A i j ≠ ⊤) then x ⟨j, hj⟩ else 0)
         constructor; swap
         · intro j
