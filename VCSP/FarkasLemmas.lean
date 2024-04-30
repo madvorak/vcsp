@@ -238,6 +238,17 @@ lemma Matrix.no_bot_dotProd_nng {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w 
     v ᵥ⬝ w ≠ (⊥ : ℚ∞) := by
   sorry
 
+lemma Matrix.no_bot_has_top_dotProd_le {v : m → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : m} (hvi : v i = ⊤)
+    {w : m → ℚ} {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
+    w i ≤ 0 := by
+  -- ERat.top_mul_coe_of_pos
+  sorry
+
+lemma Matrix.no_bot_has_top_dotProd_nng_le {v : m → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : m} (hvi : v i = ⊤)
+    {w : m → ℚ} (hw : 0 ≤ w) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
+    w i = 0 :=
+  le_antisymm (Matrix.no_bot_has_top_dotProd_le hv hvi hq) (hw i)
+
 lemma Matrix.dotProd_zero_le_zero (v : m → ℚ∞) :
     v ᵥ⬝ (0 : m → ℚ) ≤ (0 : ℚ∞) := by
   if hv : ∀ i, v i ≠ ⊥ then
