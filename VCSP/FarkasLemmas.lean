@@ -307,43 +307,43 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
     (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) := by
   -- filter rows and columns
   let m' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥ } -- non-tautological rows
-  let n' : Type := { j : n // ∀ i : m', A i j ≠ ⊤ } -- columns that allow non-zero values
+  let n' : Type := { j : n // ∀ i' : m', A i'.val j ≠ ⊤ } -- columns that allow non-zero values
   let A' : Matrix m' n' ℚ := -- the new matrix
-    Matrix.of (fun i : m' => fun j : n' =>
-      match matcha : A i.val j.val with
+    Matrix.of (fun i' : m' => fun j' : n' =>
+      match matcha : A i'.val j'.val with
       | (q : ℚ) => q
-      | ⊥ => False.elim (i.property.right j matcha)
-      | ⊤ => False.elim (j.property i matcha)
+      | ⊥ => False.elim (i'.property.right j' matcha)
+      | ⊤ => False.elim (j'.property i' matcha)
     )
-  if hbot : ∃ i : m', b i.val = ⊥ then
-    obtain ⟨i, hi⟩ := hbot
+  if hbot : ∃ i' : m', b i'.val = ⊥ then
+    obtain ⟨i', hi'⟩ := hbot
     convert false_ne_true
     · rw [iff_false, not_exists]
       intro x ⟨hAxb, hx⟩
-      specialize hAxb i.val
-      rw [hi, le_bot_iff] at hAxb
-      exact Matrix.no_bot_dotProd_nng i.property.right hx hAxb
+      specialize hAxb i'.val
+      rw [hi', le_bot_iff] at hAxb
+      exact Matrix.no_bot_dotProd_nng i'.property.right hx hAxb
     · rw [iff_true]
       use 0
       constructor
       · apply Matrix.mulWeig_zero_le_zero
       constructor
-      · rw [Matrix.has_bot_dotProd_nng hi (by rfl)]
+      · rw [Matrix.has_bot_dotProd_nng hi' (by rfl)]
         exact ERat.bot_lt_zero
       · rfl
   else
     let b' : m' → ℚ := -- the new RHS
-      fun i : m' =>
-        match hbi : b i.val with
+      fun i' : m' =>
+        match hbi : b i'.val with
         | (q : ℚ) => q
-        | ⊥ => False.elim (hbot ⟨i, hbi⟩)
-        | ⊤ => False.elim (i.property.left hbi)
+        | ⊥ => False.elim (hbot ⟨i', hbi⟩)
+        | ⊤ => False.elim (i'.property.left hbi)
     convert standardFarkas A' b'
     · constructor <;> intro ⟨x, ineqalities, hx⟩
-      · use (fun j : n' => x j.val)
+      · use (fun j' : n' => x j'.val)
         constructor; swap
-        · intro j
-          exact hx j.val
+        · intro j'
+          exact hx j'.val
         intro i'
         rw [← ERat.coe_le_coe_iff]
         convert ineqalities i'.val; swap
@@ -362,8 +362,20 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
         show
           Finset.univ.sum (fun j' : n' => (A' i' j' * x j'.val).toERat) =
           Finset.univ.sum (fun j : n => (x j).toERat * A i'.val j)
-        rw [Finset.univ_sum_split_of_zero (p := (fun j : n => ∀ i' : m', A i' j ≠ ⊤))]
-        swap
+        rw [Finset.univ_sum_split_of_zero (p := (fun j : n => ∀ i' : m', A i'.val j ≠ ⊤))]
+        · congr
+          ext j'
+          rw [mul_comm]
+          simp only [A', Matrix.of_apply, ERat.coe_mul]
+          congr
+          split <;> rename_i hAij <;> simp only [hAij]
+          · rfl
+          · exfalso
+            apply i'.property.right
+            exact hAij
+          · exfalso
+            apply j'.property
+            exact hAij
         · intro j where_top
           push_neg at where_top
           obtain ⟨t, ht⟩ := where_top
@@ -378,23 +390,10 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
           rw [hxj]
           apply ERat.zero_mul
           apply i'.property.right
-        congr
-        ext j'
-        rw [mul_comm]
-        simp only [A', Matrix.of_apply, ERat.coe_mul]
-        congr
-        split <;> rename_i hAij <;> simp only [hAij]
-        · rfl
-        · exfalso
-          apply i'.property.right
-          exact hAij
-        · exfalso
-          apply j'.property
-          exact hAij
-      · use (fun j : n => if hj : (∀ i : m', A i j ≠ ⊤) then x ⟨j, hj⟩ else 0)
+      · use (fun j : n => if hj : (∀ i' : m', A i'.val j ≠ ⊤) then x ⟨j, hj⟩ else 0)
         constructor; swap
         · intro j
-          if hj : (∀ i : m', A i j ≠ ⊤) then
+          if hj : (∀ i' : m', A i'.val j ≠ ⊤) then
             convert hx ⟨j, hj⟩
             simp [hj]
           else
