@@ -24,9 +24,9 @@ variable {n m : Type} [Fintype n] [Fintype m]
 section basicFarkas
 
 lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix m n R) (b : m → R) :
-    (∃ x : n → R, A *ᵥ x ≤ b ∧ 0 ≤ x) ∧ (∃ y : m → R, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y) →
+    (∃ x : n → R, 0 ≤ x ∧ A *ᵥ x ≤ b) ∧ (∃ y : m → R, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) →
       False := by
-  intro ⟨⟨x, hAx, hx⟩, ⟨y, hAy, hby, hy⟩⟩
+  intro ⟨⟨x, hx, hAx⟩, ⟨y, hy, hAy, hby⟩⟩
   have hAy' : 0 ≤ y ᵥ* A
   · rwa [Matrix.neg_mulVec, Matrix.mulVec_transpose, neg_nonpos] at hAy
   exfalso
@@ -39,10 +39,10 @@ lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix m n R) (b : m → R
     _ < 0 := hby
 
 axiom standardFarkas (A : Matrix m n ℚ) (b : m → ℚ) :
-    (∃ x : n → ℚ, A *ᵥ x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y)
+    (∃ x : n → ℚ, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : m → ℚ, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0)
 
 example (A : Matrix m n ℚ) (b : m → ℚ) :
-    (∃ x : n → ℚ, A *ᵥ x ≤ b ∧ 0 ≤ x) ∧ (∃ y : m → ℚ, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0 ∧ 0 ≤ y) →
+    (∃ x : n → ℚ, 0 ≤ x ∧ A *ᵥ x ≤ b) ∧ (∃ y : m → ℚ, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) →
       False := by
   intro ⟨hx, hy⟩
   simpa [hx, hy] using standardFarkas A b
@@ -302,9 +302,9 @@ def Matrix.Good (A : Matrix m n ℚ∞) : Prop :=
 def Matrix.Good' (A : Matrix m n ℚ∞) (b : m → ℚ∞) : Prop :=
   ¬ (∃ i : m, (∃ j : n, A i j = ⊥) ∧ b i = ⊥)
 
-set_option maxHeartbeats 555555 in
+set_option maxHeartbeats 666666 in
 theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.Good' b) :
-    (∃ x : n → ℚ, A ₘ* x ≤ b ∧ 0 ≤ x) ≠ (∃ y : m → ℚ, -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0 ∧ 0 ≤ y) := by
+    (∃ x : n → ℚ, 0 ≤ x ∧ A ₘ* x ≤ b) ≠ (∃ y : m → ℚ, 0 ≤ y ∧ -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0) := by
   -- filter rows and columns
   let m' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥ } -- non-tautological rows
   let n' : Type := { j : n // ∀ i' : m', A i'.val j ≠ ⊤ } -- columns that allow non-zero values
@@ -319,18 +319,18 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
     obtain ⟨i', hi'⟩ := hbot
     convert false_ne_true
     · rw [iff_false, not_exists]
-      intro x ⟨hAxb, hx⟩
+      intro x ⟨hx, hAxb⟩
       specialize hAxb i'.val
       rw [hi', le_bot_iff] at hAxb
       exact Matrix.no_bot_dotProd_nng i'.property.right hx hAxb
     · rw [iff_true]
       use 0
       constructor
-      · apply Matrix.mulWeig_zero_le_zero
+      · rfl
       constructor
+      · apply Matrix.mulWeig_zero_le_zero
       · rw [Matrix.has_bot_dotProd_nng hi' (by rfl)]
         exact ERat.bot_lt_zero
-      · rfl
   else
     let b' : m' → ℚ := -- the new RHS
       fun i' : m' =>
@@ -339,9 +339,9 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
         | ⊥ => False.elim (hbot ⟨i', hbi⟩)
         | ⊤ => False.elim (i'.property.left hbi)
     convert standardFarkas A' b'
-    · constructor <;> intro ⟨x, ineqalities, hx⟩
+    · constructor <;> intro ⟨x, hx, ineqalities⟩
       · use (fun j' : n' => x j'.val)
-        constructor; swap
+        constructor
         · intro j'
           exact hx j'.val
         intro i'
@@ -398,7 +398,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
           apply ERat.zero_mul
           apply i'.property.right
       · use (fun j : n => if hj : (∀ i' : m', A i'.val j ≠ ⊤) then x ⟨j, hj⟩ else 0)
-        constructor; swap
+        constructor
         · intro j
           if hj : (∀ i' : m', A i'.val j ≠ ⊤) then
             convert hx ⟨j, hj⟩
@@ -451,8 +451,24 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
               intro _
               aesop
             apply bot_le
-    · constructor <;> intro ⟨y, ineqalities, sharpine, hy⟩
-      · sorry
-      · sorry
+    · constructor <;> intro ⟨y, hy, ineqalities, sharpine⟩
+      · use (fun i' : m' => y i'.val)
+        constructor
+        · intro i'
+          exact hy i'.val
+        constructor
+        · sorry
+        · sorry
+      · use (fun i : m => if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then y ⟨i, hi⟩ else 0)
+        constructor
+        · intro i
+          if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
+            convert hy ⟨i, hi⟩
+            simp [hi]
+          else
+            aesop
+        constructor
+        · sorry
+        · sorry
 
 end generalizedFarkas
