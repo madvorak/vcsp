@@ -457,7 +457,50 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
         · intro i'
           exact hy i'.val
         constructor
-        · sorry
+        · intro j'
+          rw [←ERat.coe_le_coe_iff]
+          convert ineqalities j'.val
+          simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
+          rw [Finset.sum_toERat]
+          show
+            Finset.univ.sum (fun i' : m' => ((-A'ᵀ) j' i' * y i'.val).toERat) =
+            Finset.univ.sum (fun i : m => y i • (-Aᵀ) j'.val i)
+          rw [Finset.univ_sum_of_zero_when_neg (fun i : m => b i ≠ ⊤ ∧ ∀ (j : n), A i j ≠ ⊥)]
+          · congr
+            ext i'
+            rw [mul_comm]
+            save
+            simp only [A', Matrix.of_apply, Matrix.transpose_apply, Matrix.neg_apply, ERat.coe_neg]
+            congr
+            split <;> rename_i q hAij <;> simp only [hAij]
+            · rfl
+            · exfalso
+              apply i'.property.right
+              exact hAij
+            · exfalso
+              apply j'.property
+              exact hAij
+          · intro i hyp
+            push_neg at hyp
+            have hyi : y i = 0
+            · sorry
+            rw [hyi]
+            apply ERat.zero_mul
+            simp only [Matrix.neg_apply, Matrix.transpose_apply, ne_eq, ERat.neg_eq_bot_iff]
+            refine j'.property ⟨i, ?_⟩
+            have bi_eq_bot : b i = ⊥
+            · sorry -- TODO high priority!
+            have ith_row_has_bot : ∃ j, A i j = ⊥
+            · apply hyp
+              rw [bi_eq_bot]
+              exact bot_ne_top
+            have ith_row_has_top : ∃ j, A i j = ⊤
+            · sorry -- TODO
+            constructor
+            · exfalso
+              exact hAb ⟨i, ith_row_has_bot, bi_eq_bot⟩
+            · exfalso
+              exact hA ⟨i, ith_row_has_bot, ith_row_has_top⟩
         · sorry
       · use (fun i : m => if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then y ⟨i, hi⟩ else 0)
         constructor
