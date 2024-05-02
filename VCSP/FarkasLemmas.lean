@@ -302,8 +302,12 @@ def Matrix.Good (A : Matrix m n ℚ∞) : Prop :=
 def Matrix.Good' (A : Matrix m n ℚ∞) (b : m → ℚ∞) : Prop :=
   ¬ (∃ i : m, (∃ j : n, A i j = ⊥) ∧ b i = ⊥)
 
-set_option maxHeartbeats 666666 in
-theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.Good' b) :
+def Matrix.Good'' (A : Matrix m n ℚ∞) (b : m → ℚ∞) : Prop :=
+  ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ b i = ⊤)
+
+set_option maxHeartbeats 777777 in
+theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
+    (hA : A.Good) (hAT : Aᵀ.Good) (hAb' : A.Good' b) (hAb : A.Good'' b) :
     (∃ x : n → ℚ, 0 ≤ x ∧ A ₘ* x ≤ b) ≠ (∃ y : m → ℚ, 0 ≤ y ∧ -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0) := by
   -- filter rows and columns
   let m' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥ } -- non-tautological rows
@@ -338,6 +342,38 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
         | (q : ℚ) => q
         | ⊥ => False.elim (hbot ⟨i', hbi⟩)
         | ⊤ => False.elim (i'.property.left hbi)
+    let n'' : Type := { j : n // ∀ i : m, A i j ≠ ⊤ } -- non-tautological columns
+    let m'' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥ } -- rows that allow non-zero values
+    have hm : m' ≃ m''
+    · apply Equiv.setCongr
+      ext i
+      show (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) ↔ (b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥)
+      constructor <;> intro ⟨bi_neq_top, hi⟩
+      · exact ⟨bi_neq_top, fun j'' : n'' => hi j''.val⟩
+      · constructor
+        · exact bi_neq_top
+        · intro j
+          if hn'' : (∀ i : m, A i j ≠ ⊤) then
+            exact hi ⟨j, hn''⟩
+          else
+            push_neg at hn''
+            intro Aij_neq_bot
+            exact hAT ⟨j, ⟨i, Aij_neq_bot⟩, hn''⟩
+    have hn : n' ≃ n''
+    · apply Equiv.setCongr
+      ext j
+      show (∀ i' : m', A i'.val j ≠ ⊤) ↔ (∀ i : m, A i j ≠ ⊤)
+      constructor <;> intro hj
+      · intro i Aij_eq_top
+        if bi_top : b i = ⊤ then
+          exact hAb ⟨i, ⟨j, Aij_eq_top⟩, bi_top⟩
+        else if Ai_bot : (∃ j : n, A i j = ⊥) then
+          exact hA ⟨i, Ai_bot, ⟨j, Aij_eq_top⟩⟩
+        else
+          push_neg at Ai_bot
+          exact hj ⟨i, ⟨bi_top, Ai_bot⟩⟩ Aij_eq_top
+      · intro i'
+        exact hj i'.val
     convert standardFarkas A' b'
     · constructor <;> intro ⟨x, hx, ineqalities⟩
       · use (fun j' : n' => x j'.val)
@@ -469,7 +505,6 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
           · congr
             ext i'
             rw [mul_comm]
-            save
             simp only [A', Matrix.of_apply, Matrix.transpose_apply, Matrix.neg_apply, ERat.coe_neg]
             congr
             split <;> rename_i q hAij <;> simp only [hAij]
@@ -498,7 +533,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
             · sorry -- TODO
             constructor
             · exfalso
-              exact hAb ⟨i, ith_row_has_bot, bi_eq_bot⟩
+              exact hAb' ⟨i, ith_row_has_bot, bi_eq_bot⟩
             · exfalso
               exact hA ⟨i, ith_row_has_bot, ith_row_has_top⟩
         · sorry
