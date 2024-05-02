@@ -362,7 +362,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
         show
           Finset.univ.sum (fun j' : n' => (A' i' j' * x j'.val).toERat) =
           Finset.univ.sum (fun j : n => (x j).toERat * A i'.val j)
-        rw [Finset.univ_sum_split_of_zero (p := (fun j : n => ∀ i' : m', A i'.val j ≠ ⊤))]
+        rw [Finset.univ_sum_of_zero_when_neg (fun j : n => ∀ i' : m', A i'.val j ≠ ⊤)]
         · congr
           ext j'
           rw [mul_comm]

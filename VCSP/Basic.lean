@@ -53,7 +53,7 @@ attribute [pp_dot] List.length List.get List.sum Multiset.sum Multiset.summap Fi
 end better_notation
 
 
-section multiset_utils
+section multisets_and_finsets
 variable {α β γ : Type*}
 
 lemma Multiset.nsmul_summap [AddCommMonoid β] (s : Multiset α) (f : α → β) (n : ℕ) :
@@ -86,36 +86,22 @@ lemma Finset.subtype_univ_sum_eq_subtype_univ_sum {p q : α → Prop} (hpq : p =
   ext
   simp_all only
 
-lemma Finset.univ_sum_split_aux [Fintype α] [AddCommMonoid β]
-    (f : α → β) (p : α → Prop) [DecidablePred p] :
-    Finset.univ.val.map (fun a : { a // p a } => f a.val) =
-    (Finset.univ.filter p).val.map f := by
-  sorry
+-- Andrew Yang proved this lemma
+lemma Finset.univ_sum_of_zero_when_neg [Fintype α] [AddCommMonoid β]
+    {f : α → β} (p : α → Prop) [DecidablePred p] (hpf : ∀ a : α, ¬(p a) → f a = 0) :
+    Finset.univ.sum f = Finset.univ.sum (fun a : { a : α // p a } => f a.val) := by
+  classical
+  trans (Finset.univ.filter p).sum f
+  · symm
+    apply Finset.sum_subset_zero_on_sdiff
+    · apply Finset.subset_univ
+    · simpa
+    · intros
+      rfl
+  · apply Finset.sum_subtype
+    simp
 
-lemma Finset.univ_sum_split [Fintype α] [AddCommMonoid β]
-    (f : α → β) (p : α → Prop) [DecidablePred p] :
-    let fₚ : { a : α // p a } → β := (fun a => f a.val)
-    let fₙ : { a : α // ¬(p a) } → β := (fun a => f a.val)
-    Finset.univ.sum f = Finset.univ.sum fₚ + Finset.univ.sum fₙ := by
-  rw [←Finset.sum_filter_add_sum_filter_not (p := p)]
-  apply congr_arg₂ <;>
-  · rw [Finset.sum_filter, Finset.sum_ite, Finset.sum_const_zero, add_zero]
-    unfold Finset.sum
-    rw [Finset.univ_sum_split_aux]
-
-lemma Finset.univ_sum_split_of_zero [Fintype α] [AddCommMonoid β]
-    {f : α → β} {p : α → Prop} [DecidablePred p]
-    (hpf : ∀ a : α, ¬(p a) → f a = 0) :
-    let fₚ : { a : α // p a } → β := (fun a => f a.val)
-    Finset.univ.sum f = Finset.univ.sum fₚ := by
-  rw [Finset.univ_sum_split f p]
-  convert add_zero _
-  apply Finset.sum_eq_zero
-  intro x _
-  apply hpf
-  exact x.property
-
-end multiset_utils
+end multisets_and_finsets
 
 
 section uncategorized_stuff
