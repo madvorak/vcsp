@@ -380,13 +380,20 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
           push_neg at where_top
           obtain ⟨t, ht⟩ := where_top
           have hxj : x j = 0
-          · obtain ⟨_, hq⟩ : ∃ q : ℚ, b t = q.toERat
-            · sorry -- easy
-            apply Matrix.no_bot_has_top_dotProd_nng_le
-            · exact t.property.right
-            · exact ht
-            · exact hx
-            · exact hq ▸ ineqalities t
+          · obtain ⟨q, hq⟩ : ∃ q : ℚ, b t = q.toERat
+            · match hbt : b t.val with
+              | (q : ℚ) =>
+                exact ⟨_, rfl⟩
+              | ⊥ =>
+                exfalso
+                apply hbot
+                use t
+                exact hbt
+              | ⊤ =>
+                exfalso
+                apply t.property.left
+                exact hbt
+            exact Matrix.no_bot_has_top_dotProd_nng_le (t.property.right) ht hx (hq ▸ ineqalities t.val)
           rw [hxj]
           apply ERat.zero_mul
           apply i'.property.right
