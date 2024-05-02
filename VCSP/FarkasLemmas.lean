@@ -297,18 +297,10 @@ end heteroMatrixProducts
 section generalizedFarkas
 
 def Matrix.Good (A : Matrix m n ℚ∞) : Prop :=
-  ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ (∃ j : n, A i j = ⊥))
+  ¬ (∃ i : m, (∃ j : n, A i j = ⊥) ∧ (∃ j : n, A i j = ⊤))
 
 def Matrix.Good' (A : Matrix m n ℚ∞) (b : m → ℚ∞) : Prop :=
-  ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ b i = ⊥)
-
-lemma Matrix.Good.row {A : Matrix m n ℚ∞} (hA : A.Good) (i : m) :
-    (∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j))) ∨ (∃ j, A i j = ⊤) ∨ (∃ j, A i j = ⊥) := by
-  sorry
-
-lemma Matrix.Good'.row {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hAb : A.Good' b) (i : m) :
-    b i = ⊥ → ∃ aᵢ : n → ℚ, ∀ j : n, A i j = some (some (aᵢ j)) := by
-  sorry
+  ¬ (∃ i : m, (∃ j : n, A i j = ⊥) ∧ b i = ⊥)
 
 set_option maxHeartbeats 555555 in
 theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) (hAb : A.Good' b) :
@@ -352,45 +344,53 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞} (hA : A.Good) 
         constructor; swap
         · intro j
           exact hx j.val
-        intro i
+        intro i'
         rw [← ERat.coe_le_coe_iff]
-        convert ineqalities i.val; swap
+        convert ineqalities i'.val; swap
         · simp only [b']
           split <;> rename_i hbi <;> simp only [hbi]
           · rfl
           · exfalso
             apply hbot
-            use i
+            use i'
             exact hbi
           · exfalso
-            apply i.property.left
+            apply i'.property.left
             exact hbi
         simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
         rw [Finset.sum_toERat]
         show
-          Finset.univ.sum (fun j' : n' => (A' i j' * x j'.val).toERat) =
-          Finset.univ.sum (fun j : n => (x j).toERat * A i.val j)
-        --conv => rhs; congr; rfl; ext; rw [mul_comm]
-        have zeroes : ∀ j : n, A i.val j = ⊤ → x j = 0
-        · intro j hyp
-          obtain ⟨_, hq⟩ : ∃ q : ℚ, b i = q.toERat
-          · sorry
-          apply Matrix.no_bot_has_top_dotProd_nng_le
-          · sorry
-          · exact hyp
-          · exact hx
-          · exact hq ▸ ineqalities i
-        --rw [←Finset.sum_dite]
-        sorry
-        /-
-        TODO
-        1. show which summands on the RHS are forced to be zero
-        2. make it a `Finset.sum` of `dite` of ...
-        3. split the `Finset.sum` into two `Finset.sum`s
-        4. `convert add_zero _`
-        5. discharge the trivial goal
-        6. `apply Finset.subtype_univ_sum_eq_subtype_univ_sum`
-        -/
+          Finset.univ.sum (fun j' : n' => (A' i' j' * x j'.val).toERat) =
+          Finset.univ.sum (fun j : n => (x j).toERat * A i'.val j)
+        rw [Finset.univ_sum_split_of_zero (p := (fun j : n => ∀ i' : m', A i' j ≠ ⊤))]
+        swap
+        · intro j where_top
+          push_neg at where_top
+          obtain ⟨t, ht⟩ := where_top
+          have hxj : x j = 0
+          · obtain ⟨_, hq⟩ : ∃ q : ℚ, b t = q.toERat
+            · sorry -- easy
+            apply Matrix.no_bot_has_top_dotProd_nng_le
+            · exact t.property.right
+            · exact ht
+            · exact hx
+            · exact hq ▸ ineqalities t
+          rw [hxj]
+          apply ERat.zero_mul
+          apply i'.property.right
+        congr
+        ext j'
+        rw [mul_comm]
+        simp only [A', Matrix.of_apply, ERat.coe_mul]
+        congr
+        split <;> rename_i hAij <;> simp only [hAij]
+        · rfl
+        · exfalso
+          apply i'.property.right
+          exact hAij
+        · exfalso
+          apply j'.property
+          exact hAij
       · use (fun j : n => if hj : (∀ i : m', A i j ≠ ⊤) then x ⟨j, hj⟩ else 0)
         constructor; swap
         · intro j

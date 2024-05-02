@@ -86,6 +86,25 @@ lemma Finset.subtype_univ_sum_eq_subtype_univ_sum {p q : α → Prop} (hpq : p =
   ext
   simp_all only
 
+lemma Finset.univ_sum_split [Fintype α] [AddCommMonoid β]
+    (f : α → β) (p : α → Prop) [DecidablePred p] :
+    let fₚ : { a : α // p a } → β := (fun a => f a.val)
+    let fₙ : { a : α // ¬(p a) } → β := (fun a => f a.val)
+    Finset.univ.sum f = Finset.univ.sum fₚ + Finset.univ.sum fₙ := by
+  sorry
+
+lemma Finset.univ_sum_split_of_zero [Fintype α] [AddCommMonoid β]
+    {f : α → β} {p : α → Prop} [DecidablePred p]
+    (hpf : ∀ a : α, ¬(p a) → f a = 0) :
+    let fₚ : { a : α // p a } → β := (fun a => f a.val)
+    Finset.univ.sum f = Finset.univ.sum fₚ := by
+  rw [Finset.univ_sum_split f p]
+  convert add_zero _
+  apply Finset.sum_eq_zero
+  intro x _
+  apply hpf
+  exact x.property
+
 end multiset_utils
 
 
