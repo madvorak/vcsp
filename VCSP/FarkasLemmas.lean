@@ -319,22 +319,28 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
       | ⊥ => False.elim (i'.property.right j' matcha)
       | ⊤ => False.elim (j'.property i' matcha)
     )
-  if hbot : ∃ i' : m', b i'.val = ⊥ then
-    obtain ⟨i', hi'⟩ := hbot
-    convert false_ne_true
-    · rw [iff_false, not_exists]
-      intro x ⟨hx, hAxb⟩
-      specialize hAxb i'.val
-      rw [hi', le_bot_iff] at hAxb
-      exact Matrix.no_bot_dotProd_nng i'.property.right hx hAxb
-    · rw [iff_true]
-      use 0
-      constructor
-      · rfl
-      constructor
-      · apply Matrix.mulWeig_zero_le_zero
-      · rw [Matrix.has_bot_dotProd_nng hi' (by rfl)]
-        exact ERat.bot_lt_zero
+  if hbot : ∃ i : m, b i = ⊥ then
+    obtain ⟨i, hi⟩ := hbot
+    if hi' : (∀ j : n, A i j ≠ ⊥) then
+      convert false_ne_true
+      · rw [iff_false, not_exists]
+        intro x ⟨hx, hAxb⟩
+        specialize hAxb i
+        rw [hi, le_bot_iff] at hAxb
+        refine Matrix.no_bot_dotProd_nng hi' hx hAxb
+      · rw [iff_true]
+        use 0
+        constructor
+        · rfl
+        constructor
+        · apply Matrix.mulWeig_zero_le_zero
+        · rw [Matrix.has_bot_dotProd_nng hi (by rfl)]
+          exact ERat.bot_lt_zero
+    else
+      push_neg at hi'
+      exfalso
+      apply hAb'
+      exact ⟨i, hi', hi⟩
   else
     let b' : m' → ℚ := -- the new RHS
       fun i' : m' =>
@@ -368,8 +374,6 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
           exact hj ⟨i, ⟨bi_top, Ai_bot⟩⟩ Aij_eq_top
       · intro i'
         exact hj i'.val
-    have hbot'' : ¬ ∃ i'' : m'', b i''.val = ⊥
-    · sorry --equivalent to `hbot`
     let A'' : Matrix m'' n'' ℚ := -- matrix for simpler `y` part
       Matrix.of (fun i'' : m'' => fun j'' : n'' =>
         match matcha : A i''.val j''.val with
@@ -381,7 +385,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
       fun i'' : m'' =>
         match hbi : b i''.val with
         | (q : ℚ) => q
-        | ⊥ => False.elim (hbot'' ⟨i'', hbi⟩)
+        | ⊥ => False.elim (hbot ⟨i''.val, hbi⟩)
         | ⊤ => False.elim (i''.property.left hbi)
     convert standardFarkas A'' b''
     · sorry
@@ -543,9 +547,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
             split <;> rename_i q hbi <;> simp only [hbi]
             · sorry -- rw [mul_comm]
             · exfalso
-              apply hbot''
-              use i''
-              exact hbi
+              exact hbot ⟨i''.val, hbi⟩
             · exfalso
               exact i''.property.left hbi
           · intro i todo
@@ -555,9 +557,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
             apply ERat.zero_mul
             simp only [Matrix.neg_apply, Matrix.transpose_apply, ne_eq, ERat.neg_eq_bot_iff]
             intro bi_eq_bot
-            apply hbot''
-            refine ⟨⟨i, ?_⟩, bi_eq_bot⟩
-            sorry
+            exact hbot ⟨i, bi_eq_bot⟩
       · use (fun i : m => if hi : (b i ≠ ⊤ ∧ ∀ j'' : n'', A i j'' ≠ ⊥) then y ⟨i, hi⟩ else 0)
         constructor
         · intro i
@@ -565,7 +565,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
             convert hy ⟨i, hi⟩
             simp [hi]
           else
-            aesop
+            sorry --aesop
         constructor
         · sorry
         · sorry

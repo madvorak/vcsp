@@ -87,6 +87,20 @@ exactly one of the following is true:
 	$0 \leqq y$ and $(-A^T) y \leqq 0$ and $b^T y < 0$
 \end{itemize}
 
+\section{Proof sketch}
+
+\begin{itemize}
+\item $ A \in F_\infty^{I \times J} $
+\item $ b \in F_\infty^{I} $
+\item if $\bot \in b$ then easy; assume $\bot \notin b$
+\item $ I' := \{ i \in I ~|~ b_i \neq \top \wedge \bot \notin A_{i, \star}  \} $
+\item $ J' := \{ j \in J ~|~ \top \notin A_{\star, j}  \} $
+\item $ A' := A \restriction (I' \times J') $
+\item $ b' := b \restriction I' $
+\item $ A' \in F^{I' \times J'} $
+\item $ b' \in F^{I'} $
+\end{itemize}
+
 \section{Proof idea}
 
 We need to do the following steps in given order:
@@ -112,15 +126,5 @@ but $y = 0$ satisfies the other part. Stop here.
 Whichever solution Farkas outputs, extend it with zeros on
 all deleted positions.
 \end{enumerate}
-
-\section{Proof sketch}
-
-Let $I$ denote the set of row indices of $A$ and
-let $J$ denote the set of column indices of $A$.
-Let $I' \subseteq I$ be rows on which $A$ doesn't have $\bot$ and $b$ doesn't have $\top$.
-Let $J' \subseteq J$ be columns in which $A$ doesn't have $\top$.
-Let $A' := A \restriction I' \times J'$ and $b' := b \restriction I'$.
-We had $A \in F_\infty^{I \times J}$ and $b \in F_\infty^I$.
-We have $A' \in F^{I' \times J'}$ and $b' \in F^{I'}$.
 
 \end{document}
