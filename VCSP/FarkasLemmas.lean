@@ -344,11 +344,8 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
         | ⊤ => False.elim (i'.property.left hbi)
     let n'' : Type := { j : n // ∀ i : m, A i j ≠ ⊤ } -- non-tautological columns
     let m'' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥ } -- rows that allow non-zero values
-    have hm : m' ≃ m''
-    · apply Equiv.setCongr
-      ext i
-      show (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) ↔ (b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥)
-      constructor <;> intro ⟨bi_neq_top, hi⟩
+    have hm (i : m) : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) ↔ (b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥)
+    · constructor <;> intro ⟨bi_neq_top, hi⟩
       · exact ⟨bi_neq_top, fun j'' : n'' => hi j''.val⟩
       · constructor
         · exact bi_neq_top
@@ -359,11 +356,8 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
             push_neg at hn''
             intro Aij_neq_bot
             exact hAT ⟨j, ⟨i, Aij_neq_bot⟩, hn''⟩
-    have hn : n' ≃ n''
-    · apply Equiv.setCongr
-      ext j
-      show (∀ i' : m', A i'.val j ≠ ⊤) ↔ (∀ i : m, A i j ≠ ⊤)
-      constructor <;> intro hj
+    have hn (j : n) : (∀ i' : m', A i'.val j ≠ ⊤) ↔ (∀ i : m, A i j ≠ ⊤)
+    · constructor <;> intro hj
       · intro i Aij_eq_top
         if bi_top : b i = ⊤ then
           exact hAb ⟨i, ⟨j, Aij_eq_top⟩, bi_top⟩
@@ -374,7 +368,24 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
           exact hj ⟨i, ⟨bi_top, Ai_bot⟩⟩ Aij_eq_top
       · intro i'
         exact hj i'.val
-    convert standardFarkas A' b'
+    have hbot'' : ¬ ∃ i'' : m'', b i''.val = ⊥
+    · sorry --equivalent to `hbot`
+    let A'' : Matrix m'' n'' ℚ := -- matrix for simpler `y` part
+      Matrix.of (fun i'' : m'' => fun j'' : n'' =>
+        match matcha : A i''.val j''.val with
+        | (q : ℚ) => q
+        | ⊥ => False.elim (i''.property.right j'' matcha)
+        | ⊤ => False.elim (j''.property i'' matcha)
+      )
+    let b'' : m'' → ℚ := -- the new RHS
+      fun i'' : m'' =>
+        match hbi : b i''.val with
+        | (q : ℚ) => q
+        | ⊥ => False.elim (hbot'' ⟨i'', hbi⟩)
+        | ⊤ => False.elim (i''.property.left hbi)
+    convert standardFarkas A'' b''
+    · sorry
+    /-convert standardFarkas A' b'
     · constructor <;> intro ⟨x, hx, ineqalities⟩
       · use (fun j' : n' => x j'.val)
         constructor
@@ -486,61 +497,71 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
             · apply Matrix.has_bot_dotProd_nng hAij
               intro _
               aesop
-            apply bot_le
+            apply bot_le-/
     · constructor <;> intro ⟨y, hy, ineqalities, sharpine⟩
-      · use (fun i' : m' => y i'.val)
+      · use (fun i'' : m'' => y i''.val)
         constructor
-        · intro i'
-          exact hy i'.val
+        · intro i''
+          exact hy i''.val
         constructor
-        · intro j'
+        · intro ⟨j, hj⟩
           rw [←ERat.coe_le_coe_iff]
-          convert ineqalities j'.val
+          convert ineqalities j
           simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
           rw [Finset.sum_toERat]
           show
-            Finset.univ.sum (fun i' : m' => ((-A'ᵀ) j' i' * y i'.val).toERat) =
-            Finset.univ.sum (fun i : m => y i • (-Aᵀ) j'.val i)
-          rw [Finset.univ_sum_of_zero_when_neg (fun i : m => b i ≠ ⊤ ∧ ∀ (j : n), A i j ≠ ⊥)]
+            Finset.univ.sum (fun i'' : m'' => ((-A''ᵀ) ⟨j, hj⟩ i'' * y i''.val).toERat) =
+            Finset.univ.sum (fun i : m => y i • (-Aᵀ) j i)
+          rw [Finset.univ_sum_of_zero_when_neg (fun i : m => b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥)]
           · congr
-            ext i'
+            ext i''
             rw [mul_comm]
-            simp only [A', Matrix.of_apply, Matrix.transpose_apply, Matrix.neg_apply, ERat.coe_neg]
+            simp only [A'', Matrix.of_apply, Matrix.transpose_apply, Matrix.neg_apply, ERat.coe_neg]
             congr
             split <;> rename_i q hAij <;> simp only [hAij]
             · rfl
             · exfalso
-              apply i'.property.right
-              exact hAij
+              exact i''.property.right ⟨j, hj⟩ hAij
             · exfalso
-              apply j'.property
+              apply hj
               exact hAij
-          · intro i hyp
-            push_neg at hyp
+          · intro i todo
             have hyi : y i = 0
             · sorry
             rw [hyi]
             apply ERat.zero_mul
             simp only [Matrix.neg_apply, Matrix.transpose_apply, ne_eq, ERat.neg_eq_bot_iff]
-            refine j'.property ⟨i, ?_⟩
-            have bi_eq_bot : b i = ⊥
-            · sorry -- TODO high priority!
-            have ith_row_has_bot : ∃ j, A i j = ⊥
-            · apply hyp
-              rw [bi_eq_bot]
-              exact bot_ne_top
-            have ith_row_has_top : ∃ j, A i j = ⊤
-            · sorry -- TODO
-            constructor
+            apply hj
+        · rw [←ERat.coe_lt_coe_iff]
+          convert sharpine
+          simp only [Matrix.dotProduct, Matrix.dotProd]
+          rw [Finset.sum_toERat]
+          rw [Finset.univ_sum_of_zero_when_neg (fun i : m => b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥)]
+          · congr
+            ext i''
+            simp [b'']
+            split <;> rename_i q hbi <;> simp only [hbi]
+            · sorry -- rw [mul_comm]
             · exfalso
-              exact hAb' ⟨i, ith_row_has_bot, bi_eq_bot⟩
+              apply hbot''
+              use i''
+              exact hbi
             · exfalso
-              exact hA ⟨i, ith_row_has_bot, ith_row_has_top⟩
-        · sorry
-      · use (fun i : m => if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then y ⟨i, hi⟩ else 0)
+              exact i''.property.left hbi
+          · intro i todo
+            have hyi : y i = 0
+            · sorry
+            rw [hyi]
+            apply ERat.zero_mul
+            simp only [Matrix.neg_apply, Matrix.transpose_apply, ne_eq, ERat.neg_eq_bot_iff]
+            intro bi_eq_bot
+            apply hbot''
+            refine ⟨⟨i, ?_⟩, bi_eq_bot⟩
+            sorry
+      · use (fun i : m => if hi : (b i ≠ ⊤ ∧ ∀ j'' : n'', A i j'' ≠ ⊥) then y ⟨i, hi⟩ else 0)
         constructor
         · intro i
-          if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
+          if hi : (b i ≠ ⊤ ∧ ∀ j'' : n'', A i j'' ≠ ⊥) then
             convert hy ⟨i, hi⟩
             simp [hi]
           else
