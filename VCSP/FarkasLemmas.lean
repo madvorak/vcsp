@@ -18,13 +18,13 @@ end typeclasses
 
 
 open scoped Matrix
-variable {n m : Type} [Fintype n] [Fintype m]
+variable {I J : Type} [Fintype I] [Fintype J]
 
 
 section basicFarkas
 
-lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix m n R) (b : m → R) :
-    (∃ x : n → R, 0 ≤ x ∧ A *ᵥ x ≤ b) ∧ (∃ y : m → R, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) →
+lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix I J R) (b : I → R) :
+    (∃ x : J → R, 0 ≤ x ∧ A *ᵥ x ≤ b) ∧ (∃ y : I → R, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) →
       False := by
   intro ⟨⟨x, hx, hAx⟩, ⟨y, hy, hAy, hby⟩⟩
   have hAy' : 0 ≤ y ᵥ* A
@@ -38,11 +38,11 @@ lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix m n R) (b : m → R
     _ = b ⬝ᵥ y := Matrix.dotProduct_comm y b
     _ < 0 := hby
 
-axiom standardFarkas (A : Matrix m n ℚ) (b : m → ℚ) :
-    (∃ x : n → ℚ, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : m → ℚ, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0)
+axiom standardFarkas (A : Matrix I J ℚ) (b : I → ℚ) :
+    (∃ x : J → ℚ, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0)
 
-example (A : Matrix m n ℚ) (b : m → ℚ) :
-    (∃ x : n → ℚ, 0 ≤ x ∧ A *ᵥ x ≤ b) ∧ (∃ y : m → ℚ, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) →
+example (A : Matrix I J ℚ) (b : I → ℚ) :
+    (∃ x : J → ℚ, 0 ≤ x ∧ A *ᵥ x ≤ b) ∧ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) →
       False := by
   intro ⟨hx, hy⟩
   simpa [hx, hy] using standardFarkas A b
@@ -149,7 +149,7 @@ instance : AlmostOrderedSMul ℚ ℚ∞ where
       rw [ERat.coe_lt_coe_iff] at hab ⊢
       rwa [mul_lt_mul_left hc] at hab
 
-lemma Function.neg_le_zero_ERat (x : n → ℚ∞) : -x ≤ 0 ↔ 0 ≤ x := by
+lemma Function.neg_le_zero_ERat (x : J → ℚ∞) : -x ≤ 0 ↔ 0 ≤ x := by
   constructor <;> intro hx i <;> specialize hx i
   · rw [Pi.neg_apply] at hx
     rw [Pi.zero_apply] at *
@@ -195,8 +195,8 @@ variable {α γ : Type*}
 
 /-- `Matrix.dotProd v w` is the sum of the element-wise products `w i • v i`
     (mnemonic: "vector times weights"). -/
-def Matrix.dotProd [AddCommMonoid α] [SMul γ α] (v : m → α) (w : m → γ) : α :=
-  Finset.univ.sum (fun i : m => w i • v i)
+def Matrix.dotProd [AddCommMonoid α] [SMul γ α] (v : I → α) (w : I → γ) : α :=
+  Finset.univ.sum (fun i : I => w i • v i)
 
 /- The precedence of 72 comes immediately after ` • ` for `SMul.smul`
    and ` ₘ* ` for `Matrix.mulWeig` (both have precedence of 73)
@@ -206,19 +206,19 @@ def Matrix.dotProd [AddCommMonoid α] [SMul γ α] (v : m → α) (w : m → γ)
    that `v ᵥ⬝ w ᵥ* C` is parsed as `v ᵥ⬝ (w ᵥ* C)` here. -/
 infixl:72 " ᵥ⬝ " => Matrix.dotProd
 
-def Matrix.mulWeig [AddCommMonoid α] [SMul γ α] (M : Matrix m n α) (w : n → γ) (i : m) : α :=
-  (fun j : n => M i j) ᵥ⬝ w
+def Matrix.mulWeig [AddCommMonoid α] [SMul γ α] (M : Matrix I J α) (w : J → γ) (i : I) : α :=
+  (fun j : J => M i j) ᵥ⬝ w
 infixr:73 " ₘ* " => Matrix.mulWeig
 
 
-lemma Matrix.zero_dotProd [AddCommMonoid α] [SMulZeroClass γ α] (w : m → γ) :
-    (0 : m → α) ᵥ⬝ w = (0 : α) := by
+lemma Matrix.zero_dotProd [AddCommMonoid α] [SMulZeroClass γ α] (w : I → γ) :
+    (0 : I → α) ᵥ⬝ w = (0 : α) := by
   apply Finset.sum_eq_zero
   intro i _
   exact smul_zero (w i)
 
-lemma Matrix.no_bot_dotProd_zero {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
-    v ᵥ⬝ (0 : m → ℚ) = (0 : ℚ∞) := by
+lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
+    v ᵥ⬝ (0 : I → ℚ) = (0 : ℚ∞) := by
   apply Finset.sum_eq_zero
   intro i _
   rw [Pi.zero_apply]
@@ -230,27 +230,27 @@ lemma Matrix.no_bot_dotProd_zero {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     rewrite [zero_mul]
     rfl
 
-lemma Matrix.has_bot_dotProd_nng {v : m → ℚ∞} {i : m} (hvi : v i = ⊥) {w : m → ℚ} (hw : 0 ≤ w) :
+lemma Matrix.has_bot_dotProd_nng {v : I → ℚ∞} {i : I} (hvi : v i = ⊥) {w : I → ℚ} (hw : 0 ≤ w) :
     v ᵥ⬝ w = (⊥ : ℚ∞) := by
   sorry
 
-lemma Matrix.no_bot_dotProd_nng {v : m → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : m → ℚ} (hw : 0 ≤ w) :
+lemma Matrix.no_bot_dotProd_nng {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : I → ℚ} (hw : 0 ≤ w) :
     v ᵥ⬝ w ≠ (⊥ : ℚ∞) := by
   sorry
 
-lemma Matrix.no_bot_has_top_dotProd_le {v : m → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : m} (hvi : v i = ⊤)
-    {w : m → ℚ} {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
+lemma Matrix.no_bot_has_top_dotProd_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
+    {w : I → ℚ} {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
     w i ≤ 0 := by
   -- ERat.top_mul_coe_of_pos
   sorry
 
-lemma Matrix.no_bot_has_top_dotProd_nng_le {v : m → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : m} (hvi : v i = ⊤)
-    {w : m → ℚ} (hw : 0 ≤ w) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
+lemma Matrix.no_bot_has_top_dotProd_nng_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
+    {w : I → ℚ} (hw : 0 ≤ w) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
     w i = 0 :=
   le_antisymm (Matrix.no_bot_has_top_dotProd_le hv hvi hq) (hw i)
 
-lemma Matrix.dotProd_zero_le_zero (v : m → ℚ∞) :
-    v ᵥ⬝ (0 : m → ℚ) ≤ (0 : ℚ∞) := by
+lemma Matrix.dotProd_zero_le_zero (v : I → ℚ∞) :
+    v ᵥ⬝ (0 : I → ℚ) ≤ (0 : ℚ∞) := by
   if hv : ∀ i, v i ≠ ⊥ then
     rw [Matrix.no_bot_dotProd_zero hv]
   else
@@ -261,7 +261,7 @@ lemma Matrix.dotProd_zero_le_zero (v : m → ℚ∞) :
     · rfl
 
 lemma Matrix.dotProd_le_dotProd_of_nng_right [OrderedAddCommMonoid α] [OrderedSemiring γ] [SMulZeroClass γ α] [AlmostOrderedSMul γ α]
-    {u v : n → α} (huv : u ≤ v) {w : n → γ} (hw : 0 ≤ w) :
+    {u v : J → α} (huv : u ≤ v) {w : J → γ} (hw : 0 ≤ w) :
     u ᵥ⬝ w ≤ v ᵥ⬝ w := by
   apply Finset.sum_le_sum
   intro i _
@@ -269,14 +269,14 @@ lemma Matrix.dotProd_le_dotProd_of_nng_right [OrderedAddCommMonoid α] [OrderedS
   · exact huv i
   · exact hw i
 
-lemma Matrix.no_bot_mulWeig_zero {A : Matrix m n ℚ∞} (hA : ∀ i, ∀ j, A i j ≠ ⊥) :
-    A ₘ* (0 : n → ℚ) = (0 : m → ℚ∞) := by
+lemma Matrix.no_bot_mulWeig_zero {A : Matrix I J ℚ∞} (hA : ∀ i, ∀ j, A i j ≠ ⊥) :
+    A ₘ* (0 : J → ℚ) = (0 : I → ℚ∞) := by
   ext
   apply Matrix.no_bot_dotProd_zero
   apply hA
 
-lemma Matrix.mulWeig_zero_le_zero (A : Matrix m n ℚ∞) :
-    A ₘ* (0 : n → ℚ) ≤ (0 : m → ℚ∞) := by
+lemma Matrix.mulWeig_zero_le_zero (A : Matrix I J ℚ∞) :
+    A ₘ* (0 : J → ℚ) ≤ (0 : I → ℚ∞) := by
   intro i
   apply Matrix.dotProd_zero_le_zero
 
@@ -296,32 +296,32 @@ end heteroMatrixProducts
 
 section generalizedFarkas
 
-def Matrix.Good (A : Matrix m n ℚ∞) : Prop :=
-  ¬ (∃ i : m, (∃ j : n, A i j = ⊥) ∧ (∃ j : n, A i j = ⊤))
+def Matrix.Good (A : Matrix I J ℚ∞) : Prop :=
+  ¬ (∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤))
 
-def Matrix.Good' (A : Matrix m n ℚ∞) (b : m → ℚ∞) : Prop :=
-  ¬ (∃ i : m, (∃ j : n, A i j = ⊥) ∧ b i = ⊥)
+def Matrix.Good' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
+  ¬ (∃ i : I, (∃ j : J, A i j = ⊥) ∧ b i = ⊥)
 
-def Matrix.Good'' (A : Matrix m n ℚ∞) (b : m → ℚ∞) : Prop :=
-  ¬ (∃ i : m, (∃ j : n, A i j = ⊤) ∧ b i = ⊤)
+def Matrix.Good'' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
+  ¬ (∃ i : I, (∃ j : J, A i j = ⊤) ∧ b i = ⊤)
 
 set_option maxHeartbeats 777777 in
-theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
+theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
     (hA : A.Good) (hAT : Aᵀ.Good) (hAb' : A.Good' b) (hAb : A.Good'' b) :
-    (∃ x : n → ℚ, 0 ≤ x ∧ A ₘ* x ≤ b) ≠ (∃ y : m → ℚ, 0 ≤ y ∧ -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0) := by
+    (∃ x : J → ℚ, 0 ≤ x ∧ A ₘ* x ≤ b) ≠ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0) := by
   -- filter rows and columns
-  let m' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥ } -- non-tautological rows
-  let n' : Type := { j : n // ∀ i' : m', A i'.val j ≠ ⊤ } -- columns that allow non-zero values
-  let A' : Matrix m' n' ℚ := -- the new matrix
-    Matrix.of (fun i' : m' => fun j' : n' =>
+  let I' : Type := { i : I // b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥ } -- non-tautological rows
+  let J' : Type := { j : J // ∀ i' : I', A i'.val j ≠ ⊤ } -- columns that allow non-zero values
+  let A' : Matrix I' J' ℚ := -- the new matrix
+    Matrix.of (fun i' : I' => fun j' : J' =>
       match matcha : A i'.val j'.val with
       | (q : ℚ) => q
       | ⊥ => False.elim (i'.property.right j' matcha)
       | ⊤ => False.elim (j'.property i' matcha)
     )
-  if hbot : ∃ i : m, b i = ⊥ then
+  if hbot : ∃ i : I, b i = ⊥ then
     obtain ⟨i, hi⟩ := hbot
-    if hi' : (∀ j : n, A i j ≠ ⊥) then
+    if hi' : (∀ j : J, A i j ≠ ⊥) then
       convert false_ne_true
       · rw [iff_false, not_exists]
         intro x ⟨hx, hAxb⟩
@@ -342,47 +342,47 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
       apply hAb'
       exact ⟨i, hi', hi⟩
   else
-    let b' : m' → ℚ := -- the new RHS
-      fun i' : m' =>
+    let b' : I' → ℚ := -- the new RHS
+      fun i' : I' =>
         match hbi : b i'.val with
         | (q : ℚ) => q
         | ⊥ => False.elim (hbot ⟨i', hbi⟩)
         | ⊤ => False.elim (i'.property.left hbi)
-    let n'' : Type := { j : n // ∀ i : m, A i j ≠ ⊤ } -- non-tautological columns
-    let m'' : Type := { i : m // b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥ } -- rows that allow non-zero values
-    have hm (i : m) : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) ↔ (b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥)
+    let J'' : Type := { j : J // ∀ i : I, A i j ≠ ⊤ } -- non-tautological columns
+    let I'' : Type := { i : I // b i ≠ ⊤ ∧ ∀ j'' : J'', A i j''.val ≠ ⊥ } -- rows that allow non-zero values
+    have hI (i : I) : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) ↔ (b i ≠ ⊤ ∧ ∀ j'' : J'', A i j''.val ≠ ⊥)
     · constructor <;> intro ⟨bi_neq_top, hi⟩
-      · exact ⟨bi_neq_top, fun j'' : n'' => hi j''.val⟩
+      · exact ⟨bi_neq_top, fun j'' : J'' => hi j''.val⟩
       · constructor
         · exact bi_neq_top
         · intro j
-          if hn'' : (∀ i : m, A i j ≠ ⊤) then
-            exact hi ⟨j, hn''⟩
+          if hI'' : (∀ i : I, A i j ≠ ⊤) then
+            exact hi ⟨j, hI''⟩
           else
-            push_neg at hn''
+            push_neg at hI''
             intro Aij_neq_bot
-            exact hAT ⟨j, ⟨i, Aij_neq_bot⟩, hn''⟩
-    have hn (j : n) : (∀ i' : m', A i'.val j ≠ ⊤) ↔ (∀ i : m, A i j ≠ ⊤)
+            exact hAT ⟨j, ⟨i, Aij_neq_bot⟩, hI''⟩
+    have hJ (j : J) : (∀ i' : I', A i'.val j ≠ ⊤) ↔ (∀ i : I, A i j ≠ ⊤)
     · constructor <;> intro hj
       · intro i Aij_eq_top
         if bi_top : b i = ⊤ then
           exact hAb ⟨i, ⟨j, Aij_eq_top⟩, bi_top⟩
-        else if Ai_bot : (∃ j : n, A i j = ⊥) then
+        else if Ai_bot : (∃ j : J, A i j = ⊥) then
           exact hA ⟨i, Ai_bot, ⟨j, Aij_eq_top⟩⟩
         else
           push_neg at Ai_bot
           exact hj ⟨i, ⟨bi_top, Ai_bot⟩⟩ Aij_eq_top
       · intro i'
         exact hj i'.val
-    let A'' : Matrix m'' n'' ℚ := -- matrix for simpler `y` part
-      Matrix.of (fun i'' : m'' => fun j'' : n'' =>
+    let A'' : Matrix I'' J'' ℚ := -- matrix for simpler `y` part
+      Matrix.of (fun i'' : I'' => fun j'' : J'' =>
         match matcha : A i''.val j''.val with
         | (q : ℚ) => q
         | ⊥ => False.elim (i''.property.right j'' matcha)
         | ⊤ => False.elim (j''.property i'' matcha)
       )
-    let b'' : m'' → ℚ := -- the new RHS
-      fun i'' : m'' =>
+    let b'' : I'' → ℚ := -- the new RHS
+      fun i'' : I'' =>
         match hbi : b i''.val with
         | (q : ℚ) => q
         | ⊥ => False.elim (hbot ⟨i''.val, hbi⟩)
@@ -391,7 +391,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
     · sorry
     /-convert standardFarkas A' b'
     · constructor <;> intro ⟨x, hx, ineqalities⟩
-      · use (fun j' : n' => x j'.val)
+      · use (fun j' : J' => x j'.val)
         constructor
         · intro j'
           exact hx j'.val
@@ -411,9 +411,9 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
         simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
         rw [Finset.sum_toERat]
         show
-          Finset.univ.sum (fun j' : n' => (A' i' j' * x j'.val).toERat) =
-          Finset.univ.sum (fun j : n => (x j).toERat * A i'.val j)
-        rw [Finset.univ_sum_of_zero_when_neg (fun j : n => ∀ i' : m', A i'.val j ≠ ⊤)]
+          Finset.univ.sum (fun j' : J' => (A' i' j' * x j'.val).toERat) =
+          Finset.univ.sum (fun j : J => (x j).toERat * A i'.val j)
+        rw [Finset.univ_sum_of_zero_when_neg (fun j : J => ∀ i' : I', A i'.val j ≠ ⊤)]
         · congr
           ext j'
           rw [mul_comm]
@@ -448,16 +448,16 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
           rw [hxj]
           apply ERat.zero_mul
           apply i'.property.right
-      · use (fun j : n => if hj : (∀ i' : m', A i'.val j ≠ ⊤) then x ⟨j, hj⟩ else 0)
+      · use (fun j : J => if hj : (∀ i' : I', A i'.val j ≠ ⊤) then x ⟨j, hj⟩ else 0)
         constructor
         · intro j
-          if hj : (∀ i' : m', A i'.val j ≠ ⊤) then
+          if hj : (∀ i' : I', A i'.val j ≠ ⊤) then
             convert hx ⟨j, hj⟩
             simp [hj]
           else
             aesop
         intro i
-        if hi : (b i ≠ ⊤ ∧ ∀ j : n, A i j ≠ ⊥) then
+        if hi : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) then
           convert ERat.coe_le_coe_iff.mpr (ineqalities ⟨i, hi⟩)
           · unfold Matrix.mulVec Matrix.dotProduct Matrix.mulWeig Matrix.dotProd
             simp_rw [dite_smul]
@@ -503,7 +503,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
               aesop
             apply bot_le-/
     · constructor <;> intro ⟨y, hy, ineqalities, sharpine⟩
-      · use (fun i'' : m'' => y i''.val)
+      · use (fun i'' : I'' => y i''.val)
         constructor
         · intro i''
           exact hy i''.val
@@ -514,9 +514,9 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
           simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
           rw [Finset.sum_toERat]
           show
-            Finset.univ.sum (fun i'' : m'' => ((-A''ᵀ) ⟨j, hj⟩ i'' * y i''.val).toERat) =
-            Finset.univ.sum (fun i : m => y i • (-Aᵀ) j i)
-          rw [Finset.univ_sum_of_zero_when_neg (fun i : m => b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥)]
+            Finset.univ.sum (fun i'' : I'' => ((-A''ᵀ) ⟨j, hj⟩ i'' * y i''.val).toERat) =
+            Finset.univ.sum (fun i : I => y i • (-Aᵀ) j i)
+          rw [Finset.univ_sum_of_zero_when_neg (fun i : I => b i ≠ ⊤ ∧ ∀ j'' : J'', A i j''.val ≠ ⊥)]
           · congr
             ext i''
             rw [mul_comm]
@@ -540,7 +540,7 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
           convert sharpine
           simp only [Matrix.dotProduct, Matrix.dotProd]
           rw [Finset.sum_toERat]
-          rw [Finset.univ_sum_of_zero_when_neg (fun i : m => b i ≠ ⊤ ∧ ∀ j'' : n'', A i j''.val ≠ ⊥)]
+          rw [Finset.univ_sum_of_zero_when_neg (fun i : I => b i ≠ ⊤ ∧ ∀ j'' : J'', A i j''.val ≠ ⊥)]
           · congr
             ext i''
             simp [b'']
@@ -558,10 +558,10 @@ theorem extendedFarkas {A : Matrix m n ℚ∞} {b : m → ℚ∞}
             simp only [Matrix.neg_apply, Matrix.transpose_apply, ne_eq, ERat.neg_eq_bot_iff]
             intro bi_eq_bot
             exact hbot ⟨i, bi_eq_bot⟩
-      · use (fun i : m => if hi : (b i ≠ ⊤ ∧ ∀ j'' : n'', A i j'' ≠ ⊥) then y ⟨i, hi⟩ else 0)
+      · use (fun i : I => if hi : (b i ≠ ⊤ ∧ ∀ j'' : J'', A i j'' ≠ ⊥) then y ⟨i, hi⟩ else 0)
         constructor
         · intro i
-          if hi : (b i ≠ ⊤ ∧ ∀ j'' : n'', A i j'' ≠ ⊥) then
+          if hi : (b i ≠ ⊤ ∧ ∀ j'' : J'', A i j'' ≠ ⊥) then
             convert hy ⟨i, hi⟩
             simp [hi]
           else
