@@ -112,6 +112,7 @@ all deleted positions.
 \item $ A \in F_\infty^{I \times J} $
 \item $ b \in F_\infty^{I} $
 \item hA: no row $i$ is allowed to have both $A_{i} \ni \bot$ and $A_{i} \ni \top$
+\item hAT: no column $j$ is allowed to have both $A_{\star, j} \ni \bot$ and $A_{\star, j} \ni \top$
 \item hAb: no row $i$ is allowed to have both $b_i = \top$ and $A_{i} \ni \top$
 \item if $\bot \in b$ then easy; from now on assume $\bot \notin b$
 \item $ I' := \{ i \in I ~|~ b_i \neq \top \wedge \bot \notin A_{i} \} $
@@ -144,7 +145,7 @@ all deleted positions.
 			\item if $ b_i = \top $ then $b^T y = \top \ge 0$ \\
 			(we need $\bot \notin b$ here)
 			\item if $ \bot \in A_{i} $ hence $ \top \in (-A^T)_{\star, i} $ then $ ((-A^T)\; y)_j = \top > 0$ \\
-			(we need $ \bot \notin (-A^T)_{\star, i} $ here)
+			(we use hAT here --- TODO necessary?)
 		\end{itemize}
 	\end{itemize}
 	\item given $j \in J'$ show: $\quad ((-A'^T)\; y')_{j} = \sum\limits_{i \in I'} y'_i \cdot (-A'^T)_{j,i} \le 0 $\\

@@ -238,6 +238,11 @@ lemma Matrix.no_bot_dotProd_nng {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w 
     v ᵥ⬝ w ≠ (⊥ : ℚ∞) := by
   sorry
 
+lemma Matrix.no_bot_has_top_dotProd_pos {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
+    {w : I → ℚ} (hw : 0 ≤ w) (hwi : 0 < w i) :
+    v ᵥ⬝ w = ⊤ := by
+  sorry
+
 lemma Matrix.no_bot_has_top_dotProd_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     {w : I → ℚ} {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
     w i ≤ 0 := by
@@ -465,6 +470,45 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
         constructor
         · intro i'
           exact hy i'.val
+        have hhi (i : I) (i_not_I' : ¬ (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥)) (j : J) : (-Aᵀ) j i ≠ ⊥
+        · intro contr
+          have btop : ∃ j : J, A i j = ⊤
+          · use j
+            simpa using contr
+          clear contr
+          refine hA ⟨i, ?_, btop⟩
+          push_neg at i_not_I'
+          apply i_not_I'
+          intro contr
+          apply hAb
+          use i
+        have hhy (i : I) (i_not_I' : ¬ (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥)) : y i = 0
+        · by_contra contr
+          have hyi : 0 < y i
+          · cases lt_or_eq_of_le (hy i) with
+            | inl hpos =>
+              exact hpos
+            | inr h0 =>
+              exfalso
+              apply contr
+              exact h0.symm
+          clear contr
+          if bi_top : b i = ⊤ then
+            have impos : b ᵥ⬝ y = ⊤
+            · push_neg at hbot
+              exact Matrix.no_bot_has_top_dotProd_pos hbot bi_top hy hyi
+            rw [impos] at sharpine
+            exact not_top_lt sharpine
+          else
+            push_neg at i_not_I'
+            obtain ⟨j, Aij_eq_bot⟩ := i_not_I' bi_top
+            have htop : ((-Aᵀ) j) ᵥ⬝ y = ⊤
+            · refine Matrix.no_bot_has_top_dotProd_pos ?_ (by simpa using Aij_eq_bot) hy hyi
+              intro k hk
+              exact hAT ⟨j, ⟨i, Aij_eq_bot⟩, ⟨k, by simpa using hk⟩⟩
+            have ineqality : ((-Aᵀ) j) ᵥ⬝ y ≤ 0 := ineqalities j
+            rw [htop, top_le_iff] at ineqality
+            exact ERat.top_ne_zero ineqality.symm
         constructor
         · intro j'
           sorry
