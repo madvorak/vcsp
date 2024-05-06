@@ -470,19 +470,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
         constructor
         · intro i'
           exact hy i'.val
-        have hhi (i : I) (i_not_I' : ¬ (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥)) (j : J) : (-Aᵀ) j i ≠ ⊥
-        · intro contr
-          have btop : ∃ j : J, A i j = ⊤
-          · use j
-            simpa using contr
-          clear contr
-          refine hA ⟨i, ?_, btop⟩
-          push_neg at i_not_I'
-          apply i_not_I'
-          intro contr
-          apply hAb
-          use i
-        have hhy (i : I) (i_not_I' : ¬ (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥)) : y i = 0
+        have h0 (i : I) (i_not_I' : ¬ (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥)) : y i = 0
         · by_contra contr
           have hyi : 0 < y i
           · cases lt_or_eq_of_le (hy i) with
@@ -510,9 +498,64 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             rw [htop, top_le_iff] at ineqality
             exact ERat.top_ne_zero ineqality.symm
         constructor
-        · intro j'
-          sorry
-        · sorry
+        · have hnb (i : I) (i_not_I' : ¬ (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥)) (j : J) : (-Aᵀ) j i ≠ ⊥
+          · intro contr
+            have btop : ∃ j : J, A i j = ⊤
+            · use j
+              simpa using contr
+            clear contr
+            refine hA ⟨i, ?_, btop⟩
+            push_neg at i_not_I'
+            apply i_not_I'
+            intro contr
+            apply hAb
+            use i
+          intro j'
+          have inequality : Finset.univ.sum (fun i : I => y i • (-Aᵀ) j'.val i) ≤ 0 := ineqalities j'
+          rw [Finset.univ_sum_of_zero_when_neg (fun i : I => b i ≠ ⊤ ∧ ∀ (j : J), A i j ≠ ⊥)] at inequality
+          · rw [←ERat.coe_le_coe_iff]
+            convert inequality
+            simp only [Matrix.mulVec, Matrix.dotProduct]
+            rw [Finset.sum_toERat]
+            congr
+            ext i'
+            simp only [A', Matrix.neg_apply, Matrix.transpose_apply, Matrix.of_apply]
+            congr
+            split <;> rename_i hAij <;> simp only [hAij]
+            · rewrite [mul_comm]
+              rfl
+            · exfalso
+              apply i'.property.right
+              exact hAij
+            · exfalso
+              apply j'.property
+              exact hAij
+          · intro i hi
+            rw [h0 i hi]
+            apply ERat.zero_mul
+            apply hnb
+            exact hi
+        · unfold Matrix.dotProd at sharpine
+          rw [Finset.univ_sum_of_zero_when_neg (fun i : I => b i ≠ ⊤ ∧ ∀ (j : J), A i j ≠ ⊥)] at sharpine
+          · unfold Matrix.dotProduct
+            rw [←ERat.coe_lt_coe_iff, Finset.sum_toERat]
+            convert sharpine with i'
+            simp only [b']
+            split <;> rename_i hbi <;> simp only [hbi]
+            · rewrite [mul_comm]
+              rfl
+            · exfalso
+              apply hbot
+              use i'
+              exact hbi
+            · exfalso
+              apply i'.property.left
+              exact hbi
+          · intro i hi
+            rw [h0 i hi]
+            apply ERat.zero_mul
+            intro contr
+            exact hbot ⟨i, contr⟩
       · use (fun i : I => if hi : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) then y ⟨i, hi⟩ else 0)
         constructor
         · intro i
