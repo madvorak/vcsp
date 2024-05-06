@@ -86,65 +86,6 @@ exactly one of the following is true:
 	$0 \leqq y$ and $(-A^T)\; y \leqq 0$ and $b^T y < 0$
 \end{itemize}
 
-\section{Proof sketch}
-
-\renewcommand{\labelitemii}{$\blacklozenge$}
-
-\begin{itemize}
-\item $ A \in F_\infty^{I \times J} $
-\item $ b \in F_\infty^{I} $
-\item if $\bot \in b$ then easy; assume $\bot \notin b$
-\item $ I' := \{ i \in I ~|~ b_i \neq \top \wedge \bot \notin A_{i, \star} \} $
-\item $ J' := \{ j \in J ~|~ \top \notin A_{\star, j}  \} $
-\item $ A' := A \restriction (I' \times J') $
-\item $ b' := b \restriction I' $
-\item $ A' \in F^{I' \times J'} $
-\item $ b' \in F^{I'} $
-\item $ (\exists x) \implies (\exists x') \ \dots \ $ easy
-\item $ (\exists x') \implies (\exists x) \ \dots \ $ easy
-\item assume $\exists y \in F^I$ such that $0 \leqq y$ and $(-A^T)\; y \leqq 0$ and $b^T y < 0$
-\begin{itemize}
-\item use $y' := y \restriction I'$
-\item $ y' \in F^{I'} $
-\item $0 \leqq y'$ from $0 \leqq y$
-\item given $j \in J'$ show\dots $ ((-A'^T)\; y')_{j} = \sum\limits_{i \in I'} y'_i \cdot (-A'^T)_{j,i} \le 0 $\\
-using\dots $ ((-A^T)\; y)_j =
-\sum\limits_{i \in I'} y'_i \cdot (-A^T)_{j,i} + \sum\limits_{i \in I \setminus I'} y_i \cdot (-A^T)_{j,i} \le 0 $
-suffices\dots $ \sum\limits_{i \in I \setminus I'} y_i \cdot (-A^T)_{j,i} = 0 $ \\
-suffices $(\forall i \in I \setminus I')\dots\quad y_i \cdot (-A)_{i,j} = 0 $ \\
-we know that either $ b_i = \top $ or $ \bot \in A_{i, \star} $ \\
-if $ b_i = \top $ then $ y_i = 0 $ because otherwise $b^T y = \top \ge 0$ \\
-(we need $\bot \notin b$ for $b^T y = \top$ above) \\
-if $ \bot \in A_{i, \star} $ hence $ \top \in (-A^T)_{\star, i} $ then $ y_i = 0 $ because otherwise TODO
-(for the last step we need $ \bot \notin (-A^T)_{\star, i} $ that is $ \top \notin A_{i, \star} $ which
-we know because otherwise $ \bot,\!\top \in A_{i, \star} $ contradicts global assumption) \\
-either way we got $ y_i = 0 $ \\
-suffices\dots $ (-A)_{i,j} \neq \bot $ \\
-we show $ A_{i,j} \neq \top $ by the same arguments as above (first fix $i$)
-\item we need to show $b'^T y' = \sum\limits_{i \in I'} y'_i \cdot b'_i < 0$ \\
-suffices\dots $ \sum\limits_{i \in I \setminus I'} y_i \cdot b_i = 0 $ \\
-show $y_i = 0$ by the same arguments as above \\
-finish using $\bot \notin b$
-\end{itemize}
-\item assume $\exists y' \in F^{I'}$ such that $0 \leqq y'$ and $(-A'^T)\; y' \leqq 0$ and $b'^T y' < 0$
-\begin{itemize}
-\item use $y := y'$ extended with $0$ on $I \setminus I'$
-\item $ y \in F^I $
-\item $0 \leqq y$ is trivial
-\item assume $j \in J'$ and calculate\dots $ ((-A^T)\; y)_j = $\\
-$ \sum\limits_{i \in I'} y_i \cdot (-A^T)_{j,i} + \sum\limits_{i \in I \setminus I'} y_i \cdot (-A^T)_{j,i} = $\\
-$ \sum\limits_{i \in I'} y'_i \cdot (-A'^T)_{j,i} + \sum\limits_{i \in I \setminus I'} 0 \cdot (-A^T)_{j,i} = $\\
-$ ((-A'^T)\; y')_j + \sum\limits_{i \in I \setminus I'} [0 \textup{~or~} \bot] \le ((-A'^T)\; y')_j \le 0  $\\
-assume $j \notin J'$ hence $\top \in A_{\star, j}$ hence $\bot \in (-A^T)_{j, \star}$ and calculate...
-$ ((-A^T)\; y)_j = \sum\limits_{i \in I} y_i \cdot (-A^T)_{j,i} = [\ge 0] \cdot \bot + (\dots) = \bot \le 0 $
-\item $ b^T y
-= \sum\limits_{i \in I'} y_i \cdot b_i + \sum\limits_{i \in I \setminus I'} y_i \cdot b_i
-= \sum\limits_{i \in I'} y'_i \cdot b'_i + \sum\limits_{i \in I \setminus I'} 0 \cdot b_i
-= b'^T y' < 0 $
-(note that we used $\bot \notin b$ for $0 \cdot b_i = 0$ in the last equality)
-\end{itemize}
-\end{itemize}
-
 \section{Proof idea}
 
 We need to do the following steps in given order:
@@ -159,5 +100,79 @@ but $y = 0$ satisfies the other part. Stop here.
 Whichever solution Farkas outputs, extend it with zeros on
 all deleted positions.
 \end{enumerate}
+
+\section{Proof sketch}
+
+\renewcommand{\labelitemi}{$\bullet$}
+\renewcommand{\labelitemii}{$\bullet$}
+\renewcommand{\labelitemiii}{$\bullet$}
+\renewcommand{\labelitemiv}{$\bullet$}
+
+\begin{itemize}
+\item $ A \in F_\infty^{I \times J} $
+\item $ b \in F_\infty^{I} $
+\item hA: no row $i$ is allowed to have both $A_{i, \star} \ni \bot$ and $A_{i, \star} \ni \top$
+\item hAb: no row $i$ is allowed to have both $b_i = \top$ and $A_{i, \star} \ni \top$
+\item if $\bot \in b$ then easy; from now on assume $\bot \notin b$
+\item $ I' := \{ i \in I ~|~ b_i \neq \top \wedge \bot \notin A_{i, \star} \} $
+\item $ J' := \{ j \in J ~|~ \top \notin A_{\star, j}  \} $
+\item $ A' := A \restriction (I' \times J') $
+\item $ A' \in F^{I' \times J'} $
+\item $ b' := b \restriction I' $
+\item $ b' \in F^{I'} $
+\item $ (\exists x) \implies (\exists x') \ \dots \ $ easy
+\item $ (\exists x') \implies (\exists x) \ \dots \ $ easy
+\item assume $\exists y \in F^I$ such that $0 \leqq y$ and $(-A^T)\; y \leqq 0$ and $b^T y < 0$
+\begin{itemize}
+	\item use $y' := y \restriction I'$
+	\item $ y' \in F^{I'} $
+	\item $0 \leqq y'$ from $0 \leqq y$
+	\item given $j \in J'$ show: $\quad ((-A'^T)\; y')_{j} = \sum\limits_{i \in I'} y'_i \cdot (-A'^T)_{j,i} \le 0 $\\
+	using: $\quad ((-A^T)\; y)_j =
+	\sum\limits_{i \in I'} y'_i \cdot (-A^T)_{j,i} + \sum\limits_{i \in I \setminus I'} y_i \cdot (-A^T)_{j,i} \le 0 $
+	suffices: $\quad \sum\limits_{i \in I \setminus I'} y_i \cdot (-A^T)_{j,i} = 0 $ \\
+	fix $i \in I \setminus I'$ and show $ y_i \cdot (-A)_{i,j} = 0 $
+	\begin{itemize}
+		\item from our $I'$ we have either $ b_i = \top $ or $ \bot \in A_{i, \star} $
+		\item show $ \bot \notin (-A^T)_{\star, i} $ that is $ \top \notin A_{i, \star} $ by contradiction $ \top \in A_{i, \star} $
+		\begin{itemize}
+			\item if $ b_i = \top $ then contradicts hAb
+			\item if $ \bot \in A_{i, \star} $ then contradicts hA
+		\end{itemize}
+		\item show $y_i = 0$ by contradiction $y_i > 0$
+		\begin{itemize}
+			\item if $ b_i = \top $ then $b^T y = \top \ge 0$ \\
+			(we need $\bot \notin b$ here)
+			\item if $ \bot \in A_{i, \star} $ hence $ \top \in (-A^T)_{\star, i} $ then $ ((-A^T)\; y)_j = \top > 0$
+			(we need $ \bot \notin (-A^T)_{\star, i} $ here)
+		\end{itemize}
+		\item show $ (-A)_{i,j} \neq \bot $
+		\begin{itemize}
+			\item special case of what we already have
+		\end{itemize}
+	\end{itemize}
+	\item we need to show $b'^T y' = \sum\limits_{i \in I'} y'_i \cdot b'_i < 0$ \\
+	suffices\dots $ \sum\limits_{i \in I \setminus I'} y_i \cdot b_i = 0 $ \\
+	show $y_i = 0$ by the same arguments as above \\
+	finish using $\bot \notin b$
+\end{itemize}
+\item assume $\exists y' \in F^{I'}$ such that $0 \leqq y'$ and $(-A'^T)\; y' \leqq 0$ and $b'^T y' < 0$
+\begin{itemize}
+	\item use $y := y'$ extended with $0$ on $I \setminus I'$
+	\item $ y \in F^I $
+	\item $0 \leqq y$ is trivial
+	\item assume $j \in J'$ and calculate\dots $ ((-A^T)\; y)_j = $\\
+	$ \sum\limits_{i \in I'} y_i \cdot (-A^T)_{j,i} + \sum\limits_{i \in I \setminus I'} y_i \cdot (-A^T)_{j,i} = $\\
+	$ \sum\limits_{i \in I'} y'_i \cdot (-A'^T)_{j,i} + \sum\limits_{i \in I \setminus I'} 0 \cdot (-A^T)_{j,i} = $\\
+	$ ((-A'^T)\; y')_j + \sum\limits_{i \in I \setminus I'} [0 \textup{~or~} \bot] \le ((-A'^T)\; y')_j \le 0  $\\
+	assume $j \notin J'$ hence $\top \in A_{\star, j}$ hence $\bot \in (-A^T)_{j, \star}$ and calculate...
+	$ ((-A^T)\; y)_j = \sum\limits_{i \in I} y_i \cdot (-A^T)_{j,i} = [\ge 0] \cdot \bot + (\dots) = \bot \le 0 $
+	\item $ b^T y
+	= \sum\limits_{i \in I'} y_i \cdot b_i + \sum\limits_{i \in I \setminus I'} y_i \cdot b_i
+	= \sum\limits_{i \in I'} y'_i \cdot b'_i + \sum\limits_{i \in I \setminus I'} 0 \cdot b_i
+	= b'^T y' < 0 $
+	(note that we used $\bot \notin b$ for $0 \cdot b_i = 0$ in the last equality)
+\end{itemize}
+\end{itemize}
 
 \end{document}
