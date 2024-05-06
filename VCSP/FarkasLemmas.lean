@@ -30,7 +30,7 @@ lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix I J R) (b : I → R
   have hAy' : 0 ≤ y ᵥ* A
   · rwa [Matrix.neg_mulVec, Matrix.mulVec_transpose, neg_nonpos] at hAy
   exfalso
-  rw [← lt_self_iff_false (0 : R)]
+  rw [←lt_self_iff_false (0 : R)]
   calc 0 = 0 ⬝ᵥ x := (Matrix.zero_dotProduct x).symm
     _ ≤ (y ᵥ* A) ⬝ᵥ x := Matrix.dotProduct_le_dotProduct_of_nonneg_right hAy' hx
     _ = y ⬝ᵥ (A *ᵥ x) := (Matrix.dotProduct_mulVec y A x).symm
@@ -359,7 +359,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
         · intro j'
           exact hx j'.val
         intro i'
-        rw [← ERat.coe_le_coe_iff]
+        rw [←ERat.coe_le_coe_iff]
         convert ineqalities i'.val; swap
         · simp only [b']
           split <;> rename_i hbi <;> simp only [hbi]
@@ -433,7 +433,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
               apply Finset.subtype_univ_sum_eq_subtype_univ_sum
               · simp [Finset.mem_filter]
-              · intros -- TODO name
+              · intro j hj _
                 rw [mul_comm, ERat.coe_mul]
                 simp only [A', Matrix.of_apply]
                 split <;> rename_i hAij <;> simp only [hAij]
@@ -442,7 +442,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
                   apply hi.right
                   exact hAij
                 · exfalso
-                  aesop
+                  exact hj ⟨i, hi⟩ hAij
           · simp only [b']
             split <;> rename_i hbi <;> simp only [hbi]
             · rfl
@@ -575,7 +575,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             rw [Finset.sum_dite]
             convert add_zero _
             apply Finset.sum_eq_zero
-            intro i hi
+            intro i _
             apply zero_smul_ERat_neq_bot
             intro contr
             rw [ERat.neg_eq_bot_iff] at contr
