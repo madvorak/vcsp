@@ -433,7 +433,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
               apply Finset.subtype_univ_sum_eq_subtype_univ_sum
               · simp [Finset.mem_filter]
-              · intros
+              · intros -- TODO name
                 rw [mul_comm, ERat.coe_mul]
                 simp only [A', Matrix.of_apply]
                 split <;> rename_i hAij <;> simp only [hAij]
@@ -557,7 +557,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             intro contr
             exact hbot ⟨i, contr⟩
       · use (fun i : I => if hi : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) then y ⟨i, hi⟩ else 0)
-        constructor
+        have nonneg : 0 ≤ (fun i : I => if hi : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) then y ⟨i, hi⟩ else 0)
         · intro i
           if hi : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) then
             convert hy ⟨i, hi⟩
@@ -565,7 +565,67 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
           else
             aesop
         constructor
-        · sorry
-        · sorry
+        · exact nonneg
+        constructor
+        · intro j
+          if hj : (∀ i : I, A i j ≠ ⊤) then
+            convert ERat.coe_le_coe_iff.mpr (ineqalities ⟨j, fun i' => hj i'.val⟩)
+            simp only [Matrix.mulWeig, Matrix.neg_apply, Matrix.transpose_apply, Pi.zero_apply]
+            simp only [Matrix.dotProd, dite_smul]
+            rw [Finset.sum_dite]
+            convert add_zero _
+            apply Finset.sum_eq_zero
+            intro i hi
+            apply zero_smul_ERat_neq_bot
+            intro contr
+            rw [ERat.neg_eq_bot_iff] at contr
+            exact hj i contr
+            · simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.neg_apply, Matrix.transpose_apply, ERat.coe_neg]
+              rw [Finset.sum_toERat]
+              apply Finset.subtype_univ_sum_eq_subtype_univ_sum
+              · ext i
+                simp
+              · intro i hi hif
+                rw [mul_comm]
+                simp only [A', Matrix.neg_apply, Matrix.of_apply]
+                congr
+                split <;> rename_i hAij <;> simp only [hAij]
+                · rfl
+                · exfalso
+                  apply hi.right
+                  exact hAij
+                · exfalso
+                  apply hj
+                  exact hAij
+          else
+            push_neg at hj
+            obtain ⟨i, Aij_eq_top⟩ := hj
+            unfold Matrix.mulWeig
+            rw [Matrix.has_bot_dotProd_nng]
+            · apply bot_le
+            · rwa [Matrix.neg_apply, Matrix.transpose_apply, ERat.neg_eq_bot_iff]
+            · exact nonneg
+        · convert ERat.coe_lt_coe_iff.mpr sharpine
+          unfold Matrix.dotProduct Matrix.dotProd
+          simp_rw [dite_smul]
+          rw [Finset.sum_dite]
+          convert add_zero _
+          · apply Finset.sum_eq_zero
+            intro j _
+            apply zero_smul_ERat_neq_bot
+            intro contr
+            exact hbot ⟨j.val, contr⟩
+          · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
+            apply Finset.subtype_univ_sum_eq_subtype_univ_sum
+            · simp [Finset.mem_filter]
+            · intro i hi _
+              rw [mul_comm, ERat.coe_mul]
+              simp only [b', Matrix.of_apply]
+              split <;> rename_i hbi <;> simp only [hbi]
+              · rfl
+              · exfalso
+                exact hbot ⟨i, hbi⟩
+              · exfalso
+                exact hi.left hbi
 
 end generalizedFarkas

@@ -544,7 +544,6 @@ theorem addLECancellable_coe (x : ℚ) : AddLECancellable (x : ERat)
   | (y : ℚ), (z : ℚ), h => by
     simpa only [← coe_add, ERat.coe_le_coe_iff, add_le_add_iff_left] using h
 
--- Porting note (#11215): TODO: add `MulLECancellable.strictMono*` etc
 theorem add_lt_add_right_coe {x y : ERat} (h : x < y) (z : ℚ) : x + z < y + z :=
   not_le.1 <| mt (addLECancellable_coe z).add_le_add_iff_right.1 h.not_le
 #align ERat.add_lt_add_right_coe ERat.add_lt_add_right_coe
