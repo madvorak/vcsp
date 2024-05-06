@@ -309,16 +309,6 @@ set_option maxHeartbeats 777777 in
 theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
     (hA : A.Good) (hAT : Aᵀ.Good) (hAb' : A.Good' b) (hAb : A.Good'' b) :
     (∃ x : J → ℚ, 0 ≤ x ∧ A ₘ* x ≤ b) ≠ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0) := by
-  -- filter rows and columns
-  let I' : Type := { i : I // b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥ } -- non-tautological rows
-  let J' : Type := { j : J // ∀ i' : I', A i'.val j ≠ ⊤ } -- columns that allow non-zero values
-  let A' : Matrix I' J' ℚ := -- the new matrix
-    Matrix.of (fun i' : I' => fun j' : J' =>
-      match matcha : A i'.val j'.val with
-      | (q : ℚ) => q
-      | ⊥ => False.elim (i'.property.right j' matcha)
-      | ⊤ => False.elim (j'.property i' matcha)
-    )
   if hbot : ∃ i : I, b i = ⊥ then
     obtain ⟨i, hi⟩ := hbot
     if hi' : (∀ j : J, A i j ≠ ⊥) then
@@ -342,54 +332,22 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
       apply hAb'
       exact ⟨i, hi', hi⟩
   else
+    let I' : Type := { i : I // b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥ } -- non-tautological rows
+    let J' : Type := { j : J // ∀ i' : I', A i'.val j ≠ ⊤ } -- columns that allow non-zero values
+    let A' : Matrix I' J' ℚ := -- the new matrix
+      Matrix.of (fun i' : I' => fun j' : J' =>
+        match matcha : A i'.val j'.val with
+        | (q : ℚ) => q
+        | ⊥ => False.elim (i'.property.right j' matcha)
+        | ⊤ => False.elim (j'.property i' matcha)
+      )
     let b' : I' → ℚ := -- the new RHS
       fun i' : I' =>
         match hbi : b i'.val with
         | (q : ℚ) => q
         | ⊥ => False.elim (hbot ⟨i', hbi⟩)
         | ⊤ => False.elim (i'.property.left hbi)
-    let J'' : Type := { j : J // ∀ i : I, A i j ≠ ⊤ } -- non-tautological columns
-    let I'' : Type := { i : I // b i ≠ ⊤ ∧ ∀ j'' : J'', A i j''.val ≠ ⊥ } -- rows that allow non-zero values
-    have hI (i : I) : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) ↔ (b i ≠ ⊤ ∧ ∀ j'' : J'', A i j''.val ≠ ⊥)
-    · constructor <;> intro ⟨bi_neq_top, hi⟩
-      · exact ⟨bi_neq_top, fun j'' : J'' => hi j''.val⟩
-      · constructor
-        · exact bi_neq_top
-        · intro j
-          if hI'' : (∀ i : I, A i j ≠ ⊤) then
-            exact hi ⟨j, hI''⟩
-          else
-            push_neg at hI''
-            intro Aij_neq_bot
-            exact hAT ⟨j, ⟨i, Aij_neq_bot⟩, hI''⟩
-    have hJ (j : J) : (∀ i' : I', A i'.val j ≠ ⊤) ↔ (∀ i : I, A i j ≠ ⊤)
-    · constructor <;> intro hj
-      · intro i Aij_eq_top
-        if bi_top : b i = ⊤ then
-          exact hAb ⟨i, ⟨j, Aij_eq_top⟩, bi_top⟩
-        else if Ai_bot : (∃ j : J, A i j = ⊥) then
-          exact hA ⟨i, Ai_bot, ⟨j, Aij_eq_top⟩⟩
-        else
-          push_neg at Ai_bot
-          exact hj ⟨i, ⟨bi_top, Ai_bot⟩⟩ Aij_eq_top
-      · intro i'
-        exact hj i'.val
-    let A'' : Matrix I'' J'' ℚ := -- matrix for simpler `y` part
-      Matrix.of (fun i'' : I'' => fun j'' : J'' =>
-        match matcha : A i''.val j''.val with
-        | (q : ℚ) => q
-        | ⊥ => False.elim (i''.property.right j'' matcha)
-        | ⊤ => False.elim (j''.property i'' matcha)
-      )
-    let b'' : I'' → ℚ := -- the new RHS
-      fun i'' : I'' =>
-        match hbi : b i''.val with
-        | (q : ℚ) => q
-        | ⊥ => False.elim (hbot ⟨i''.val, hbi⟩)
-        | ⊤ => False.elim (i''.property.left hbi)
-    convert standardFarkas A'' b''
-    · sorry
-    /-convert standardFarkas A' b'
+    convert standardFarkas A' b'
     · constructor <;> intro ⟨x, hx, ineqalities⟩
       · use (fun j' : J' => x j'.val)
         constructor
@@ -485,7 +443,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             · rfl
             · exfalso
               apply hbot
-              use ⟨i, hi⟩
+              use i
               exact hbi
             · exfalso
               apply hi.left
@@ -501,71 +459,24 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             · apply Matrix.has_bot_dotProd_nng hAij
               intro _
               aesop
-            apply bot_le-/
+            apply bot_le
     · constructor <;> intro ⟨y, hy, ineqalities, sharpine⟩
-      · use (fun i'' : I'' => y i''.val)
+      · use (fun i' : I' => y i'.val)
         constructor
-        · intro i''
-          exact hy i''.val
+        · intro i'
+          exact hy i'.val
         constructor
-        · intro ⟨j, hj⟩
-          rw [←ERat.coe_le_coe_iff]
-          convert ineqalities j
-          simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
-          rw [Finset.sum_toERat]
-          show
-            Finset.univ.sum (fun i'' : I'' => ((-A''ᵀ) ⟨j, hj⟩ i'' * y i''.val).toERat) =
-            Finset.univ.sum (fun i : I => y i • (-Aᵀ) j i)
-          rw [Finset.univ_sum_of_zero_when_neg (fun i : I => b i ≠ ⊤ ∧ ∀ j'' : J'', A i j''.val ≠ ⊥)]
-          · congr
-            ext i''
-            rw [mul_comm]
-            simp only [A'', Matrix.of_apply, Matrix.transpose_apply, Matrix.neg_apply, ERat.coe_neg]
-            congr
-            split <;> rename_i q hAij <;> simp only [hAij]
-            · rfl
-            · exfalso
-              exact i''.property.right ⟨j, hj⟩ hAij
-            · exfalso
-              apply hj
-              exact hAij
-          · intro i todo
-            have hyi : y i = 0
-            · sorry
-            rw [hyi]
-            apply ERat.zero_mul
-            simp only [Matrix.neg_apply, Matrix.transpose_apply, ne_eq, ERat.neg_eq_bot_iff]
-            apply hj
-        · rw [←ERat.coe_lt_coe_iff]
-          convert sharpine
-          simp only [Matrix.dotProduct, Matrix.dotProd]
-          rw [Finset.sum_toERat]
-          rw [Finset.univ_sum_of_zero_when_neg (fun i : I => b i ≠ ⊤ ∧ ∀ j'' : J'', A i j''.val ≠ ⊥)]
-          · congr
-            ext i''
-            simp [b'']
-            split <;> rename_i q hbi <;> simp only [hbi]
-            · sorry -- rw [mul_comm]
-            · exfalso
-              exact hbot ⟨i''.val, hbi⟩
-            · exfalso
-              exact i''.property.left hbi
-          · intro i todo
-            have hyi : y i = 0
-            · sorry
-            rw [hyi]
-            apply ERat.zero_mul
-            simp only [Matrix.neg_apply, Matrix.transpose_apply, ne_eq, ERat.neg_eq_bot_iff]
-            intro bi_eq_bot
-            exact hbot ⟨i, bi_eq_bot⟩
-      · use (fun i : I => if hi : (b i ≠ ⊤ ∧ ∀ j'' : J'', A i j'' ≠ ⊥) then y ⟨i, hi⟩ else 0)
+        · intro j'
+          sorry
+        · sorry
+      · use (fun i : I => if hi : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) then y ⟨i, hi⟩ else 0)
         constructor
         · intro i
-          if hi : (b i ≠ ⊤ ∧ ∀ j'' : J'', A i j'' ≠ ⊥) then
+          if hi : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) then
             convert hy ⟨i, hi⟩
             simp [hi]
           else
-            sorry --aesop
+            aesop
         constructor
         · sorry
         · sorry
