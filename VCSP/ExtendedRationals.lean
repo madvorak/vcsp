@@ -268,7 +268,7 @@ theorem range_coe_eq_Ioo : range Rat.toERat = Ioo ⊥ ⊤ := by
   induction x using ERat.rec <;> simp
 
 @[simp, norm_cast]
-theorem coe_add (x y : ℚ) : (↑(x + y) : ERat) = x + y :=
+theorem coe_add (x y : ℚ) : (x + y).toERat = x.toERat + y.toERat :=
   rfl
 
 @[norm_cast]
@@ -999,5 +999,5 @@ end ERat
 @[simps]
 def Rat.toERatAddHom : ℚ →+ ERat where
   toFun := Rat.toERat
-  map_zero' := rfl
-  map_add' _ _ := rfl
+  map_zero' := ERat.coe_zero
+  map_add' := ERat.coe_add

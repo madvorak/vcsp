@@ -73,9 +73,9 @@ lemma smul_eq_ERat_bot_iff_of_nng {c : ℚ} {a : ℚ∞} (hc : 0 ≤ c) : c • 
     rw [ha]
     exact ERat.coe_mul_bot_of_nng hc
 
-lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (f : ι → ℚ) (s : Finset ι) :
-    (s.sum f).toERat = s.sum (fun i : ι => (f i).toERat) := by
-  sorry
+lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (s : Finset ι) (f : ι → ℚ) :
+    (s.sum f).toERat = s.sum (fun i : ι => (f i).toERat) :=
+  map_sum Rat.toERatAddHom f s
 
 lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞) ↔ ⊥ ∈ s := by
   sorry
