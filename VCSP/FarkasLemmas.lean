@@ -65,6 +65,29 @@ lemma smul_toERat_eq_mul_toERat (c a : ℚ) : c • a.toERat = (c * a).toERat :=
 
 lemma zero_smul_ERat_neq_bot {a : ℚ∞} (ha : a ≠ ⊥) : (0 : ℚ) • a = 0 := ERat.zero_mul ha
 
+lemma smul_eq_ERat_bot_iff_of_nng {c : ℚ} {a : ℚ∞} (hc : 0 ≤ c) : c • a = ⊥ ↔ a = ⊥ := by
+  constructor
+  · intro hca
+    change hca to c.toERat * a = ⊥
+    match a with
+    | ⊥ => rfl
+    | ⊤ =>
+      exfalso
+      cases lt_or_eq_of_le hc with
+      | inl c_pos =>
+        rw [ERat.coe_mul_top_of_pos c_pos] at hca
+        exact top_ne_bot hca
+      | inr c_zero =>
+        rw [←c_zero, ERat.coe_zero, ERat.zero_mul top_ne_bot] at hca
+        exact ERat.bot_ne_zero hca.symm
+    | (q : ℚ) =>
+      exfalso
+      change hca to (c * q).toERat = ⊥
+      exact ERat.coe_ne_bot _ hca
+  · intro ha
+    rw [ha]
+    exact ERat.coe_mul_bot_of_nng hc
+
 instance : AlmostOrderedSMul ℚ ℚ∞ where
   smul_le_smul_of_le_of_nng (a b : ℚ∞) (c : ℚ) (hab : a ≤ b) (hc : 0 ≤ c) := by
     match ha : a with
@@ -186,6 +209,9 @@ lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (f : ι → ℚ) (s : Finset �
     (s.sum f).toERat = s.sum (fun i : ι => (f i).toERat) := by
   sorry
 
+lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞) ↔ ⊥ ∈ s := by
+  sorry
+
 end instERat
 
 
@@ -232,11 +258,21 @@ lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
 
 lemma Matrix.has_bot_dotProd_nng {v : I → ℚ∞} {i : I} (hvi : v i = ⊥) {w : I → ℚ} (hw : 0 ≤ w) :
     v ᵥ⬝ w = (⊥ : ℚ∞) := by
-  sorry
+  simp only [Matrix.dotProd, Finset.sum, Multiset.sum_eq_ERat_bot_iff, Multiset.mem_map, Finset.mem_val, Finset.mem_univ, true_and]
+  use i
+  rw [hvi]
+  apply ERat.bot_mul_coe_of_nng
+  apply hw
 
 lemma Matrix.no_bot_dotProd_nng {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : I → ℚ} (hw : 0 ≤ w) :
     v ᵥ⬝ w ≠ (⊥ : ℚ∞) := by
-  sorry
+  simp only [Matrix.dotProd, Finset.sum]
+  intro contr
+  simp only [Multiset.sum_eq_ERat_bot_iff, Multiset.mem_map, Finset.mem_val, Finset.mem_univ, true_and] at contr
+  obtain ⟨i, hi⟩ := contr
+  rw [smul_eq_ERat_bot_iff_of_nng (hw i)] at hi
+  apply hv
+  exact hi
 
 lemma Matrix.no_bot_has_top_dotProd_pos {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     {w : I → ℚ} (hw : 0 ≤ w) (hwi : 0 < w i) :
@@ -244,15 +280,16 @@ lemma Matrix.no_bot_has_top_dotProd_pos {v : I → ℚ∞} (hv : ∀ a, v a ≠ 
   sorry
 
 lemma Matrix.no_bot_has_top_dotProd_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
-    {w : I → ℚ} {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
+    {w : I → ℚ} (hw : 0 ≤ w) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
     w i ≤ 0 := by
-  -- ERat.top_mul_coe_of_pos
-  sorry
+  by_contra! contr
+  rw [Matrix.no_bot_has_top_dotProd_pos hv hvi hw contr, top_le_iff] at hq
+  exact ERat.coe_ne_top q hq
 
 lemma Matrix.no_bot_has_top_dotProd_nng_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     {w : I → ℚ} (hw : 0 ≤ w) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
     w i = 0 :=
-  le_antisymm (Matrix.no_bot_has_top_dotProd_le hv hvi hq) (hw i)
+  le_antisymm (Matrix.no_bot_has_top_dotProd_le hv hvi hw hq) (hw i)
 
 lemma Matrix.dotProd_zero_le_zero (v : I → ℚ∞) :
     v ᵥ⬝ (0 : I → ℚ) ≤ (0 : ℚ∞) := by
@@ -286,7 +323,6 @@ lemma Matrix.mulWeig_zero_le_zero (A : Matrix I J ℚ∞) :
   apply Matrix.dotProd_zero_le_zero
 
 -- notation test
-
 variable (v : Fin 3 → ℚ∞) (w : Fin 3 → ℚ) (a : ℚ∞) (c : ℚ)
   (A : Matrix (Fin 3) (Fin 3) ℚ∞) (C : Matrix (Fin 3) (Fin 3) ℚ)
 
@@ -310,7 +346,7 @@ def Matrix.Good' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
 def Matrix.Good'' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
   ¬ (∃ i : I, (∃ j : J, A i j = ⊤) ∧ b i = ⊤)
 
-set_option maxHeartbeats 777777 in
+set_option maxHeartbeats 666666 in
 theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
     (hA : A.Good) (hAT : Aᵀ.Good) (hAb' : A.Good' b) (hAb : A.Good'' b) :
     (∃ x : J → ℚ, 0 ≤ x ∧ A ₘ* x ≤ b) ≠ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0) := by
@@ -480,7 +516,6 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
               exfalso
               apply contr
               exact h0.symm
-          clear contr
           if bi_top : b i = ⊤ then
             have impos : b ᵥ⬝ y = ⊤
             · push_neg at hbot
@@ -503,11 +538,10 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             have btop : ∃ j : J, A i j = ⊤
             · use j
               simpa using contr
-            clear contr
             refine hA ⟨i, ?_, btop⟩
             push_neg at i_not_I'
             apply i_not_I'
-            intro contr
+            intro bi_eq_top
             apply hAb
             use i
           intro j'

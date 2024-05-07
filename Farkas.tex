@@ -27,7 +27,7 @@ preserve their behavior from $F$.
 We keep the product between negative numbers and
 $\{ \bot, \top \}$ undefined.
 
-\section{Farkas-like conjecture}
+\section{First attempt}
 
 Let $A \in F_\infty^{m \times n}$ and $b \in F^m$.
 Exactly one of the following is true:
@@ -72,12 +72,14 @@ deleting a column from triggering, it leads to a
 different result in the primar than in the dual
 because of the matrix transposition.
 
-\section{New attempt}
+\section{Extended Farkas}
 
 Let $A \in F_\infty^{m \times n}$ and $b \in F_\infty^m$.
 Assuming that no row and no column of $A$ contains
 both $\bot$ and $\top$ elements and that
-$A$ does not have $\bot$ on any row where $b$ has $\bot$,
+$A$ does not have $\bot$ on any row where $b$ has~$\bot$
+and that
+$A$ does not have $\top$ on any row where $b$ has $\top$,
 exactly one of the following is true:
 \begin{itemize}
 	\item $\exists x \in F^n$ such that
