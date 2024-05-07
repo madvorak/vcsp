@@ -4,19 +4,6 @@ import VCSP.Basic
 import VCSP.ExtendedRationals
 
 
-section typeclasses
-
-class AlmostOrderedSMul (R M : Type*) [OrderedSemiring R] [OrderedAddCommMonoid M] [SMulZeroClass R M] : Prop where
-  /-- Scalar multiplication by nonnegative elements preserves the order. -/
-  smul_le_smul_of_le_of_nng : ∀ a b : M, ∀ c : R, a ≤ b → 0 ≤ c → c • a ≤ c • b
-  /-- Scalar multiplication by positive elements preserves the strict order. -/
-  smul_lt_smul_of_lt_of_pos : ∀ a b : M, ∀ c : R, a < b → 0 < c → c • a < c • b
-  /-- And the opposite direction also holds. -/
-  lt_of_smul_lt_smul_of_pos : ∀ a b : M, ∀ c : R, c • a < c • b → 0 < c → a < b
-
-end typeclasses
-
-
 open scoped Matrix
 variable {I J : Type} [Fintype I] [Fintype J]
 
@@ -50,7 +37,7 @@ example (A : Matrix I J ℚ) (b : I → ℚ) :
 end basicFarkas
 
 
-section instERat
+section aboutERat
 
 notation "ℚ∞" => ERat
 
@@ -60,8 +47,6 @@ instance : SMulZeroClass ℚ ℚ∞ where
     show (c * 0).toERat = (0 : ℚ∞)
     rewrite [mul_zero]
     rfl
-
-lemma smul_toERat_eq_mul_toERat (c a : ℚ) : c • a.toERat = (c * a).toERat := rfl
 
 lemma zero_smul_ERat_neq_bot {a : ℚ∞} (ha : a ≠ ⊥) : (0 : ℚ) • a = 0 := ERat.zero_mul ha
 
@@ -88,123 +73,6 @@ lemma smul_eq_ERat_bot_iff_of_nng {c : ℚ} {a : ℚ∞} (hc : 0 ≤ c) : c • 
     rw [ha]
     exact ERat.coe_mul_bot_of_nng hc
 
-instance : AlmostOrderedSMul ℚ ℚ∞ where
-  smul_le_smul_of_le_of_nng (a b : ℚ∞) (c : ℚ) (hab : a ≤ b) (hc : 0 ≤ c) := by
-    match ha : a with
-    | ⊤ =>
-      match b with
-      | ⊤ => rfl
-      | ⊥ => exact (hab.trans_lt bot_lt_top).false.elim
-      | (_ : ℚ) => simp [top_le_iff] at hab
-    | ⊥ =>
-      show c.toERat * ⊥ ≤ c.toERat * b
-      rw [ERat.coe_mul_bot_of_nng hc]
-      apply bot_le
-    | (p : ℚ) =>
-    match hb : b with
-    | ⊤ =>
-      show (c * p).toERat ≤ c.toERat * ⊤
-      if c_pos : 0 < c then
-        rw [ERat.coe_mul_top_of_pos c_pos]
-        apply le_top
-      else
-        rewrite [←eq_of_le_of_not_lt hc c_pos, zero_mul]
-        rfl
-    | ⊥ =>
-      exfalso
-      rw [le_bot_iff] at hab
-      cases hab
-    | (q : ℚ) =>
-      show (c * p).toERat ≤ (c * q).toERat
-      rw [ERat.coe_le_coe_iff] at hab ⊢
-      exact mul_le_mul_of_nonneg_left hab hc
-  smul_lt_smul_of_lt_of_pos (a b : ℚ∞) (c : ℚ) (hab : a < b) (hc : 0 < c) := by
-    show c.toERat * a < c.toERat * b
-    match ha : a with
-    | ⊤ =>
-      exfalso
-      exact not_top_lt hab
-    | ⊥ =>
-      convert_to ⊥ < c.toERat * b
-      · exact ERat.coe_mul_bot_of_nng hc.le
-      rw [bot_lt_iff_ne_bot] at hab ⊢
-      match b with
-      | ⊤ => rwa [ERat.coe_mul_top_of_pos hc]
-      | ⊥ => exact False.elim (hab rfl)
-      | (_ : ℚ) => tauto
-    | (p : ℚ) =>
-    match hb : b with
-    | ⊤ =>
-      convert_to c.toERat * p.toERat < ⊤
-      · exact ERat.coe_mul_top_of_pos hc
-      rw [lt_top_iff_ne_top] at hab ⊢
-      exact ne_of_beq_false rfl
-    | ⊥ =>
-      exfalso
-      exact not_lt_bot hab
-    | (q : ℚ) =>
-      show (c * p).toERat < (c * q).toERat
-      rw [ERat.coe_lt_coe_iff] at hab ⊢
-      rwa [mul_lt_mul_left hc]
-  lt_of_smul_lt_smul_of_pos (a b : ℚ∞) (c : ℚ) (hab : c • a < c • b) (hc : 0 < c) := by
-    match ha : a with
-    | ⊤ =>
-      exfalso
-      change hab to c.toERat * ⊤ < c.toERat * b
-      rw [ERat.coe_mul_top_of_pos hc] at hab
-      exact not_top_lt hab
-    | ⊥ =>
-      rw [bot_lt_iff_ne_bot]
-      by_contra contr
-      rw [contr] at hab
-      exact hab.false
-    | (p : ℚ) =>
-    match hb : b with
-    | ⊤ =>
-      simp
-    | ⊥ =>
-      exfalso
-      change hab to c.toERat * p.toERat < c.toERat * ⊥
-      rw [ERat.coe_mul_bot_of_nng hc.le] at hab
-      exact not_lt_bot hab
-    | (q : ℚ) =>
-      change hab to (c * p).toERat < (c * q).toERat
-      rw [ERat.coe_lt_coe_iff] at hab ⊢
-      rwa [mul_lt_mul_left hc] at hab
-
-lemma Function.neg_le_zero_ERat (x : J → ℚ∞) : -x ≤ 0 ↔ 0 ≤ x := by
-  constructor <;> intro hx i <;> specialize hx i
-  · rw [Pi.neg_apply] at hx
-    rw [Pi.zero_apply] at *
-    match hxi : x i with
-    | ⊤ => exact ERat.zero_lt_top.le
-    | ⊥ =>
-      exfalso
-      rw [hxi] at hx
-      exact (hx.trans_lt ERat.zero_lt_top).false
-    | (q : ℚ) =>
-      rw [hxi] at hx
-      if hq : 0 ≤ q then
-        rwa [←ERat.coe_nonneg] at hq
-      else
-        exfalso
-        have : -q ≤ 0
-        · exact ERat.coe_nonpos.mp hx
-        rw [neg_le, neg_zero] at this -- TODO refactor
-        exact hq this
-  · rw [Pi.neg_apply]
-    rw [Pi.zero_apply] at *
-    match hxi : x i with
-    | ⊤ => exact ERat.bot_lt_zero.le
-    | ⊥ =>
-      exfalso
-      rw [hxi] at hx
-      exact (hx.trans_lt ERat.bot_lt_zero).false
-    | (q : ℚ) =>
-      rw [hxi] at hx
-      rw [ERat.neg_le, neg_zero]
-      exact hx
-
 lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (f : ι → ℚ) (s : Finset ι) :
     (s.sum f).toERat = s.sum (fun i : ι => (f i).toERat) := by
   sorry
@@ -212,7 +80,7 @@ lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (f : ι → ℚ) (s : Finset �
 lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞) ↔ ⊥ ∈ s := by
   sorry
 
-end instERat
+end aboutERat
 
 
 section heteroMatrixProducts
@@ -236,12 +104,6 @@ def Matrix.mulWeig [AddCommMonoid α] [SMul γ α] (M : Matrix I J α) (w : J �
   (fun j : J => M i j) ᵥ⬝ w
 infixr:73 " ₘ* " => Matrix.mulWeig
 
-
-lemma Matrix.zero_dotProd [AddCommMonoid α] [SMulZeroClass γ α] (w : I → γ) :
-    (0 : I → α) ᵥ⬝ w = (0 : α) := by
-  apply Finset.sum_eq_zero
-  intro i _
-  exact smul_zero (w i)
 
 lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     v ᵥ⬝ (0 : I → ℚ) = (0 : ℚ∞) := by
@@ -301,15 +163,6 @@ lemma Matrix.dotProd_zero_le_zero (v : I → ℚ∞) :
     · apply bot_le
     · exact hv.choose_spec
     · rfl
-
-lemma Matrix.dotProd_le_dotProd_of_nng_right [OrderedAddCommMonoid α] [OrderedSemiring γ] [SMulZeroClass γ α] [AlmostOrderedSMul γ α]
-    {u v : J → α} (huv : u ≤ v) {w : J → γ} (hw : 0 ≤ w) :
-    u ᵥ⬝ w ≤ v ᵥ⬝ w := by
-  apply Finset.sum_le_sum
-  intro i _
-  apply AlmostOrderedSMul.smul_le_smul_of_le_of_nng
-  · exact huv i
-  · exact hw i
 
 lemma Matrix.no_bot_mulWeig_zero {A : Matrix I J ℚ∞} (hA : ∀ i, ∀ j, A i j ≠ ⊥) :
     A ₘ* (0 : J → ℚ) = (0 : I → ℚ∞) := by
