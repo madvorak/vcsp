@@ -1,11 +1,10 @@
 import Mathlib.LinearAlgebra.Matrix.DotProduct
-import Mathlib.Data.Finset.Pointwise
 import VCSP.Basic
 import VCSP.ExtendedRationals
 
 
 open scoped Matrix
-variable {I J : Type} [Fintype I] [Fintype J]
+variable {I J : Type*} [Fintype I] [Fintype J]
 
 
 section basicFarkas
@@ -161,8 +160,9 @@ end aboutERat
 
 
 section heteroMatrixProducts
-
 variable {α γ : Type*}
+
+section definitions
 
 /-- `Matrix.dotProd v w` is the sum of the element-wise products `w i • v i`
     (mnemonic: "vector times weights"). -/
@@ -179,8 +179,12 @@ infixl:72 " ᵥ⬝ " => Matrix.dotProd
 
 def Matrix.mulWeig [AddCommMonoid α] [SMul γ α] (M : Matrix I J α) (w : J → γ) (i : I) : α :=
   (fun j : J => M i j) ᵥ⬝ w
+
 infixr:73 " ₘ* " => Matrix.mulWeig
 
+end definitions
+
+section lemmas
 
 lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     v ᵥ⬝ (0 : I → ℚ) = (0 : ℚ∞) := by
@@ -279,7 +283,9 @@ lemma Matrix.mulWeig_zero_le_zero (A : Matrix I J ℚ∞) :
   intro i
   apply Matrix.dotProd_zero_le_zero
 
--- notation test
+end lemmas
+
+section notationTest
 variable (v : Fin 3 → ℚ∞) (w : Fin 3 → ℚ) (a : ℚ∞) (c : ℚ)
   (A : Matrix (Fin 3) (Fin 3) ℚ∞) (C : Matrix (Fin 3) (Fin 3) ℚ)
 
@@ -289,21 +295,27 @@ example : v ᵥ⬝ w ᵥ* C = v ᵥ⬝ (w ᵥ* C) := rfl
 example : v ᵥ⬝ C *ᵥ w = v ᵥ⬝ (C *ᵥ w) := rfl
 example : A ₘ* v ᵥ⬝ w = (A ₘ* v) ᵥ⬝ w := rfl
 
+end notationTest
+
 end heteroMatrixProducts
 
 
 section generalizedFarkas
 
+/-- `A` must not have both `⊥` and `⊤` on the same row. -/
 def Matrix.Good (A : Matrix I J ℚ∞) : Prop :=
   ¬ (∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤))
 
+/-- `A` must not have `⊥` on any row where `b` has `⊥`. -/
 def Matrix.Good' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
   ¬ (∃ i : I, (∃ j : J, A i j = ⊥) ∧ b i = ⊥)
 
+/-- `A` must not have `⊤` on any row where `b` has `⊤`. -/
 def Matrix.Good'' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
   ¬ (∃ i : I, (∃ j : J, A i j = ⊤) ∧ b i = ⊤)
 
 set_option maxHeartbeats 666666 in
+/-- Just like `standardFarkas` but for `A` and `b` over extended rationals. -/
 theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
     (hA : A.Good) (hAT : Aᵀ.Good) (hAb' : A.Good' b) (hAb : A.Good'' b) :
     (∃ x : J → ℚ, 0 ≤ x ∧ A ₘ* x ≤ b) ≠ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0) := by
@@ -330,8 +342,8 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
       apply hAb'
       exact ⟨i, hi', hi⟩
   else
-    let I' : Type := { i : I // b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥ } -- non-tautological rows
-    let J' : Type := { j : J // ∀ i' : I', A i'.val j ≠ ⊤ } -- columns that allow non-zero values
+    let I' : Type _ := { i : I // b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥ } -- non-tautological rows
+    let J' : Type _ := { j : J // ∀ i' : I', A i'.val j ≠ ⊤ } -- columns that allow non-zero values
     let A' : Matrix I' J' ℚ := -- the new matrix
       Matrix.of (fun i' : I' => fun j' : J' =>
         match matcha : A i'.val j'.val with
