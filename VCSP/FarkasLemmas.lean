@@ -78,7 +78,57 @@ lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (s : Finset ι) (f : ι → �
   map_sum Rat.toERatAddHom f s
 
 lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞) ↔ ⊥ ∈ s := by
-  sorry
+  constructor <;> intro hs
+  · induction' s using Multiset.induction with a m ih
+    · exfalso
+      rw [Multiset.sum_zero] at hs
+      exact ERat.zero_ne_bot hs
+    · rw [Multiset.mem_cons]
+      rw [Multiset.sum_cons] at hs
+      match a with
+      | ⊥ =>
+        left
+        rfl
+      | ⊤ =>
+        match hm : m.sum with
+        | ⊥ =>
+          right
+          exact ih hm
+        | ⊤ =>
+          exfalso
+          rw [hm] at hs
+          change hs to ⊤ + ⊤ = ⊥
+          rw [ERat.top_add_top] at hs
+          exact top_ne_bot hs
+        | (q : ℚ) =>
+          exfalso
+          rw [hm] at hs
+          change hs to ⊤ + q.toERat = ⊥
+          rw [ERat.top_add_coe] at hs
+          exact top_ne_bot hs
+      | (q : ℚ) =>
+        match hm : m.sum with
+        | ⊥ =>
+          right
+          exact ih hm
+        | ⊤ =>
+          exfalso
+          rw [hm] at hs
+          change hs to q.toERat + ⊤ = ⊥
+          rw [ERat.coe_add_top] at hs
+          exact top_ne_bot hs
+        | (_ : ℚ) =>
+          exfalso
+          rw [hm] at hs
+          exact ERat.coe_ne_bot _ hs
+  · induction' s using Multiset.induction with a m ih
+    · exfalso
+      exact Multiset.not_mem_zero ⊥ hs
+    · rw [Multiset.sum_cons]
+      rw [Multiset.mem_cons] at hs
+      cases hs with
+      | inl ha => rw [←ha, ERat.bot_add]
+      | inr hm => rw [ih hm, ERat.add_bot]
 
 end aboutERat
 
