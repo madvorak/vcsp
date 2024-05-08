@@ -130,6 +130,10 @@ lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞
       | inl ha => rw [←ha, ERat.bot_add]
       | inr hm => rw [ih hm, ERat.add_bot]
 
+lemma Multiset.sum_eq_ERat_top {s : Multiset ℚ∞} (htop : ⊤ ∈ s) (hbot : ⊥ ∉ s) :
+    s.sum = (⊤ : ℚ∞) := by
+  sorry
+
 end aboutERat
 
 
@@ -189,7 +193,34 @@ lemma Matrix.no_bot_dotProd_nng {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w 
 lemma Matrix.no_bot_has_top_dotProd_pos {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     {w : I → ℚ} (hw : 0 ≤ w) (hwi : 0 < w i) :
     v ᵥ⬝ w = ⊤ := by
-  sorry
+  apply Multiset.sum_eq_ERat_top
+  · rw [Multiset.mem_map]
+    use i
+    constructor
+    · rw [Finset.mem_val]
+      apply Finset.mem_univ
+    · rw [hvi]
+      exact ERat.coe_mul_top_of_pos hwi
+  · intro contr
+    rw [Multiset.mem_map] at contr
+    obtain ⟨b, -, hb⟩ := contr
+    change hb to (w b).toERat * v b = ⊥
+    match hvb : v b with
+    | ⊥ =>
+      apply hv
+      exact hvb
+    | ⊤ =>
+      rw [hvb] at hb
+      change hb to (w b).toERat * ⊤ = ⊥
+      if hwb : 0 < w b then
+        rw [ERat.coe_mul_top_of_pos hwb] at hb
+        exact top_ne_bot hb
+      else
+        rw [←eq_of_le_of_not_lt (hw b) hwb, Pi.zero_apply, ERat.coe_zero, ERat.zero_mul top_ne_bot] at hb
+        exact ERat.zero_ne_bot hb
+    | (q : ℚ) =>
+      rw [hvb] at hb
+      exact ERat.coe_ne_bot (w b * q) hb
 
 lemma Matrix.no_bot_has_top_dotProd_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     {w : I → ℚ} (hw : 0 ≤ w) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
@@ -564,5 +595,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
                 exact hbot ⟨i, hbi⟩
               · exfalso
                 exact hi.left hbi
+
+#print axioms extendedFarkas
 
 end generalizedFarkas
