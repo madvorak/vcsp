@@ -132,7 +132,30 @@ lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞
 
 lemma Multiset.sum_eq_ERat_top {s : Multiset ℚ∞} (htop : ⊤ ∈ s) (hbot : ⊥ ∉ s) :
     s.sum = (⊤ : ℚ∞) := by
-  sorry
+  induction' s using Multiset.induction with a m ih
+  · exfalso
+    exact Multiset.not_mem_zero ⊤ htop
+  · rw [Multiset.sum_cons]
+    rw [Multiset.mem_cons] at htop
+    cases htop with
+    | inl ha =>
+      rw [←ha]
+      match hm : m.sum with
+      | (q : ℚ) => rfl
+      | ⊤ => rfl
+      | ⊥ =>
+        exfalso
+        apply hbot
+        rw [Multiset.mem_cons]
+        right
+        rw [←Multiset.sum_eq_ERat_bot_iff]
+        exact hm
+    | inr hm =>
+      rw [ih hm (by aesop)]
+      match a with
+      | (q : ℚ) => rfl
+      | ⊤ => rfl
+      | ⊥ => simp at hbot
 
 end aboutERat
 
