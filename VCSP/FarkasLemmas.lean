@@ -1,44 +1,16 @@
-import Mathlib.LinearAlgebra.Matrix.DotProduct
-import VCSP.Basic
 import VCSP.ExtendedRationals
+import VCSP.FarkasBartl
 
 
-open scoped Matrix
-variable {I J : Type*} [Fintype I] [Fintype J]
-
-
-section basicFarkas
-
-lemma easyFarkas {R : Type*} [OrderedCommRing R] (A : Matrix I J R) (b : I → R) :
-    (∃ x : J → R, 0 ≤ x ∧ A *ᵥ x ≤ b) ∧ (∃ y : I → R, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) →
-      False := by
-  intro ⟨⟨x, hx, hAx⟩, ⟨y, hy, hAy, hby⟩⟩
-  have hAy' : 0 ≤ y ᵥ* A
-  · rwa [Matrix.neg_mulVec, Matrix.mulVec_transpose, neg_nonpos] at hAy
-  exfalso
-  rw [←lt_self_iff_false (0 : R)]
-  calc 0 = 0 ⬝ᵥ x := (Matrix.zero_dotProduct x).symm
-    _ ≤ (y ᵥ* A) ⬝ᵥ x := Matrix.dotProduct_le_dotProduct_of_nonneg_right hAy' hx
-    _ = y ⬝ᵥ (A *ᵥ x) := (Matrix.dotProduct_mulVec y A x).symm
-    _ ≤ y ⬝ᵥ b := Matrix.dotProduct_le_dotProduct_of_nonneg_left hAx hy
-    _ = b ⬝ᵥ y := Matrix.dotProduct_comm y b
-    _ < 0 := hby
-
-axiom standardFarkas (A : Matrix I J ℚ) (b : I → ℚ) :
-    (∃ x : J → ℚ, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0)
-
-example (A : Matrix I J ℚ) (b : I → ℚ) :
-    (∃ x : J → ℚ, 0 ≤ x ∧ A *ᵥ x ≤ b) ∧ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) →
-      False := by
-  intro ⟨hx, hy⟩
-  simpa [hx, hy] using standardFarkas A b
-
-end basicFarkas
-
-
-section aboutERat
+section extrasERat
 
 notation "ℚ∞" => ERat
+
+-- Richard Copley provided:
+def Rat.toERatAddHom : ℚ →+ ℚ∞ where
+  toFun := Rat.toERat
+  map_zero' := ERat.coe_zero
+  map_add' := ERat.coe_add
 
 instance : SMulZeroClass ℚ ℚ∞ where
   smul (c : ℚ) (a : ℚ∞) := c.toERat * a
@@ -156,8 +128,11 @@ lemma Multiset.sum_eq_ERat_top {s : Multiset ℚ∞} (htop : ⊤ ∈ s) (hbot : 
       | ⊤ => rfl
       | ⊥ => simp at hbot
 
-end aboutERat
+end extrasERat
 
+
+open scoped Matrix
+variable {I J : Type} [Fintype I] [Fintype J]
 
 section heteroMatrixProducts
 variable {α γ : Type*}
@@ -357,7 +332,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
         | (q : ℚ) => q
         | ⊥ => False.elim (hbot ⟨i', hbi⟩)
         | ⊤ => False.elim (i'.property.left hbi)
-    convert standardFarkas A' b'
+    convert mainFarkas A' b'
     · constructor <;> intro ⟨x, hx, ineqalities⟩
       · use (fun j' : J' => x j'.val)
         constructor

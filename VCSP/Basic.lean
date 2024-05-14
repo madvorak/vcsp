@@ -109,13 +109,47 @@ section uncategorized_stuff
 lemma FractionalOperation.IsValid.tt_nonempty {D ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
     (valid : ω.IsValid) {x : Fin m → ι → D} :
     ω.tt x ≠ ∅ := by
-  convert valid
-  simp [FractionalOperation.tt]
+  simpa [FractionalOperation.tt] using valid
+
+lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by
+  tauto
+
+lemma sumElim_le_sumElim_iff {α₁ α₂ β : Type*} [LE β] (u₁ v₁ : α₁ → β) (u₂ v₂ : α₂ → β) :
+    Sum.elim u₁ u₂ ≤ Sum.elim v₁ v₂ ↔ u₁ ≤ v₁ ∧ u₂ ≤ v₂ := by
+  constructor <;> intro hyp
+  · constructor
+    · intro i₁
+      have hi₁ := hyp (Sum.inl i₁)
+      rwa [Sum.elim_inl, Sum.elim_inl] at hi₁
+    · intro i₂
+      have hi₂ := hyp (Sum.inr i₂)
+      rwa [Sum.elim_inr, Sum.elim_inr] at hi₂
+  · intro j
+    cases j with
+    | inl j₁ =>
+      rw [Sum.elim_inl, Sum.elim_inl]
+      exact hyp.left j₁
+    | inr j₂ =>
+      rw [Sum.elim_inr, Sum.elim_inr]
+      exact hyp.right j₂
+
+lemma le_of_nng_add {α : Type*} [OrderedAddCommGroup α] {a b c : α} (habc : a + b = c) (ha : 0 ≤ a) : b ≤ c := by
+  aesop
 
 macro "change " h:ident " to " t:term : tactic => `(tactic| change $t at $h:ident)
 
 /-- Nonterminal `aesop` (strongly discouraged to use) -/
 macro (name := aesopnt) "aesopnt" : tactic =>
   `(tactic| aesop (config := {warnOnNonterminal := false}))
+
+open Matrix
+variable {I J R : Type*} [Fintype I] [Fintype J]
+
+lemma Matrix.neg_mulVec_neg [Ring R] (v : J → R) (A : Matrix I J R) : (-A) *ᵥ (-v) = A *ᵥ v := by
+  rw [Matrix.mulVec_neg, Matrix.neg_mulVec, neg_neg]
+
+lemma Matrix.zero_le_one_elem [OrderedSemiring R] [DecidableEq I] (i i' : I) :
+    (0 : R) ≤ (1 : Matrix I I R) i i' := by
+  by_cases hi : i = i' <;> simp [hi]
 
 end uncategorized_stuff

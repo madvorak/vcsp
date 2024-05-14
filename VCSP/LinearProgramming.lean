@@ -93,25 +93,6 @@ structure CanonicalLP (n m R : Type*) [Fintype n] [Fintype m] [OrderedSemiring R
   /-- Objective function coefficients -/
   c : n → R
 
-lemma sumElim_le_sumElim_iff {α β γ : Type*} [LE γ] (u u' : α → γ) (v v' : β → γ) :
-    Sum.elim u v ≤ Sum.elim u' v' ↔ u ≤ u' ∧ v ≤ v' := by
-  constructor <;> intro hyp
-  · constructor
-    · intro a
-      have hypa := hyp (Sum.inl a)
-      rwa [Sum.elim_inl, Sum.elim_inl] at hypa
-    · intro b
-      have hypb := hyp (Sum.inr b)
-      rwa [Sum.elim_inr, Sum.elim_inr] at hypb
-  · intro i
-    cases i with
-    | inl a =>
-      rw [Sum.elim_inl, Sum.elim_inl]
-      exact hyp.left a
-    | inr b =>
-      rw [Sum.elim_inr, Sum.elim_inr]
-      exact hyp.right b
-
 variable {n m R : Type*} [Fintype n] [Fintype m]
 
 /-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and

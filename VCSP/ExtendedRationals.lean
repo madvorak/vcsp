@@ -670,10 +670,3 @@ theorem coe_coe_sign (x : SignType) : ((x : ℚ) : ERat) = x := by cases x <;> r
   | (x : ℚ) => by rw [← coe_neg, sign_coe, sign_coe, Left.sign_neg]
 
 end ERat
-
--- Richard Copley provided:
-@[simps]
-def Rat.toERatAddHom : ℚ →+ ERat where
-  toFun := Rat.toERat
-  map_zero' := ERat.coe_zero
-  map_add' := ERat.coe_add
