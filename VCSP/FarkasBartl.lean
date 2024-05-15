@@ -7,8 +7,6 @@ import VCSP.Basic
 class CompatiblyOrdered (R M : Type*) [OrderedSemiring R] [OrderedAddCommMonoid M] [Module R M] where
   smul_order : ∀ a : R, ∀ v : M, 0 ≤ a → 0 ≤ v → 0 ≤ a • v
 
-instance (R : Type*) [OrderedSemiring R] : CompatiblyOrdered R R := ⟨fun _ _ => smul_nonneg⟩
-
 variable {I : Type} [Fintype I] -- typically `Fin m`
 
 /- The paper by Bartl is actually more general, in particular allowing "skew fields" (`DivisionRing`),
@@ -22,16 +20,18 @@ axiom generalizedFarkasBartl {F V W : Type*} [LinearOrderedField F] -- typically
 
 section corollaries
 
+instance (R : Type*) [OrderedSemiring R] : CompatiblyOrdered R R := ⟨fun _ _ => smul_nonneg⟩
+
 open Matrix
-variable {J : Type} [Fintype J]
+variable {J : Type} [Fintype J] {F : Type*} [LinearOrderedField F]
 
 macro "finishit" : tactic => `(tactic|
   unfold Matrix.mulVec Matrix.vecMul Matrix.dotProduct <;>
   simp_rw [Finset.sum_mul] <;> rw [Finset.sum_comm] <;>
   congr <;> ext <;> congr <;> ext <;> ring)
 
-theorem equalityFarkas (A : Matrix I J ℚ) (b : I → ℚ) :
-    (∃ x : J → ℚ, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → ℚ, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
+theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
+    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
   have gener :=
     not_neq_of_iff
       (generalizedFarkasBartl Aᵀ.mulVecLin (⟨⟨(b ⬝ᵥ ·), Matrix.dotProduct_add b⟩, (Matrix.dotProduct_smul · b)⟩))
@@ -62,9 +62,9 @@ theorem equalityFarkas (A : Matrix I J ℚ) (b : I → ℚ) :
       simpa [Matrix.mulVecLin] using hAx
     · simpa [Matrix.mulVecLin] using hbx
 
-theorem mainFarkas [DecidableEq I] (A : Matrix I J ℚ) (b : I → ℚ) :
-    (∃ x : J → ℚ, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
-  let A' : Matrix I (I ⊕ J) ℚ := Matrix.fromColumns 1 A
+theorem mainFarkas [DecidableEq I] (A : Matrix I J F) (b : I → F) :
+    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → F, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
+  let A' : Matrix I (I ⊕ J) F := Matrix.fromColumns 1 A
   convert equalityFarkas A' b using 1 <;> constructor
   · intro ⟨x, hx, hAxb⟩
     use Sum.elim (b - A *ᵥ x) x
@@ -85,7 +85,7 @@ theorem mainFarkas [DecidableEq I] (A : Matrix I J ℚ) (b : I → ℚ) :
       rw [Pi.le_def]
       intro
       rw [Pi.zero_apply]
-      apply Rat.mul_nonneg
+      apply mul_nonneg
       · apply Matrix.zero_le_one_elem
       · apply hx
   · intro ⟨y, hy, hAy, hby⟩
@@ -95,12 +95,12 @@ theorem mainFarkas [DecidableEq I] (A : Matrix I J ℚ) (b : I → ℚ) :
     | inl i => simpa [A', Matrix.neg_mulVec] using Matrix.dotProduct_nonneg_of_nonneg (Matrix.zero_le_one_elem · i) hy
     | inr j => apply hAy
   · intro ⟨y, hAy, hby⟩
-    have h1Ay : 0 ≤ (Matrix.fromRows (1 : Matrix I I ℚ) Aᵀ *ᵥ y)
+    have h1Ay : 0 ≤ (Matrix.fromRows (1 : Matrix I I F) Aᵀ *ᵥ y)
     · intro k
       have hAy' : (-(Matrix.fromRows 1 Aᵀ *ᵥ y)) k ≤ 0
       · simp only [A', Matrix.transpose_fromColumns, Matrix.neg_mulVec, Matrix.transpose_one] at hAy
         apply hAy
-      rwa [Pi.neg_apply, neg_le] at hAy'
+      rwa [Pi.neg_apply, neg_le, neg_zero] at hAy'
     refine ⟨y, ?_, ?_, hby⟩
     · intro i
       simpa using h1Ay (Sum.inl i)

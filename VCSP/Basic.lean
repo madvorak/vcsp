@@ -104,12 +104,21 @@ lemma Finset.univ_sum_of_zero_when_neg [Fintype α] [AddCommMonoid β]
 end multisets_and_finsets
 
 
-section uncategorized_stuff
+section matrices
+open Matrix
+variable {I J R : Type*} [Fintype I] [Fintype J]
 
-lemma FractionalOperation.IsValid.tt_nonempty {D ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
-    (valid : ω.IsValid) {x : Fin m → ι → D} :
-    ω.tt x ≠ ∅ := by
-  simpa [FractionalOperation.tt] using valid
+lemma Matrix.neg_mulVec_neg [Ring R] (v : J → R) (A : Matrix I J R) : (-A) *ᵥ (-v) = A *ᵥ v := by
+  rw [Matrix.mulVec_neg, Matrix.neg_mulVec, neg_neg]
+
+lemma Matrix.zero_le_one_elem [OrderedSemiring R] [DecidableEq I] (i i' : I) :
+    (0 : R) ≤ (1 : Matrix I I R) i i' := by
+  by_cases hi : i = i' <;> simp [hi]
+
+end matrices
+
+
+section uncategorized_stuff
 
 lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by
   tauto
@@ -136,20 +145,15 @@ lemma sumElim_le_sumElim_iff {α₁ α₂ β : Type*} [LE β] (u₁ v₁ : α₁
 lemma le_of_nng_add {α : Type*} [OrderedAddCommGroup α] {a b c : α} (habc : a + b = c) (ha : 0 ≤ a) : b ≤ c := by
   aesop
 
+lemma FractionalOperation.IsValid.tt_nonempty {D ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
+    (valid : ω.IsValid) {x : Fin m → ι → D} :
+    ω.tt x ≠ ∅ := by
+  simpa [FractionalOperation.tt] using valid
+
 macro "change " h:ident " to " t:term : tactic => `(tactic| change $t at $h:ident)
 
 /-- Nonterminal `aesop` (strongly discouraged to use) -/
 macro (name := aesopnt) "aesopnt" : tactic =>
   `(tactic| aesop (config := {warnOnNonterminal := false}))
-
-open Matrix
-variable {I J R : Type*} [Fintype I] [Fintype J]
-
-lemma Matrix.neg_mulVec_neg [Ring R] (v : J → R) (A : Matrix I J R) : (-A) *ᵥ (-v) = A *ᵥ v := by
-  rw [Matrix.mulVec_neg, Matrix.neg_mulVec, neg_neg]
-
-lemma Matrix.zero_le_one_elem [OrderedSemiring R] [DecidableEq I] (i i' : I) :
-    (0 : R) ≤ (1 : Matrix I I R) i i' := by
-  by_cases hi : i = i' <;> simp [hi]
 
 end uncategorized_stuff
