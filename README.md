@@ -1,19 +1,19 @@
 # General-Valued Constraint Satisfaction Problems
 
-This is a playground for experiments preceding my contribution to [Mathlib](https://github.com/leanprover-community/mathlib4).
+This is a playground for experiments preceding our contribution to the [Lean 4](https://github.com/leanprover/lean4) version of [Mathlib](https://github.com/leanprover-community/mathlib4).
 
-[Permalink](https://github.com/leanprover-community/mathlib4/blob/3e51ad145c59d7e879943907172a6c5a89d6420c/Mathlib/Combinatorics/Optimization/ValuedCSP.lean#L39) to the Mathlib definition of VCSP.
+[Permalink to the definition of VCSP in Mathlib](https://github.com/leanprover-community/mathlib4/blob/3e51ad145c59d7e879943907172a6c5a89d6420c/Mathlib/Combinatorics/Optimization/ValuedCSP.lean#L39)
 
 Our long-term goal is to formalize the dichotomy for fixed-template finite-valued constraint satisfaction problems [Thapper, Živný, Kolmogorov] while exploring potential generalizations (infinite domains, partially ordered codomains, and more).
 
 ## Results (please see the definitions in [ValuedCSP.lean](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Combinatorics/Optimization/ValuedCSP.lean) first)
 
-* [If a VCSP template over LinearOrderedCancelAddCommMonoid can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/0c56fa679366db730fa428b82acedd041cb82df9/VCSP/Hardness.lean#L151)
-* [Basic LP relaxation for VCSP over LinearOrderedField is valid.](https://github.com/madvorak/vcsp/blob/0c56fa679366db730fa428b82acedd041cb82df9/VCSP/LinearRelaxation.lean#L273)
-* [If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then Basic LP relaxation is tight.](https://github.com/madvorak/vcsp/blob/0c56fa679366db730fa428b82acedd041cb82df9/VCSP/LinearRelaxationAndSFP.lean#L392)
-* [Farkas-Bartl theorem](https://github.com/madvorak/vcsp/blob/3da0844a11e4128d9011adcd5b4c4867a5528ae2/VCSP/FarkasBartl.lean#L16) implies the [standard](https://github.com/madvorak/vcsp/blob/3da0844a11e4128d9011adcd5b4c4867a5528ae2/VCSP/FarkasBartl.lean#L40) Farkas [versions](https://github.com/madvorak/vcsp/blob/3da0844a11e4128d9011adcd5b4c4867a5528ae2/VCSP/FarkasBartl.lean#L72) and also implies our original [extended Farkas version](https://github.com/madvorak/vcsp/blob/3da0844a11e4128d9011adcd5b4c4867a5528ae2/VCSP/FarkasSpecial.lean#L281) (currently, these Farkas variants are only relative results).
+* [If a VCSP template over LinearOrderedCancelAddCommMonoid can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/LinearRelaxationAndSFP.lean#L398)
+* [Basic LP relaxation for VCSP over any OrderedRing of CharZero is valid.](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/LinearRelaxation.lean#L271)
+* [If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then Basic LP relaxation is tight.](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/LinearRelaxationAndSFP.lean#L398)
+* [Farkas-Bartl theorem](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/FarkasBartl.lean#L16) implies the [standard](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/FarkasBartl.lean#L40) Farkas [versions](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/FarkasBartl.lean#L72) and also implies our original [extended Farkas version](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/FarkasSpecial.lean#L281) (currently, these Farkas variants are only relative results).
 
-## Mathlib contributions
+## Mathlib contributions that stem from this project
 
 ### Pull requests (these PRs are compatible with each other)
 
