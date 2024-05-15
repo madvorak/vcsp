@@ -47,11 +47,13 @@ lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (s : Finset ι) (f : ι → �
 
 lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞) ↔ ⊥ ∈ s := by
   constructor <;> intro hs
-  · induction' s using Multiset.induction with a m ih
-    · exfalso
+  · induction s using Multiset.induction with
+    | empty =>
+      exfalso
       rw [Multiset.sum_zero] at hs
       exact ERat.zero_ne_bot hs
-    · rw [Multiset.mem_cons]
+    | @cons a m ih =>
+      rw [Multiset.mem_cons]
       rw [Multiset.sum_cons] at hs
       match a with
       | ⊥ =>
@@ -89,10 +91,12 @@ lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞
           exfalso
           rw [hm] at hs
           exact ERat.coe_ne_bot _ hs
-  · induction' s using Multiset.induction with a m ih
-    · exfalso
+  · induction s using Multiset.induction with
+    | empty =>
+      exfalso
       exact Multiset.not_mem_zero ⊥ hs
-    · rw [Multiset.sum_cons]
+    | @cons a m ih =>
+      rw [Multiset.sum_cons]
       rw [Multiset.mem_cons] at hs
       cases hs with
       | inl ha => rw [←ha, ERat.bot_add]
@@ -100,10 +104,12 @@ lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞
 
 lemma Multiset.sum_eq_ERat_top {s : Multiset ℚ∞} (htop : ⊤ ∈ s) (hbot : ⊥ ∉ s) :
     s.sum = (⊤ : ℚ∞) := by
-  induction' s using Multiset.induction with a m ih
-  · exfalso
+  induction s using Multiset.induction with
+  | empty =>
+    exfalso
     exact Multiset.not_mem_zero ⊤ htop
-  · rw [Multiset.sum_cons]
+  | @cons a m ih =>
+    rw [Multiset.sum_cons]
     rw [Multiset.mem_cons] at htop
     cases htop with
     | inl ha =>
