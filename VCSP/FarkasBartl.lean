@@ -25,7 +25,7 @@ instance (R : Type*) [OrderedSemiring R] : CompatiblyOrdered R R := ⟨fun _ _ =
 open Matrix
 variable {J : Type} [Fintype J] {F : Type*} [LinearOrderedField F]
 
-macro "finishit" : tactic => `(tactic|
+macro "finishit" : tactic => `(tactic| -- should be `private macro` which Lean does not allow
   unfold Matrix.mulVec Matrix.vecMul Matrix.dotProduct <;>
   simp_rw [Finset.sum_mul] <;> rw [Finset.sum_comm] <;>
   congr <;> ext <;> congr <;> ext <;> ring)

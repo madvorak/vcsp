@@ -6,11 +6,8 @@ section extrasERat
 
 notation "ℚ∞" => ERat
 
--- Richard Copley provided:
-def Rat.toERatAddHom : ℚ →+ ℚ∞ where
-  toFun := Rat.toERat
-  map_zero' := ERat.coe_zero
-  map_add' := ERat.coe_add
+-- Richard Copley pointed out that we need this homomorphism:
+def Rat.toERatAddHom : ℚ →+ ℚ∞ := ⟨⟨Rat.toERat, ERat.coe_zero⟩, ERat.coe_add⟩
 
 instance : SMulZeroClass ℚ ℚ∞ where
   smul (c : ℚ) (a : ℚ∞) := c.toERat * a
@@ -134,32 +131,30 @@ end extrasERat
 open scoped Matrix
 variable {I J : Type} [Fintype I] [Fintype J]
 
-section heteroMatrixProducts
-variable {α γ : Type*}
 
-section definitions
+section heteroMatrixProductsDefs
+variable {α γ : Type*} [AddCommMonoid α] [SMul γ α] -- elements come from `α` but weights (coefficients) from `γ`
 
-/-- `Matrix.dotProd v w` is the sum of the element-wise products `w i • v i`
-    (mnemonic: "vector times weights"). -/
-def Matrix.dotProd [AddCommMonoid α] [SMul γ α] (v : I → α) (w : I → γ) : α :=
+/-- `Matrix.dotProd v w` is the sum of the element-wise products `w i • v i` akin the dot product but heterogeneous
+    (mnemonic: "vector times weights").
+    Note that the order of arguments (also with the infix notation) is opposite than in the `SMul` it builds upon. -/
+def Matrix.dotProd (v : I → α) (w : I → γ) : α :=
   Finset.univ.sum (fun i : I => w i • v i)
 
-/- The precedence of 72 comes immediately after ` • ` for `SMul.smul`
-   and ` ₘ* ` for `Matrix.mulWeig` (both have precedence of 73)
-   so that `a • v ᵥ⬝ c • w` is parsed as `(a • v) ᵥ⬝ (c • w)` and
-   that `A ₘ* v ᵥ⬝ w` is parsed as `(A ₘ* v) ᵥ⬝ w` and
-   that `v ᵥ⬝ C *ᵥ w` is parsed as `v ᵥ⬝ (C *ᵥ w)` and
-   that `v ᵥ⬝ w ᵥ* C` is parsed as `v ᵥ⬝ (w ᵥ* C)` here. -/
 infixl:72 " ᵥ⬝ " => Matrix.dotProd
 
-def Matrix.mulWeig [AddCommMonoid α] [SMul γ α] (M : Matrix I J α) (w : J → γ) (i : I) : α :=
-  (fun j : J => M i j) ᵥ⬝ w
+/-- `Matrix.mulWeig M w` is the heterogeneous analogue of the matrix-vector product `Matrix.mulVec M v`
+    (mnemonic: "matrix times weights").
+    Note that the order of arguments (also with the infix notation) is opposite than in the `SMul` it builds upon. -/
+def Matrix.mulWeig (M : Matrix I J α) (w : J → γ) (i : I) : α :=
+  M i ᵥ⬝ w
 
 infixr:73 " ₘ* " => Matrix.mulWeig
 
-end definitions
+end heteroMatrixProductsDefs
 
-section lemmas
+
+section heteroMatrixProductsLemmasERat
 
 lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     v ᵥ⬝ (0 : I → ℚ) = (0 : ℚ∞) := by
@@ -258,24 +253,10 @@ lemma Matrix.mulWeig_zero_le_zero (A : Matrix I J ℚ∞) :
   intro i
   apply Matrix.dotProd_zero_le_zero
 
-end lemmas
-
-section notationTest
-variable (v : Fin 3 → ℚ∞) (w : Fin 3 → ℚ) (a : ℚ∞) (c : ℚ)
-  (A : Matrix (Fin 3) (Fin 3) ℚ∞) (C : Matrix (Fin 3) (Fin 3) ℚ)
-
-example : a • v ᵥ⬝ c • w = (a • v) ᵥ⬝ (c • w) := rfl
-example : v ᵥ⬝ C ₘ* w = v ᵥ⬝ (C ₘ* w) := rfl
-example : v ᵥ⬝ w ᵥ* C = v ᵥ⬝ (w ᵥ* C) := rfl
-example : v ᵥ⬝ C *ᵥ w = v ᵥ⬝ (C *ᵥ w) := rfl
-example : A ₘ* v ᵥ⬝ w = (A ₘ* v) ᵥ⬝ w := rfl
-
-end notationTest
-
-end heteroMatrixProducts
+end heteroMatrixProductsLemmasERat
 
 
-section generalizedFarkas
+section specialFarkas
 
 /-- `A` must not have both `⊥` and `⊤` on the same row. -/
 def Matrix.Good (A : Matrix I J ℚ∞) : Prop :=
@@ -556,7 +537,8 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             intro i _
             apply zero_smul_ERat_neq_bot
             intro contr
-            rw [ERat.neg_eq_bot_iff] at contr
+            save
+            rw [Matrix.neg_apply, ERat.neg_eq_bot_iff] at contr
             exact hj i contr
             · simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.neg_apply, Matrix.transpose_apply, ERat.coe_neg]
               rw [Finset.sum_toERat]
@@ -608,4 +590,4 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
 
 #print axioms extendedFarkas
 
-end generalizedFarkas
+end specialFarkas

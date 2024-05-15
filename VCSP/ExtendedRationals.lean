@@ -2,7 +2,7 @@
 Adapted from:
 https://github.com/leanprover-community/mathlib4/blob/333e2d79fdaee86489af73dee919bc4b66957a52/Mathlib/Data/Real/EReal.lean
 
-Released under Apache 2.0 license as described in the file LICENSE.
+Released under Apache 2.0 license.
 Authors: Kevin Buzzard
 -/
 
@@ -13,11 +13,10 @@ open Function Set
 noncomputable section
 
 
-/-- ERat is the type of extended rationals `[-∞, ∞]` or rather `ℚ ∪ {⊥, ⊤}`. -/
+/-- `ERat` is the type of extended rationals `[-∞, +∞]` or rather `ℚ ∪ {⊥, ⊤}` where, informally speaking,
+    `⊥` (negative infinity) is stronger than `⊤` (positive infinity). -/
 def ERat := WithBot (WithTop ℚ)
   deriving LinearOrderedAddCommMonoid, AddCommMonoidWithOne
-
-instance : ZeroLEOneClass ERat := inferInstanceAs (ZeroLEOneClass (WithBot (WithTop ℚ)))
 
 instance : BoundedOrder ERat := inferInstanceAs (BoundedOrder (WithBot (WithTop ℚ)))
 
@@ -25,7 +24,7 @@ instance : DenselyOrdered ERat := inferInstanceAs (DenselyOrdered (WithBot (With
 
 instance : CharZero ERat := inferInstanceAs (CharZero (WithBot (WithTop ℚ)))
 
-/-- The canonical inclusion from Rats to ERats. Registered as a coercion. -/
+/-- The canonical inclusion from `Rat`s to `ERat`s. Registered as a coercion. -/
 @[coe] def Rat.toERat : ℚ → ERat := some ∘ some
 
 
@@ -36,32 +35,32 @@ instance decidableLT : DecidableRel ((· < ·) : ERat → ERat → Prop) :=
 
 instance : Coe ℚ ERat := ⟨Rat.toERat⟩
 
-theorem coe_strictMono : StrictMono Rat.toERat :=
+lemma coe_strictMono : StrictMono Rat.toERat :=
   WithBot.coe_strictMono.comp WithTop.coe_strictMono
 
-theorem coe_injective : Injective Rat.toERat :=
+lemma coe_injective : Injective Rat.toERat :=
   coe_strictMono.injective
 
 @[simp, norm_cast]
-protected theorem coe_le_coe_iff {x y : ℚ} : (x : ERat) ≤ (y : ERat) ↔ x ≤ y :=
+protected lemma coe_le_coe_iff {x y : ℚ} : (x : ERat) ≤ (y : ERat) ↔ x ≤ y :=
   coe_strictMono.le_iff_le
 
 @[simp, norm_cast]
-protected theorem coe_lt_coe_iff {x y : ℚ} : (x : ERat) < (y : ERat) ↔ x < y :=
+protected lemma coe_lt_coe_iff {x y : ℚ} : (x : ERat) < (y : ERat) ↔ x < y :=
   coe_strictMono.lt_iff_lt
 
 @[simp, norm_cast]
-protected theorem coe_eq_coe_iff {x y : ℚ} : (x : ERat) = (y : ERat) ↔ x = y :=
+protected lemma coe_eq_coe_iff {x y : ℚ} : (x : ERat) = (y : ERat) ↔ x = y :=
   coe_injective.eq_iff
 
-protected theorem coe_ne_coe_iff {x y : ℚ} : (x : ERat) ≠ (y : ERat) ↔ x ≠ y :=
+protected lemma coe_ne_coe_iff {x y : ℚ} : (x : ERat) ≠ (y : ERat) ↔ x ≠ y :=
   coe_injective.ne_iff
 
 @[simp, norm_cast]
-theorem coe_zero : ((0 : ℚ) : ERat) = 0 := rfl
+lemma coe_zero : ((0 : ℚ) : ERat) = 0 := rfl
 
 @[simp, norm_cast]
-theorem coe_one : ((1 : ℚ) : ERat) = 1 := rfl
+lemma coe_one : ((1 : ℚ) : ERat) = 1 := rfl
 
 @[elab_as_elim]
 protected def rec {C : ERat → Sort*} (h_bot : C ⊥) (h_Rat : ∀ a : ℚ, C a) (h_top : C ⊤) : ∀ a : ERat, C a
@@ -84,12 +83,12 @@ protected def mul : ERat → ERat → ERat
 instance : Mul ERat := ⟨ERat.mul⟩
 
 @[simp, norm_cast]
-theorem coe_mul (x y : ℚ) : (↑(x * y) : ERat) = x * y :=
+lemma coe_mul (x y : ℚ) : (↑(x * y) : ERat) = x * y :=
   rfl
 
 /-- Induct on two `ERat`s by performing case splits on the sign of one whenever the other is infinite. -/
 @[elab_as_elim]
-theorem induction₂ {P : ERat → ERat → Prop} (top_top : P ⊤ ⊤) (top_pos : ∀ x : ℚ, 0 < x → P ⊤ x)
+lemma induction₂ {P : ERat → ERat → Prop} (top_top : P ⊤ ⊤) (top_pos : ∀ x : ℚ, 0 < x → P ⊤ x)
     (top_zero : P ⊤ 0) (top_neg : ∀ x : ℚ, x < 0 → P ⊤ x) (top_bot : P ⊤ ⊥)
     (pos_top : ∀ x : ℚ, 0 < x → P x ⊤) (pos_bot : ∀ x : ℚ, 0 < x → P x ⊥) (zero_top : P 0 ⊤)
     (coe_coe : ∀ x y : ℚ, P x y) (zero_bot : P 0 ⊥) (neg_top : ∀ x : ℚ, x < 0 → P x ⊤)
@@ -114,9 +113,9 @@ theorem induction₂ {P : ERat → ERat → Prop} (top_top : P ⊤ ⊤) (top_pos
   | ⊤, ⊤ => top_top
 
 /-- Induct on two `ERat`s by performing case splits on the sign of one whenever the other is infinite.
-This version eliminates some cases by assuming that the relation is symmetric. -/
+    This version eliminates some cases by assuming that the relation is symmetric. -/
 @[elab_as_elim]
-theorem induction₂_symm {P : ERat → ERat → Prop} (symm : ∀ {x y}, P x y → P y x)
+lemma induction₂_symm {P : ERat → ERat → Prop} (symm : ∀ {x y}, P x y → P y x)
     (top_top : P ⊤ ⊤) (top_pos : ∀ x : ℚ, 0 < x → P ⊤ x) (top_zero : P ⊤ 0)
     (top_neg : ∀ x : ℚ, x < 0 → P ⊤ x) (top_bot : P ⊤ ⊥) (pos_bot : ∀ x : ℚ, 0 < x → P x ⊥)
     (coe_coe : ∀ x y : ℚ, P x y) (zero_bot : P 0 ⊥) (neg_bot : ∀ x : ℚ, x < 0 → P x ⊥)
@@ -125,17 +124,17 @@ theorem induction₂_symm {P : ERat → ERat → Prop} (symm : ∀ {x y}, P x y 
     pos_bot (symm top_zero) coe_coe zero_bot (fun _ h => symm <| top_neg _ h) neg_bot (symm top_bot)
     (fun _ h => symm <| pos_bot _ h) (symm zero_bot) (fun _ h => symm <| neg_bot _ h) bot_bot
 
-protected theorem mul_comm (x y : ERat) : x * y = y * x := by
+protected lemma mul_comm (x y : ERat) : x * y = y * x := by
   induction' x using ERat.rec with x <;> induction' y using ERat.rec with y <;>
     try { rfl }
   rw [← coe_mul, ← coe_mul, mul_comm]
 
-protected theorem one_mul : ∀ x : ERat, 1 * x = x
+protected lemma one_mul : ∀ x : ERat, 1 * x = x
   | ⊤ => rfl
   | ⊥ => rfl
   | (x : ℚ) => congr_arg Rat.toERat (one_mul x)
 
-theorem zero_mul {x : ERat} (hx : x ≠ ⊥) : 0 * x = 0 :=
+lemma zero_mul {x : ERat} (hx : x ≠ ⊥) : 0 * x = 0 :=
   match x with
   | ⊤ => rfl
   | ⊥ => False.elim (hx rfl)
@@ -150,152 +149,152 @@ instance canLift : CanLift ERat ℚ (↑) fun r => r ≠ ⊤ ∧ r ≠ ⊥ where
     · simp
     · simp at hx
 
-/-- The map from ERats to Rats sending infinities to zero. -/
+/-- The map from `ERat`s to `Rat`s sending infinities to zero. -/
 def toRat : ERat → ℚ
   | ⊥ => 0
   | ⊤ => 0
   | (x : ℚ) => x
 
 @[simp]
-theorem toRat_top : toRat ⊤ = 0 :=
+lemma toRat_top : toRat ⊤ = 0 :=
   rfl
 
 @[simp]
-theorem toRat_bot : toRat ⊥ = 0 :=
+lemma toRat_bot : toRat ⊥ = 0 :=
   rfl
 
 @[simp]
-theorem toRat_zero : toRat 0 = 0 :=
+lemma toRat_zero : toRat 0 = 0 :=
   rfl
 
 @[simp]
-theorem toRat_one : toRat 1 = 1 :=
+lemma toRat_one : toRat 1 = 1 :=
   rfl
 
 @[simp]
-theorem toRat_coe (x : ℚ) : toRat (x : ERat) = x :=
+lemma toRat_coe (x : ℚ) : toRat (x : ERat) = x :=
   rfl
 
 @[simp]
-theorem bot_lt_coe (x : ℚ) : (⊥ : ERat) < x :=
+lemma bot_lt_coe (x : ℚ) : (⊥ : ERat) < x :=
   WithBot.bot_lt_coe _
 
 @[simp]
-theorem coe_ne_bot (x : ℚ) : (x : ERat) ≠ ⊥ :=
+lemma coe_ne_bot (x : ℚ) : (x : ERat) ≠ ⊥ :=
   (bot_lt_coe x).ne'
 
 @[simp]
-theorem bot_ne_coe (x : ℚ) : (⊥ : ERat) ≠ x :=
+lemma bot_ne_coe (x : ℚ) : (⊥ : ERat) ≠ x :=
   (bot_lt_coe x).ne
 
 @[simp]
-theorem coe_lt_top (x : ℚ) : (x : ERat) < ⊤ :=
+lemma coe_lt_top (x : ℚ) : (x : ERat) < ⊤ :=
   WithBot.coe_lt_coe.2 <| WithTop.coe_lt_top _
 
 @[simp]
-theorem coe_ne_top (x : ℚ) : (x : ERat) ≠ ⊤ :=
+lemma coe_ne_top (x : ℚ) : (x : ERat) ≠ ⊤ :=
   (coe_lt_top x).ne
 
 @[simp]
-theorem top_ne_coe (x : ℚ) : (⊤ : ERat) ≠ x :=
+lemma top_ne_coe (x : ℚ) : (⊤ : ERat) ≠ x :=
   (coe_lt_top x).ne'
 
 @[simp]
-theorem bot_lt_zero : (⊥ : ERat) < 0 :=
+lemma bot_lt_zero : (⊥ : ERat) < 0 :=
   bot_lt_coe 0
 
 @[simp]
-theorem bot_ne_zero : (⊥ : ERat) ≠ 0 :=
+lemma bot_ne_zero : (⊥ : ERat) ≠ 0 :=
   (coe_ne_bot 0).symm
 
 @[simp]
-theorem zero_ne_bot : (0 : ERat) ≠ ⊥ :=
+lemma zero_ne_bot : (0 : ERat) ≠ ⊥ :=
   coe_ne_bot 0
 
 @[simp]
-theorem zero_lt_top : (0 : ERat) < ⊤ :=
+lemma zero_lt_top : (0 : ERat) < ⊤ :=
   coe_lt_top 0
 
 @[simp]
-theorem zero_ne_top : (0 : ERat) ≠ ⊤ :=
+lemma zero_ne_top : (0 : ERat) ≠ ⊤ :=
   coe_ne_top 0
 
 @[simp]
-theorem top_ne_zero : (⊤ : ERat) ≠ 0 :=
+lemma top_ne_zero : (⊤ : ERat) ≠ 0 :=
   (coe_ne_top 0).symm
 
-theorem range_coe : range Rat.toERat = {⊥, ⊤}ᶜ := by
+lemma range_coe : range Rat.toERat = {⊥, ⊤}ᶜ := by
   ext x
   induction x using ERat.rec <;> simp
 
-theorem range_coe_eq_Ioo : range Rat.toERat = Ioo ⊥ ⊤ := by
+lemma range_coe_eq_Ioo : range Rat.toERat = Ioo ⊥ ⊤ := by
   ext x
   induction x using ERat.rec <;> simp
 
 @[simp, norm_cast]
-theorem coe_add (x y : ℚ) : (x + y).toERat = x.toERat + y.toERat :=
+lemma coe_add (x y : ℚ) : (x + y).toERat = x.toERat + y.toERat :=
   rfl
 
 @[norm_cast]
-theorem coe_nsmul (n : ℕ) (x : ℚ) : (↑(n • x) : ERat) = n • (x : ERat) :=
+lemma coe_nsmul (n : ℕ) (x : ℚ) : (↑(n • x) : ERat) = n • (x : ERat) :=
   map_nsmul (⟨⟨Rat.toERat, coe_zero⟩, coe_add⟩ : ℚ →+ ERat) _ _
 
 #noalign ERat.coe_bit0
 #noalign ERat.coe_bit1
 
 @[simp, norm_cast]
-theorem coe_eq_zero {x : ℚ} : (x : ERat) = 0 ↔ x = 0 :=
+lemma coe_eq_zero {x : ℚ} : (x : ERat) = 0 ↔ x = 0 :=
   ERat.coe_eq_coe_iff
 
 @[simp, norm_cast]
-theorem coe_eq_one {x : ℚ} : (x : ERat) = 1 ↔ x = 1 :=
+lemma coe_eq_one {x : ℚ} : (x : ERat) = 1 ↔ x = 1 :=
   ERat.coe_eq_coe_iff
 
-theorem coe_ne_zero {x : ℚ} : (x : ERat) ≠ 0 ↔ x ≠ 0 :=
+lemma coe_ne_zero {x : ℚ} : (x : ERat) ≠ 0 ↔ x ≠ 0 :=
   ERat.coe_ne_coe_iff
 
-theorem coe_ne_one {x : ℚ} : (x : ERat) ≠ 1 ↔ x ≠ 1 :=
+lemma coe_ne_one {x : ℚ} : (x : ERat) ≠ 1 ↔ x ≠ 1 :=
   ERat.coe_ne_coe_iff
 
 @[simp, norm_cast]
-protected theorem coe_nonneg {x : ℚ} : (0 : ERat) ≤ x ↔ 0 ≤ x :=
+protected lemma coe_nonneg {x : ℚ} : (0 : ERat) ≤ x ↔ 0 ≤ x :=
   ERat.coe_le_coe_iff
 
 @[simp, norm_cast]
-protected theorem coe_nonpos {x : ℚ} : (x : ERat) ≤ 0 ↔ x ≤ 0 :=
+protected lemma coe_nonpos {x : ℚ} : (x : ERat) ≤ 0 ↔ x ≤ 0 :=
   ERat.coe_le_coe_iff
 
 @[simp, norm_cast]
-protected theorem coe_pos {x : ℚ} : (0 : ERat) < x ↔ 0 < x :=
+protected lemma coe_pos {x : ℚ} : (0 : ERat) < x ↔ 0 < x :=
   ERat.coe_lt_coe_iff
 
 @[simp, norm_cast]
-protected theorem coe_neg' {x : ℚ} : (x : ERat) < 0 ↔ x < 0 :=
+protected lemma coe_neg' {x : ℚ} : (x : ERat) < 0 ↔ x < 0 :=
   ERat.coe_lt_coe_iff
 
-theorem toRat_le_toRat {x y : ERat} (h : x ≤ y) (hx : x ≠ ⊥) (hy : y ≠ ⊤) :
+lemma toRat_le_toRat {x y : ERat} (h : x ≤ y) (hx : x ≠ ⊥) (hy : y ≠ ⊤) :
     x.toRat ≤ y.toRat := by
   lift x to ℚ using ⟨ne_top_of_le_ne_top hy h, hx⟩
   lift y to ℚ using ⟨hy, ne_bot_of_le_ne_bot hx h⟩
   simpa using h
 
-theorem coe_toRat {x : ERat} (hx : x ≠ ⊤) (h'x : x ≠ ⊥) : (x.toRat : ERat) = x := by
+lemma coe_toRat {x : ERat} (hx : x ≠ ⊤) (h'x : x ≠ ⊥) : (x.toRat : ERat) = x := by
   lift x to ℚ using ⟨hx, h'x⟩
   rfl
 
-theorem le_coe_toRat {x : ERat} (h : x ≠ ⊤) : x ≤ x.toRat := by
+lemma le_coe_toRat {x : ERat} (h : x ≠ ⊤) : x ≤ x.toRat := by
   by_cases h' : x = ⊥
   · rw [h', toRat_bot, coe_zero]
     decide
   · simp only [le_refl, coe_toRat h h']
 
-theorem coe_toRat_le {x : ERat} (h : x ≠ ⊥) : ↑x.toRat ≤ x := by
+lemma coe_toRat_le {x : ERat} (h : x ≠ ⊥) : ↑x.toRat ≤ x := by
   by_cases h' : x = ⊤
   · rw [h', toRat_top, coe_zero]
     decide
   · simp only [le_refl, coe_toRat h' h]
 
-theorem eq_top_iff_forall_lt (x : ERat) : x = ⊤ ↔ ∀ y : ℚ, (y : ERat) < x := by
+lemma eq_top_iff_forall_lt (x : ERat) : x = ⊤ ↔ ∀ y : ℚ, (y : ERat) < x := by
   constructor
   · rintro rfl
     exact ERat.coe_lt_top
@@ -303,7 +302,7 @@ theorem eq_top_iff_forall_lt (x : ERat) : x = ⊤ ↔ ∀ y : ℚ, (y : ERat) < 
     intro h
     exact ⟨x.toRat, le_coe_toRat h⟩
 
-theorem eq_bot_iff_forall_lt (x : ERat) : x = ⊥ ↔ ∀ y : ℚ, x < (y : ERat) := by
+lemma eq_bot_iff_forall_lt (x : ERat) : x = ⊥ ↔ ∀ y : ℚ, x < (y : ERat) := by
   constructor
   · rintro rfl
     exact bot_lt_coe
@@ -449,7 +448,7 @@ lemma preimage_coe_Ioo_bot_top : Rat.toERat ⁻¹' Ioo ⊥ ⊤ = univ := by
 
 /-! ### Order -/
 
-/-- The set of numbers in `ERat` that are not equal to `±∞` is equivalent to `ℚ`. -/
+/-- The set of numbers in `ERat` that are not `⊥, ⊤` is equivalent to `ℚ`. -/
 def neTopBotEquivRat : ({⊥, ⊤}ᶜ : Set ERat) ≃ ℚ where
   toFun x := ERat.toRat x
   invFun x := ⟨x, by simp⟩
@@ -462,30 +461,30 @@ def neTopBotEquivRat : ({⊥, ⊤}ᶜ : Set ERat) ≃ ℚ where
 /-! ### Addition -/
 
 @[simp]
-theorem add_bot (x : ERat) : x + ⊥ = ⊥ :=
+lemma add_bot (x : ERat) : x + ⊥ = ⊥ :=
   WithBot.add_bot _
 
 @[simp]
-theorem bot_add (x : ERat) : ⊥ + x = ⊥ :=
+lemma bot_add (x : ERat) : ⊥ + x = ⊥ :=
   WithBot.bot_add _
 
 @[simp]
-theorem add_eq_bot_iff {x y : ERat} : x + y = ⊥ ↔ x = ⊥ ∨ y = ⊥ :=
+lemma add_eq_bot_iff {x y : ERat} : x + y = ⊥ ↔ x = ⊥ ∨ y = ⊥ :=
   WithBot.add_eq_bot
 
 @[simp]
-theorem top_add_top : (⊤ : ERat) + ⊤ = ⊤ :=
+lemma top_add_top : (⊤ : ERat) + ⊤ = ⊤ :=
   rfl
 
 @[simp]
-theorem top_add_coe (x : ℚ) : (⊤ : ERat) + x = ⊤ :=
+lemma top_add_coe (x : ℚ) : (⊤ : ERat) + x = ⊤ :=
   rfl
 
 @[simp]
-theorem coe_add_top (x : ℚ) : (x : ERat) + ⊤ = ⊤ :=
+lemma coe_add_top (x : ℚ) : (x : ERat) + ⊤ = ⊤ :=
   rfl
 
-theorem toRat_add {x y : ERat} (hx : x ≠ ⊤) (h'x : x ≠ ⊥) (hy : y ≠ ⊤) (h'y : y ≠ ⊥) :
+lemma toRat_add {x y : ERat} (hx : x ≠ ⊤) (h'x : x ≠ ⊥) (hy : y ≠ ⊤) (h'y : y ≠ ⊥) :
     toRat (x + y) = toRat x + toRat y := by
   lift x to ℚ using ⟨hx, h'x⟩
   lift y to ℚ using ⟨hy, h'y⟩
@@ -506,17 +505,17 @@ instance : SubNegZeroMonoid ERat where
   zsmul := zsmulRec
 
 @[simp]
-theorem neg_top : -(⊤ : ERat) = ⊥ :=
+lemma neg_top : -(⊤ : ERat) = ⊥ :=
   rfl
 
 @[simp]
-theorem neg_bot : -(⊥ : ERat) = ⊤ :=
+lemma neg_bot : -(⊥ : ERat) = ⊤ :=
   rfl
 
-@[simp, norm_cast] theorem coe_neg (x : ℚ) : (↑(-x) : ERat) = -↑x := rfl
+@[simp, norm_cast] lemma coe_neg (x : ℚ) : (↑(-x) : ERat) = -↑x := rfl
 
 @[norm_cast]
-theorem coe_zsmul (n : ℤ) (x : ℚ) : (↑(n • x) : ERat) = n • (x : ERat) :=
+lemma coe_zsmul (n : ℤ) (x : ℚ) : (↑(n • x) : ERat) = n • (x : ERat) :=
   map_zsmul' (⟨⟨(↑), coe_zero⟩, coe_add⟩ : ℚ →+ ERat) coe_neg _ _
 
 instance : InvolutiveNeg ERat where
@@ -527,33 +526,33 @@ instance : InvolutiveNeg ERat where
     | (a : ℚ) => congr_arg Rat.toERat (neg_neg a)
 
 @[simp]
-theorem toRat_neg : ∀ {a : ERat}, toRat (-a) = -toRat a
+lemma toRat_neg : ∀ {a : ERat}, toRat (-a) = -toRat a
   | ⊤ => by simp
   | ⊥ => by simp
   | (x : ℚ) => rfl
 
 @[simp]
-theorem neg_eq_top_iff {x : ERat} : -x = ⊤ ↔ x = ⊥ :=
+lemma neg_eq_top_iff {x : ERat} : -x = ⊤ ↔ x = ⊥ :=
   neg_injective.eq_iff' rfl
 
 @[simp]
-theorem neg_eq_bot_iff {x : ERat} : -x = ⊥ ↔ x = ⊤ :=
+lemma neg_eq_bot_iff {x : ERat} : -x = ⊥ ↔ x = ⊤ :=
   neg_injective.eq_iff' rfl
 
 @[simp]
-theorem neg_eq_zero_iff {x : ERat} : -x = 0 ↔ x = 0 :=
+lemma neg_eq_zero_iff {x : ERat} : -x = 0 ↔ x = 0 :=
   neg_injective.eq_iff' neg_zero
 
-theorem neg_strictAnti : StrictAnti (- · : ERat → ERat) :=
+lemma neg_strictAnti : StrictAnti (- · : ERat → ERat) :=
   WithBot.strictAnti_iff.2 ⟨WithTop.strictAnti_iff.2
     ⟨coe_strictMono.comp_strictAnti fun _ _ => neg_lt_neg, fun _ => bot_lt_coe _⟩,
       WithTop.forall.2 ⟨compare_gt_iff_gt.mp rfl, fun _ => coe_lt_top _⟩⟩
 
-@[simp] theorem neg_le_neg_iff {a b : ERat} : -a ≤ -b ↔ b ≤ a := neg_strictAnti.le_iff_le
+@[simp] lemma neg_le_neg_iff {a b : ERat} : -a ≤ -b ↔ b ≤ a := neg_strictAnti.le_iff_le
 
-@[simp] theorem neg_lt_neg_iff {a b : ERat} : -a < -b ↔ b < a := neg_strictAnti.lt_iff_lt
+@[simp] lemma neg_lt_neg_iff {a b : ERat} : -a < -b ↔ b < a := neg_strictAnti.lt_iff_lt
 
-protected theorem neg_le {a b : ERat} : -a ≤ b ↔ -b ≤ a := by
+protected lemma neg_le {a b : ERat} : -a ≤ b ↔ -b ≤ a := by
   rw [← neg_le_neg_iff, neg_neg]
 
 /-!
@@ -565,62 +564,62 @@ registered on `ERat`, beyond `SubNegZeroMonoid`, because of this bad behavior.
 -/
 
 @[simp]
-theorem bot_sub (x : ERat) : ⊥ - x = ⊥ :=
+lemma bot_sub (x : ERat) : ⊥ - x = ⊥ :=
   bot_add x
 
 @[simp]
-theorem sub_top (x : ERat) : x - ⊤ = ⊥ :=
+lemma sub_top (x : ERat) : x - ⊤ = ⊥ :=
   add_bot x
 
 @[simp]
-theorem top_sub_bot : (⊤ : ERat) - ⊥ = ⊤ :=
+lemma top_sub_bot : (⊤ : ERat) - ⊥ = ⊤ :=
   rfl
 
 @[simp]
-theorem top_sub_coe (x : ℚ) : (⊤ : ERat) - x = ⊤ :=
+lemma top_sub_coe (x : ℚ) : (⊤ : ERat) - x = ⊤ :=
   rfl
 
 @[simp]
-theorem coe_sub_bot (x : ℚ) : (x : ERat) - ⊥ = ⊤ :=
+lemma coe_sub_bot (x : ℚ) : (x : ERat) - ⊥ = ⊤ :=
   rfl
 
 /-! ### Multiplication -/
 
-@[simp] theorem top_mul_top : (⊤ : ERat) * ⊤ = ⊤ := rfl
+@[simp] lemma top_mul_top : (⊤ : ERat) * ⊤ = ⊤ := rfl
 
-@[simp] theorem top_mul_bot : (⊤ : ERat) * ⊥ = ⊥ := rfl
+@[simp] lemma top_mul_bot : (⊤ : ERat) * ⊥ = ⊥ := rfl
 
-@[simp] theorem bot_mul_top : (⊥ : ERat) * ⊤ = ⊥ := rfl
+@[simp] lemma bot_mul_top : (⊥ : ERat) * ⊤ = ⊥ := rfl
 
-@[simp] theorem bot_mul_bot : (⊥ : ERat) * ⊥ = ⊤ := rfl
+@[simp] lemma bot_mul_bot : (⊥ : ERat) * ⊥ = ⊤ := rfl
 
-theorem coe_mul_top_of_pos {x : ℚ} (h : 0 < x) : (x : ERat) * ⊤ = ⊤ :=
+lemma coe_mul_top_of_pos {x : ℚ} (h : 0 < x) : (x : ERat) * ⊤ = ⊤ :=
   if_pos h
 
-theorem top_mul_coe_of_pos {x : ℚ} (h : 0 < x) : (⊤ : ERat) * x = ⊤ :=
+lemma top_mul_coe_of_pos {x : ℚ} (h : 0 < x) : (⊤ : ERat) * x = ⊤ :=
   if_pos h
 
-theorem coe_mul_bot_of_nng {x : ℚ} (h : 0 ≤ x) : (x : ERat) * ⊥ = ⊥ :=
+lemma coe_mul_bot_of_nng {x : ℚ} (h : 0 ≤ x) : (x : ERat) * ⊥ = ⊥ :=
   if_pos h
 
-theorem bot_mul_coe_of_nng {x : ℚ} (h : 0 ≤ x) : (⊥ : ERat) * x = ⊥ :=
+lemma bot_mul_coe_of_nng {x : ℚ} (h : 0 ≤ x) : (⊥ : ERat) * x = ⊥ :=
   if_pos h
 
-theorem coe_mul_top_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊤ = ⊥ :=
+lemma coe_mul_top_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊤ = ⊥ :=
   (if_neg h.not_lt).trans (if_neg h.ne)
 
-theorem top_mul_coe_of_neg {x : ℚ} (h : x < 0) : (⊤ : ERat) * x = ⊥ :=
+lemma top_mul_coe_of_neg {x : ℚ} (h : x < 0) : (⊤ : ERat) * x = ⊥ :=
   (if_neg h.not_lt).trans (if_neg h.ne)
 
-theorem coe_mul_bot_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊥ = ⊤ := by
+lemma coe_mul_bot_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊥ = ⊤ := by
   apply if_neg
   intro cont
   exact (h.trans_le cont).false
 
-/-- Induct on two ERats by performing case splits on the sign of one whenever the other is infinite.
-This version eliminates some cases by assuming that `P x y` implies `P (-x) y` for all `x`, `y`. -/
+/-- Induct on two `ERat`s by performing case splits on the sign of one whenever the other is infinite.
+    This version eliminates some cases by assuming that `P x y` implies `P (-x) y` for all `x` and `y`. -/
 @[elab_as_elim]
-theorem induction₂_neg_left {P : ERat → ERat → Prop} (neg_left : ∀ {x y}, P x y → P (-x) y)
+lemma induction₂_neg_left {P : ERat → ERat → Prop} (neg_left : ∀ {x y}, P x y → P (-x) y)
     (top_top : P ⊤ ⊤) (top_pos : ∀ x : ℚ, 0 < x → P ⊤ x)
     (top_zero : P ⊤ 0) (top_neg : ∀ x : ℚ, x < 0 → P ⊤ x) (top_bot : P ⊤ ⊥)
     (zero_top : P 0 ⊤) (zero_bot : P 0 ⊥)
@@ -633,11 +632,11 @@ theorem induction₂_neg_left {P : ERat → ERat → Prop} (neg_left : ∀ {x y}
     (fun x hx => neg_left <| top_pos x hx) (neg_left top_zero)
     (fun x hx => neg_left <| top_neg x hx) (neg_left top_bot)
 
-/-- Induct on two ERats by performing case splits on the sign of one whenever the other is infinite.
-This version eliminates some cases by assuming that `P` is symmetric and
-`P x y` implies `P (-x) y` for all `x`, `y`. -/
+/-- Induct on two `ERat`s by performing case splits on the sign of one whenever the other is infinite.
+    This version eliminates some cases by assuming that `P` is symmetric and that
+    `P x y` implies `P (-x) y` for all `x` and `y`. -/
 @[elab_as_elim]
-theorem induction₂_symm_neg {P : ERat → ERat → Prop}
+lemma induction₂_symm_neg {P : ERat → ERat → Prop}
     (symm : ∀ {x y}, P x y → P y x)
     (neg_left : ∀ {x y}, P x y → P (-x) y) (top_top : P ⊤ ⊤)
     (top_pos : ∀ x : ℚ, 0 < x → P ⊤ x) (top_zero : P ⊤ 0) (coe_coe : ∀ x y : ℚ, P x y) :
@@ -653,18 +652,18 @@ theorem induction₂_symm_neg {P : ERat → ERat → Prop}
 
 open SignType (sign)
 
-theorem sign_top : sign (⊤ : ERat) = 1 := rfl
+lemma sign_top : sign (⊤ : ERat) = 1 := rfl
 
-theorem sign_bot : sign (⊥ : ERat) = -1 := rfl
+lemma sign_bot : sign (⊥ : ERat) = -1 := rfl
 
 @[simp]
-theorem sign_coe (x : ℚ) : sign (x : ERat) = sign x := by
+lemma sign_coe (x : ℚ) : sign (x : ERat) = sign x := by
   simp only [sign, OrderHom.coe_mk, ERat.coe_pos, ERat.coe_neg']
 
 @[simp, norm_cast]
-theorem coe_coe_sign (x : SignType) : ((x : ℚ) : ERat) = x := by cases x <;> rfl
+lemma coe_coe_sign (x : SignType) : ((x : ℚ) : ERat) = x := by cases x <;> rfl
 
-@[simp] theorem sign_neg : ∀ x : ERat, sign (-x) = -sign x
+@[simp] lemma sign_neg : ∀ x : ERat, sign (-x) = -sign x
   | ⊤ => rfl
   | ⊥ => rfl
   | (x : ℚ) => by rw [← coe_neg, sign_coe, sign_coe, Left.sign_neg]
