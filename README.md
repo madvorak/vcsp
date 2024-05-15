@@ -26,6 +26,10 @@ My long-term goal is to formalize the dichotomy for fixed-template finite-valued
 * https://github.com/leanprover-community/mathlib4/pull/10297
 * https://github.com/leanprover-community/mathlib4/pull/10379
 * https://github.com/leanprover-community/mathlib4/pull/11689
+* https://github.com/leanprover-community/mathlib4/pull/12806
+* https://github.com/leanprover-community/mathlib4/pull/12901
+* https://github.com/leanprover-community/mathlib4/pull/12903
+* https://github.com/leanprover-community/mathlib4/pull/12911
 
 ### Proposals for Linear Programming
 (incompatible with each other)
