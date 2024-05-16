@@ -235,7 +235,7 @@ lemma Matrix.no_bot_has_top_dotProd_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ �
 lemma Matrix.no_bot_has_top_dotProd_nng_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     {w : I → ℚ} (hw : 0 ≤ w) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
     w i = 0 :=
-  le_antisymm (Matrix.no_bot_has_top_dotProd_le hv hvi hw hq) (hw i)
+  eq_of_le_of_le (Matrix.no_bot_has_top_dotProd_le hv hvi hw hq) (hw i)
 
 lemma Matrix.dotProd_zero_le_zero (v : I → ℚ∞) :
     v ᵥ⬝ (0 : I → ℚ) ≤ (0 : ℚ∞) := by

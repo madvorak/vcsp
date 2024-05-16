@@ -29,7 +29,7 @@ variable {F : Type*} [LinearOrderedField F]
 instance LinearOrderedField.toLinearOrderedDivisionRing : LinearOrderedDivisionRing F :=
   { ‹LinearOrderedField F› with }
 
-open Matrix
+open scoped Matrix
 variable {J : Type} [Fintype J]
 
 macro "finishit" : tactic => `(tactic| -- should be `private macro` which Lean does not allow

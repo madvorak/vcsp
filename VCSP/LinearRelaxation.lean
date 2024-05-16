@@ -41,7 +41,6 @@ variable
 instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
   inferInstanceAs (DecidableEq (Σ t : Γ.Term ι, Fin (I.count t)))
 
-@[pp_dot]
 def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
     CanonicalLP
       ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- variables
@@ -70,7 +69,6 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
       (fun ⟨⟨t, _⟩, v⟩ => t.f v)
       (fun _ => 0))
 
-@[pp_dot]
 abbrev ValuedCSP.Instance.solutionVCSPtoBLP (I : Γ.Instance ι) (x : ι → D) :
     ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) → C :=
   Sum.elim

@@ -9,18 +9,21 @@ structure CanonicalRationalSolution (α : Type*) where
 
 variable {α : Type*}
 
--- `@[pp_dot]` -- put back after the pretty-printer issue gets fixed
 def CanonicalRationalSolution.toFunction (s : CanonicalRationalSolution α) : α → ℚ :=
   fun a : α => (s.numerators a : ℚ) / (s.denominator : ℚ)
 
 variable [Fintype α] [DecidableEq α]
 
-@[pp_dot]
 def Function.toCanonicalRationalSolution (x : α → ℚ) : CanonicalRationalSolution α :=
   CanonicalRationalSolution.mk
     (fun a : α => Finset.univ.prod (fun i : α => if i = a then (x i).num.toNat else (x i).den))
     (Finset.univ.prod (fun i : α => (x i).den))
     (Finset.prod_pos (fun i _ => Rat.pos (x i)))
+
+@[app_unexpander Function.toCanonicalRationalSolution]
+def Function.toCanonicalRationalSolution_unexpand : Lean.PrettyPrinter.Unexpander
+  | `($_ $x) => `($(x).$(Lean.mkIdent `toCanonicalRationalSolution))
+  | _ => throw ()
 
 
 lemma Finset.univ.prod_single_hit (g : α → ℚ) (a : α) :
@@ -37,7 +40,7 @@ lemma Finset.univ.prod_with_one_exception {f g : α → ℚ} {a : α} (hfg : f a
     convert Finset.univ.prod_mul_single_hit f (fun i => g i / f i) a using 1
     · apply congr_arg
       ext1 i
-      rw [mul_ite, mul_one, mul_div_cancel']
+      rw [mul_ite, mul_one, mul_div_cancel₀]
       exact hf i
     · apply mul_div_assoc
   else

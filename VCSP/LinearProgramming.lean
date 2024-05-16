@@ -124,7 +124,7 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP n
     rw [sumElim_le_sumElim_iff] at hyp
     obtain ⟨⟨ineqPos, ineqNeg⟩, nonneg⟩ := hyp
     constructor
-    · apply le_antisymm ineqPos
+    · apply eq_of_le_of_le ineqPos
       intro i
       have almost : -((P.A *ᵥ x) i) ≤ -(P.b i)
       · specialize ineqNeg i

@@ -127,7 +127,7 @@ lemma induction₂_symm {P : ERat → ERat → Prop} (symm : ∀ {x y}, P x y �
 protected lemma mul_comm (x y : ERat) : x * y = y * x := by
   induction' x using ERat.rec with x <;> induction' y using ERat.rec with y <;>
     try { rfl }
-  rw [← coe_mul, ← coe_mul, mul_comm]
+  rw [←coe_mul, ←coe_mul, mul_comm]
 
 protected lemma one_mul : ∀ x : ERat, 1 * x = x
   | ⊤ => rfl
@@ -403,47 +403,47 @@ lemma preimage_coe_Iio_top : Rat.toERat ⁻¹' Iio ⊤ = univ := by
 
 @[simp]
 lemma preimage_coe_Icc (x y : ℚ) : Rat.toERat ⁻¹' Icc x y = Icc x y := by
-  simp_rw [← Ici_inter_Iic]
+  simp_rw [←Ici_inter_Iic]
   simp
 
 @[simp]
 lemma preimage_coe_Ico (x y : ℚ) : Rat.toERat ⁻¹' Ico x y = Ico x y := by
-  simp_rw [← Ici_inter_Iio]
+  simp_rw [←Ici_inter_Iio]
   simp
 
 @[simp]
 lemma preimage_coe_Ioc (x y : ℚ) : Rat.toERat ⁻¹' Ioc x y = Ioc x y := by
-  simp_rw [← Ioi_inter_Iic]
+  simp_rw [←Ioi_inter_Iic]
   simp
 
 @[simp]
 lemma preimage_coe_Ioo (x y : ℚ) : Rat.toERat ⁻¹' Ioo x y = Ioo x y := by
-  simp_rw [← Ioi_inter_Iio]
+  simp_rw [←Ioi_inter_Iio]
   simp
 
 @[simp]
 lemma preimage_coe_Ico_top (x : ℚ) : Rat.toERat ⁻¹' Ico x ⊤ = Ici x := by
-  rw [← Ici_inter_Iio]
+  rw [←Ici_inter_Iio]
   simp
 
 @[simp]
 lemma preimage_coe_Ioo_top (x : ℚ) : Rat.toERat ⁻¹' Ioo x ⊤ = Ioi x := by
-  rw [← Ioi_inter_Iio]
+  rw [←Ioi_inter_Iio]
   simp
 
 @[simp]
 lemma preimage_coe_Ioc_bot (y : ℚ) : Rat.toERat ⁻¹' Ioc ⊥ y = Iic y := by
-  rw [← Ioi_inter_Iic]
+  rw [←Ioi_inter_Iic]
   simp
 
 @[simp]
 lemma preimage_coe_Ioo_bot (y : ℚ) : Rat.toERat ⁻¹' Ioo ⊥ y = Iio y := by
-  rw [← Ioi_inter_Iio]
+  rw [←Ioi_inter_Iio]
   simp
 
 @[simp]
 lemma preimage_coe_Ioo_bot_top : Rat.toERat ⁻¹' Ioo ⊥ ⊤ = univ := by
-  rw [← Ioi_inter_Iio]
+  rw [←Ioi_inter_Iio]
   simp
 
 /-! ### Order -/
@@ -553,7 +553,7 @@ lemma neg_strictAnti : StrictAnti (- · : ERat → ERat) :=
 @[simp] lemma neg_lt_neg_iff {a b : ERat} : -a < -b ↔ b < a := neg_strictAnti.lt_iff_lt
 
 protected lemma neg_le {a b : ERat} : -a ≤ b ↔ -b ≤ a := by
-  rw [← neg_le_neg_iff, neg_neg]
+  rw [←neg_le_neg_iff, neg_neg]
 
 /-!
 ### Subtraction
@@ -666,6 +666,6 @@ lemma coe_coe_sign (x : SignType) : ((x : ℚ) : ERat) = x := by cases x <;> rfl
 @[simp] lemma sign_neg : ∀ x : ERat, sign (-x) = -sign x
   | ⊤ => rfl
   | ⊥ => rfl
-  | (x : ℚ) => by rw [← coe_neg, sign_coe, sign_coe, Left.sign_neg]
+  | (x : ℚ) => by rw [←coe_neg, sign_coe, sign_coe, Left.sign_neg]
 
 end ERat

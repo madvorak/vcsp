@@ -2,59 +2,12 @@ import Mathlib.Combinatorics.Optimization.ValuedCSP
 import Mathlib.Tactic.Have
 
 
-section better_notation
-
-/-- Given `n : ℕ` and `l : List _`, print `List.take n l` as `l.take n` in Infoview. -/
-@[app_unexpander List.take]
-def List.take.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $n $l) => `($(l).$(Lean.mkIdent `take) $n)
-  | _ => throw ()
-
-/-- Given `n : ℕ` and `l : List _`, print `List.drop n l` as `l.drop n` in Infoview. -/
-@[app_unexpander List.drop]
-def List.drop.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $n $l) => `($(l).$(Lean.mkIdent `drop) $n)
-  | _ => throw ()
-
-/-- Given `p : α → Bool` and `l : List α`, print `List.takeWhile p l` as `l.takeWhile p` in Infoview. -/
-@[app_unexpander List.takeWhile]
-def List.takeWhile.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $p $l) => `($(l).$(Lean.mkIdent `takeWhile) $p)
-  | _ => throw ()
-
-/-- Given `p : α → Bool` and `l : List α`, print `List.dropWhile p l` as `l.dropWhile p` in Infoview. -/
-@[app_unexpander List.dropWhile]
-def List.dropWhile.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $p $l) => `($(l).$(Lean.mkIdent `dropWhile) $p)
-  | _ => throw ()
-
-/-- Given `f : α → _` and `l : List α`, print `List.map f l` as `l.map f` in Infoview. -/
-@[app_unexpander List.map]
-def List.map.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $f $l) => `($(l).$(Lean.mkIdent `map) $f)
-  | _ => throw ()
-
-/-- Given `f : α → _` and `s : Multiset α`, print `Multiset.map f s` as `s.map f` in Infoview. -/
-@[app_unexpander Multiset.map]
-def Multiset.map.unexpander : Lean.PrettyPrinter.Unexpander
-  | `($_ $f $s) => `($(s).$(Lean.mkIdent `map) $f)
-  | _ => throw ()
+section multisets_and_finsets
+variable {α β γ : Type*}
 
 /-- Summation à la `Finset.sum` (but without notation). -/
 abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
   (s.map f).sum
-
-attribute [pp_dot] List.length List.get List.sum Multiset.sum Multiset.summap Finset.sum
-  Sigma.fst Sigma.snd
-  ValuedCSP.Term.f ValuedCSP.Term.n ValuedCSP.Term.app
-  ValuedCSP.Term.evalSolution ValuedCSP.Instance.evalSolution
-  FractionalOperation.size FractionalOperation.tt
-
-end better_notation
-
-
-section multisets_and_finsets
-variable {α β γ : Type*}
 
 lemma Multiset.nsmul_summap [AddCommMonoid β] (s : Multiset α) (f : α → β) (n : ℕ) :
     n • s.summap f = s.summap (fun a => n • f a) :=
@@ -105,7 +58,7 @@ end multisets_and_finsets
 
 
 section matrices
-open Matrix
+open scoped Matrix
 variable {I J R : Type*} [Fintype I] [Fintype J]
 
 lemma Matrix.neg_mulVec_neg [Ring R] (v : J → R) (A : Matrix I J R) : (-A) *ᵥ (-v) = A *ᵥ v := by
