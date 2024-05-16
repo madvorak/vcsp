@@ -7,18 +7,44 @@ import VCSP.Basic
 class LinearOrderedDivisionRing (R : Type*) extends
   LinearOrderedRing R, DivisionRing R
 
-variable {I : Type} [Fintype I] -- typically `Fin m`
+theorem nFarkasBartl {n : ℕ} {F V W : Type*} [LinearOrderedDivisionRing F]
+    [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
+    (A : W →ₗ[F] Fin n → F) (b : W →ₗ[F] V) :
+    (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : Fin n → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • U i)) := by
+  constructor
+  · induction n with
+    | zero =>
+      have A_tauto : ∀ w : W, A w ≤ 0
+      · intro x i
+        exfalso
+        apply Nat.not_lt_zero
+        exact i.isLt
+      intro hAb
+      refine ⟨0, by rfl, fun x : W => ?_⟩
+      simp_rw [Pi.zero_apply, smul_zero, Finset.sum_const_zero]
+      apply eq_of_le_of_le
+      · exact hAb x (A_tauto x)
+      · simpa using hAb (-x) (A_tauto (-x))
+    | succ m ih =>
+      sorry
+  · intro ⟨U, hU, hb⟩
+    intro x hx
+    rw [hb, ←neg_zero, ←le_neg, ←Finset.sum_neg_distrib]
+    apply Finset.sum_nonneg
+    intro i _
+    rw [le_neg, neg_zero]
+    exact smul_nonpos_of_nonpos_of_nonneg (hx i) (hU i)
 
-/-- TODO prove https://link.springer.com/article/10.1007/s00186-011-0377-y as a theorem! -/
+variable {I : Type} [Fintype I]
+
 theorem generalizedFarkasBartl {F V W : Type*} [LinearOrderedDivisionRing F]
     [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
-     -- typically `V` = `F` and `W` = `Fin n → F`
     (A : W →ₗ[F] I → F) (b : W →ₗ[F] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
   constructor
   · induction' hI : ‹Fintype I›.elems using Finset.cons_induction_on with _i _I _hi _ih
     · intro hAb
-      refine ⟨0, by rfl, fun v : W => ?_⟩
+      refine ⟨0, by rfl, fun _ : W => ?_⟩
       simp_rw [Pi.zero_apply, smul_zero, Finset.sum_const_zero]
       apply eq_of_le_of_le
       · apply hAb
