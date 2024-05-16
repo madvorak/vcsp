@@ -543,7 +543,6 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             intro i _
             apply zero_smul_ERat_neq_bot
             intro contr
-            save
             rw [Matrix.neg_apply, ERat.neg_eq_bot_iff] at contr
             exact hj i contr
             · simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.neg_apply, Matrix.transpose_apply, ERat.coe_neg]
