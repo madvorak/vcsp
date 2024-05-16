@@ -1,4 +1,3 @@
-import Mathlib.Data.Finset.PiInduction
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.LinearAlgebra.Matrix.ToLin
 import Mathlib.Data.Matrix.ColumnRowPartitioned
@@ -11,12 +10,29 @@ class LinearOrderedDivisionRing (R : Type*) extends
 variable {I : Type} [Fintype I] -- typically `Fin m`
 
 /-- TODO prove https://link.springer.com/article/10.1007/s00186-011-0377-y as a theorem! -/
-theorem generalizedFarkasBartl {F V W : Type*} [LinearOrderedDivisionRing F] -- typically `V` = `F` and `W` = `F^n`
+theorem generalizedFarkasBartl {F V W : Type*} [LinearOrderedDivisionRing F]
     [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
+     -- typically `V` = `F` and `W` = `Fin n → F`
     (A : W →ₗ[F] I → F) (b : W →ₗ[F] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
   constructor
-  · sorry
+  · induction' hI : ‹Fintype I›.elems using Finset.cons_induction_on with _i _I _hi _ih
+    · intro hAb
+      refine ⟨0, by rfl, fun v : W => ?_⟩
+      simp_rw [Pi.zero_apply, smul_zero, Finset.sum_const_zero]
+      apply eq_of_le_of_le
+      · apply hAb
+        intro i
+        exfalso
+        apply Finset.not_mem_empty i
+        exact hI ▸ ‹Fintype I›.complete i
+      · rw [←neg_zero, ←neg_le, ←LinearMap.map_neg]
+        apply hAb
+        intro i
+        exfalso
+        apply Finset.not_mem_empty i
+        exact hI ▸ ‹Fintype I›.complete i
+    · sorry
   · intro ⟨U, hU, hb⟩
     intro x hx
     rw [hb, ←neg_zero, ←le_neg, ←Finset.sum_neg_distrib]
