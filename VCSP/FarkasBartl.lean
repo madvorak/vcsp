@@ -12,8 +12,10 @@ theorem nFarkasBartl {n : ℕ} {F V W : Type*} [LinearOrderedDivisionRing F]
     (A : W →ₗ[F] Fin n → F) (b : W →ₗ[F] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : Fin n → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • U i)) := by
   constructor
-  · induction n with
+  · revert A
+    induction n with
     | zero =>
+      intro A
       have A_tauto : ∀ w : W, A w ≤ 0
       · intro x i
         exfalso
@@ -26,7 +28,42 @@ theorem nFarkasBartl {n : ℕ} {F V W : Type*} [LinearOrderedDivisionRing F]
       · exact hAb x (A_tauto x)
       · simpa using hAb (-x) (A_tauto (-x))
     | succ m ih =>
-      sorry
+      intro A hA
+      if complicated : ∃ x' : W, A x' ≤ 0 ∧ b x' > 0 then
+        obtain ⟨x', hx'⟩ := complicated
+        -- TODO switch to `A' : W →ₗ[F] Fin m → F` at some point (the earlier the better)
+        let x'' := (A x' ⟨m, lt_add_one m⟩)⁻¹ • x'
+        have hAx' : A x' ⟨m, lt_add_one m⟩ > 0
+        · sorry
+        have hAx'' : A x'' ⟨m, lt_add_one m⟩ = 1
+        · sorry
+        have hAA : ∀ x : W, A (x - (A x ⟨m, lt_add_one m⟩) • x'') ⟨m, lt_add_one m⟩ = 0
+        · sorry
+        have hh : ∀ x : W, (A (x - (A x ⟨m, lt_add_one m⟩) • x'') ≤ 0) → b (x - (A x ⟨m, lt_add_one m⟩) • x'') ≤ 0
+        · sorry
+        sorry
+      else
+        obtain ⟨U, hU, hb⟩ := ih (⟨⟨fun w => fun i => A w i.castSucc, by aesop⟩, by aesop⟩) (by
+          intro x hAx
+          push_neg at complicated
+          apply complicated x -- or `apply hA` ?
+          intro i
+          if hi : i.val < m then
+            sorry
+          else
+            sorry)
+        use (fun i : Fin m.succ => if hi : i.val < m then U ⟨i.val, hi⟩ else 0)
+        constructor
+        · intro i
+          if hi : i.val < m then
+            simp [hi]
+            apply hU
+          else
+            simp [hi]
+        · intro w
+          convert hb w using 1
+          -- TODO prove that `S + 0 = S` essentially
+          sorry
   · intro ⟨U, hU, hb⟩
     intro x hx
     rw [hb, ←neg_zero, ←le_neg, ←Finset.sum_neg_distrib]
