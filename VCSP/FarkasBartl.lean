@@ -1,3 +1,4 @@
+import Mathlib.Data.Finset.PiInduction
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.LinearAlgebra.Matrix.ToLin
 import Mathlib.Data.Matrix.ColumnRowPartitioned
@@ -10,10 +11,19 @@ class LinearOrderedDivisionRing (R : Type*) extends
 variable {I : Type} [Fintype I] -- typically `Fin m`
 
 /-- TODO prove https://link.springer.com/article/10.1007/s00186-011-0377-y as a theorem! -/
-axiom generalizedFarkasBartl {F V W : Type*} [LinearOrderedDivisionRing F] -- typically `V` = `F` and `W` = `F^n`
+theorem generalizedFarkasBartl {F V W : Type*} [LinearOrderedDivisionRing F] -- typically `V` = `F` and `W` = `F^n`
     [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
     (A : W →ₗ[F] I → F) (b : W →ₗ[F] V) :
-    (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i))
+    (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
+  constructor
+  · sorry
+  · intro ⟨U, hU, hb⟩
+    intro x hx
+    rw [hb, ←neg_zero, ←le_neg, ←Finset.sum_neg_distrib]
+    apply Finset.sum_nonneg
+    intro i _
+    rw [le_neg, neg_zero]
+    exact smul_nonpos_of_nonpos_of_nonneg (hx i) (hU i)
 
 
 section corollaries
