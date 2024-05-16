@@ -7,22 +7,16 @@ import VCSP.Basic
 class LinearOrderedDivisionRing (R : Type*) extends
   LinearOrderedRing R, DivisionRing R
 
-class CompatiblyOrdered (R M : Type*) [OrderedSemiring R] [OrderedAddCommMonoid M] [Module R M] where
-  smul_order : ∀ a : R, ∀ v : M, 0 ≤ a → 0 ≤ v → 0 ≤ a • v
-
 variable {I : Type} [Fintype I] -- typically `Fin m`
 
 /-- TODO prove https://link.springer.com/article/10.1007/s00186-011-0377-y as a theorem! -/
 axiom generalizedFarkasBartl {F V W : Type*} [LinearOrderedDivisionRing F] -- typically `V` = `F` and `W` = `F^n`
-    [LinearOrderedAddCommGroup V] [Module F V] [CompatiblyOrdered F V] [AddCommGroup W] [Module F W]
+    [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
     (A : W →ₗ[F] I → F) (b : W →ₗ[F] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i))
 
 
 section corollaries
-
-instance OrderedSemiring.isCompatiblyOrdered {R : Type*} [OrderedSemiring R] : CompatiblyOrdered R R :=
-  ⟨fun _ _ => smul_nonneg⟩
 
 variable {F : Type*} [LinearOrderedField F]
 
