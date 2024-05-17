@@ -29,43 +29,54 @@ lemma industepFarkasBartl {m : ℕ} {F V W : Type*} [LinearOrderedDivisionRing F
       simp_rw [smul_dite, smul_zero]
       rw [Finset.sum_dite, Finset.sum_const_zero, add_zero]
       convert hbU w using 1
-      sorry
+      sorry -- easy
   else
     push_neg at is_easy
     obtain ⟨x', hax', hbx'⟩ := is_easy
     let j : Fin m.succ := ⟨m, lt_add_one m⟩
     let x := (A x' j)⁻¹ • x'
     have hAx' : A x' j > 0
-    · sorry -- from `hax'` and `hbx'` and the contrapositive of `hAb`
+    · by_contra! contr
+      exact ((hAb x' (fun i => if hi : i.val < m then hax' ⟨i, hi⟩ else if hij : i = j then hij ▸ contr else by
+          exfalso
+          have := i.isLt
+          simp [j] at hij
+          apply hij
+          sorry -- easy
+        )).trans_lt hbx').false
     have hAx : A x j = 1
-    · sorry -- from `hAx'` and the definition of `x`
+    · convert inv_mul_cancel hAx'.ne.symm
+      simp [x]
     have hAA : ∀ w : W, A (w - (A w j • x)) j = 0
-    · sorry -- ??
+    · intro w
+      simp [hAx]
     have haAbA : ∀ w : W, A' (w - (A w j • x)) ≤ 0 → b (w - (A w j • x)) ≤ 0
-    · sorry -- ??
+    · intro w hw
+      apply hAb
+      intro i
+      if hi : i.val < m then
+        exact hw ⟨i, hi⟩
+      else if hij : i = j then
+        sorry -- from `hAA`
+      else
+        sorry -- easy
     have haaAbbA : ∀ w : W, A' w - A' (A w j • x) ≤ 0 → b w - b (A w j • x) ≤ 0
-    · sorry -- distribute `A'` in `haAbA`; distribute `b` in `haAbA`
-    have haAabAb : ∀ w : W, A' w - (A w j • A' x) ≤ 0 → b w - (A w j • b x) ≤ 0
-    · sorry -- from `haaAbbA` by swapping homomorphism and `•` on both sides of ˙→˙
-    have haAabAb' : ∀ w : W, (A' - (A · j • A' x)) w ≤ 0 → (b - (A · j • b x)) w ≤ 0
-    · sorry -- distribute `w` from `haAabAb` on both sides of ˙→˙
-    have haAabAb'' : A' - (A · j • A' x) ≤ 0 → b - (A · j • b x) ≤ 0
-    · intro hh z
-      apply haAabAb'
-      exact hh z
-    -- `haAabAb''` is weaker than `haAabAb'` and almost certainly useless
-    obtain ⟨U', hU', hbU'⟩ := ih ⟨⟨A' - (A · j • A' x), sorry⟩, sorry⟩ ⟨⟨b - (A · j • b x), sorry⟩, sorry⟩ haAabAb'
-    use (fun i : Fin m.succ => if hi : i.val < m then U' ⟨i.val, hi⟩ else 0)
+    · simpa using haAbA
+    have haAabAb : ∀ w : W, (A' - (A · j • A' x)) w ≤ 0 → (b - (A · j • b x)) w ≤ 0
+    · simpa using haaAbbA
+    obtain ⟨U', hU', hbU'⟩ := ih ⟨⟨A' - (A · j • A' x), sorry⟩, sorry⟩ ⟨⟨b - (A · j • b x), sorry⟩, sorry⟩ haAabAb
+    use (fun i : Fin m.succ => if hi : i.val < m then U' ⟨i.val, hi⟩ else sorry) -- TODO specify this first!
     constructor
     · intro i
       if hi : i.val < m then
         simp [hi]
         apply hU'
       else
-        simp [hi]
+        sorry
     · intro w
       have key : b w - A w j • b x = Finset.univ.sum (fun i : Fin m => (A' w i - A w j * A' x i) • U' i)
       · simpa using hbU' w
+      rw [←add_eq_of_eq_sub key.symm]
       sorry
 
 theorem nFarkasBartl {n : ℕ} {F V W : Type*} [LinearOrderedDivisionRing F]
