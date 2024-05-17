@@ -9,15 +9,14 @@ class LinearOrderedDivisionRing (R : Type*) extends
 
 lemma industepFarkasBartl {m : ℕ} {F V W : Type*} [LinearOrderedDivisionRing F]
     [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
-    {b : W →ₗ[F] V}
-    (ih : ∀ A' : W →ₗ[F] Fin m → F, (∀ x : W, A' x ≤ 0 → b x ≤ 0) →
-      ∃ U : Fin m → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin m => A' w i • U i))
-    {A : W →ₗ[F] Fin m.succ → F}
-    (hAb : ∀ x : W, A x ≤ 0 → b x ≤ 0) :
+    (ih : ∀ A₀ : W →ₗ[F] Fin m → F, ∀ b₀ : W →ₗ[F] V,
+      (∀ x : W, A₀ x ≤ 0 → b₀ x ≤ 0) →
+        (∃ U : Fin m → V, 0 ≤ U ∧ ∀ w : W, b₀ w = Finset.univ.sum (fun i : Fin m => A₀ w i • U i)))
+    {A : W →ₗ[F] Fin m.succ → F} {b : W →ₗ[F] V} (hAb : ∀ x : W, A x ≤ 0 → b x ≤ 0) :
     ∃ U : Fin m.succ → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin m.succ => A w i • U i) := by
   let A' : W →ₗ[F] Fin m → F := ⟨⟨fun w => fun i => A w i.castSucc, by aesop⟩, by aesop⟩
   if is_easy : ∀ x : W, A' x ≤ 0 → b x ≤ 0 then
-    obtain ⟨U, hU, hb⟩ := ih A' is_easy
+    obtain ⟨U, hU, hbU⟩ := ih A' b is_easy
     use (fun i : Fin m.succ => if hi : i.val < m then U ⟨i.val, hi⟩ else 0)
     constructor
     · intro i
@@ -27,31 +26,54 @@ lemma industepFarkasBartl {m : ℕ} {F V W : Type*} [LinearOrderedDivisionRing F
       else
         simp [hi]
     · intro w
-      --simp_rw [smul_ite]
-      convert hb w using 1
-      -- TODO prove that `S + 0 = S` essentially
+      simp_rw [smul_dite, smul_zero]
+      rw [Finset.sum_dite, Finset.sum_const_zero, add_zero]
+      convert hbU w using 1
       sorry
   else
     push_neg at is_easy
-    obtain ⟨x', hA'x', hbx'⟩ := is_easy
+    obtain ⟨x', hax', hbx'⟩ := is_easy
     let j : Fin m.succ := ⟨m, lt_add_one m⟩
     let x := (A x' j)⁻¹ • x'
     have hAx' : A x' j > 0
-    · sorry -- from `hA'x'` and `hbx'` and the contrapositive of `hAb`
+    · sorry -- from `hax'` and `hbx'` and the contrapositive of `hAb`
     have hAx : A x j = 1
     · sorry -- from `hAx'` and the definition of `x`
-    have hAA : ∀ w : W, A (w - (A w j) • x) j = 0
-    · sorry
-    have hAAbA : ∀ w : W, (A (w - (A w j) • x) ≤ 0) → b (w - (A w j) • x) ≤ 0
-    · sorry
-    sorry
+    have hAA : ∀ w : W, A (w - (A w j • x)) j = 0
+    · sorry -- ??
+    have haAbA : ∀ w : W, A' (w - (A w j • x)) ≤ 0 → b (w - (A w j • x)) ≤ 0
+    · sorry -- ??
+    have haaAbbA : ∀ w : W, A' w - A' (A w j • x) ≤ 0 → b w - b (A w j • x) ≤ 0
+    · sorry -- distribute `A'` in `haAbA`; distribute `b` in `haAbA`
+    have haAabAb : ∀ w : W, A' w - (A w j • A' x) ≤ 0 → b w - (A w j • b x) ≤ 0
+    · sorry -- from `haaAbbA` by swapping homomorphism and `•` on both sides of ˙→˙
+    have haAabAb' : ∀ w : W, (A' - (A · j • A' x)) w ≤ 0 → (b - (A · j • b x)) w ≤ 0
+    · sorry -- distribute `w` from `haAabAb` on both sides of ˙→˙
+    have haAabAb'' : A' - (A · j • A' x) ≤ 0 → b - (A · j • b x) ≤ 0
+    · intro hh z
+      apply haAabAb'
+      exact hh z
+    -- `haAabAb''` is weaker than `haAabAb'` and almost certainly useless
+    obtain ⟨U', hU', hbU'⟩ := ih ⟨⟨A' - (A · j • A' x), sorry⟩, sorry⟩ ⟨⟨b - (A · j • b x), sorry⟩, sorry⟩ haAabAb'
+    use (fun i : Fin m.succ => if hi : i.val < m then U' ⟨i.val, hi⟩ else 0)
+    constructor
+    · intro i
+      if hi : i.val < m then
+        simp [hi]
+        apply hU'
+      else
+        simp [hi]
+    · intro w
+      have key : b w - A w j • b x = Finset.univ.sum (fun i : Fin m => (A' w i - A w j * A' x i) • U' i)
+      · simpa using hbU' w
+      sorry
 
 theorem nFarkasBartl {n : ℕ} {F V W : Type*} [LinearOrderedDivisionRing F]
     [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
     (A : W →ₗ[F] Fin n → F) (b : W →ₗ[F] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : Fin n → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • U i)) := by
   constructor
-  · induction n with
+  · induction n generalizing b with -- note that `A` is "generalized" automatically
     | zero =>
       have A_tauto (w : W) : A w ≤ 0
       · intro i
@@ -97,7 +119,7 @@ theorem generalizedFarkasBartl {F V W : Type*} [LinearOrderedDivisionRing F]
         exfalso
         apply Finset.not_mem_empty i
         exact hI ▸ ‹Fintype I›.complete i
-    · sorry
+    · sorry -- almost certainly wrong
   · intro ⟨U, hU, hb⟩
     intro x hx
     rw [hb, ←neg_zero, ←le_neg, ←Finset.sum_neg_distrib]
