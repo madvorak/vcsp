@@ -18,7 +18,7 @@ private def chop {m : ℕ} {F W : Type*} [Ring F] [AddCommGroup W] [Module F W]
     aesop -- TODO speed up
   ⟩
 
-private def auxLinMaps {m : ℕ} {F W : Type*} [Field F] [AddCommGroup W] [Module F W]
+private def auxLinMaps {m : ℕ} {F W : Type*} [CommRing F] [AddCommGroup W] [Module F W]
     (A : W →ₗ[F] Fin m.succ → F) (x : W) : W →ₗ[F] Fin m → F :=
   ⟨⟨
     chop A - (A · ⟨m, lt_add_one m⟩ • chop A x),
@@ -35,7 +35,7 @@ private def auxLinMaps {m : ℕ} {F W : Type*} [Field F] [AddCommGroup W] [Modul
     ring
   ⟩
 
-private def auxLinMap {m : ℕ} {F V W : Type*} [Field F]
+private def auxLinMap {m : ℕ} {F V W : Type*} [Ring F]
     [LinearOrderedAddCommGroup V] [Module F V] [AddCommGroup W] [Module F W]
     (A : W →ₗ[F] Fin m.succ → F) (b : W →ₗ[F] V) (x : W) : W →ₗ[F] V :=
   ⟨⟨
@@ -50,7 +50,7 @@ private def auxLinMap {m : ℕ} {F V W : Type*} [Field F]
     simp only [Pi.smul_apply, Pi.sub_apply, LinearMapClass.map_smul, RingHom.id_apply, smul_sub, IsScalarTower.smul_assoc]
   ⟩
 
-private lemma filter_yielding_singleton_attach_sum {m : ℕ} {F V : Type*} [LinearOrderedField F] [AddCommMonoid V] [Module F V]
+private lemma filter_yielding_singleton_attach_sum {m : ℕ} {F V : Type*} [Ring F] [AddCommMonoid V] [Module F V]
     (f : Fin m.succ → F) (v : V) :
     (Finset.univ.filter (¬ ·.val < m)).attach.sum (fun j => f j.val • v) =
     f ⟨m, lt_add_one m⟩ • v := by
@@ -85,8 +85,8 @@ private lemma sum_nng_aux {m : ℕ} {F V W : Type*} [OrderedRing F]
   rw [le_neg, neg_zero]
   exact smul_nonpos_of_nonpos_of_nonneg (hAx i) (hU i)
 
-private lemma finishing_piece {m : ℕ} {F V W : Type*} [LinearOrderedRing F]
-    [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
+private lemma finishing_piece {m : ℕ} {F V W : Type*} [Ring F]
+    [LinearOrderedAddCommGroup V] [Module F V] [AddCommGroup W] [Module F W]
     {A : W →ₗ[F] Fin m.succ → F} {w : W} {U : Fin m → V} :
     Finset.univ.sum (fun i : Fin m => chop A w i • U i) =
     (Finset.univ.filter _).attach.sum
