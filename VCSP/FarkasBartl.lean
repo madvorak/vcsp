@@ -12,10 +12,14 @@ private def chop {m : ℕ} {F W : Type*} [Ring F] [AddCommGroup W] [Module F W]
   ⟨⟨
     fun w : W => fun i : Fin m => A w i.castSucc,
   by
-    aesop -- TODO speed up
+    intros
+    ext
+    simp
   ⟩,
   by
-    aesop -- TODO speed up
+    intros
+    ext
+    simp
   ⟩
 
 private def auxLinMaps {m : ℕ} {F W : Type*} [CommRing F] [AddCommGroup W] [Module F W]
