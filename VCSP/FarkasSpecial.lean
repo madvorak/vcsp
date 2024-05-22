@@ -135,7 +135,7 @@ end extrasERat
 
 
 open scoped Matrix
-variable {I J : Type} [Fintype I] [Fintype J]
+variable {I J : Type*} [Fintype I] [Fintype J]
 
 
 section heteroMatrixProductsDefs

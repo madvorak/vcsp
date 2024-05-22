@@ -214,9 +214,9 @@ theorem finFarkasBartl {n : ℕ} {R V W : Type*} [LinearOrderedDivisionRing R]
     rw [hb]
     exact sum_nng_aux hU hx
 
-variable {I : Type} [Fintype I]
+variable {I : Type*} [Fintype I]
 
-lemma finFarkasBartl_to_fintype {I' : Type} [Fintype I'] (e : I' ≃ I) {R V W : Type*} [LinearOrderedDivisionRing R]
+lemma finFarkasBartl_to_fintype {I' : Type*} [Fintype I'] (e : I' ≃ I) {R V W : Type*} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (the_same :
       ∀ A : W →ₗ[R] I' → R, ∀ b : W →ₗ[R] V,
@@ -266,7 +266,7 @@ instance LinearOrderedField.toLinearOrderedDivisionRing : LinearOrderedDivisionR
   { ‹LinearOrderedField F› with }
 
 open scoped Matrix
-variable {J : Type} [Fintype J]
+variable {J : Type*} [Fintype J]
 
 macro "finishit" : tactic => `(tactic| -- should be `private macro` which Lean does not allow
   unfold Matrix.mulVec Matrix.vecMul Matrix.dotProduct <;>
