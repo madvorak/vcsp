@@ -11,7 +11,7 @@ Our long-term goal is to formalize the dichotomy for fixed-template finite-value
 * [If a VCSP template over LinearOrderedCancelAddCommMonoid can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/Hardness.lean#L70)
 * [Basic LP relaxation for VCSP over any OrderedRing of CharZero is valid.](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/LinearRelaxation.lean#L271)
 * [If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then Basic LP relaxation is tight.](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/LinearRelaxationAndSFP.lean#L398)
-* [Farkas-Bartl theorem](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/FarkasBartl.lean#L16) implies the [standard](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/FarkasBartl.lean#L40) Farkas [versions](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/FarkasBartl.lean#L72) and also implies our original [extended Farkas version](https://github.com/madvorak/vcsp/blob/8afb864ff922b2ed94c383b30cebb70fb9209fd3/VCSP/FarkasSpecial.lean#L281) (currently, these Farkas variants are only relative results).
+* We also provide several version of Farkas lemma (TODO links)
 
 ## Mathlib contributions that stem from this project
 

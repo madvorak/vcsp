@@ -305,7 +305,7 @@ theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
       simpa [Matrix.mulVecLin] using hAx
     · simpa [Matrix.mulVecLin] using hbx
 
-theorem mainFarkas [DecidableEq I] (A : Matrix I J F) (b : I → F) :
+theorem inequalityFarkas [DecidableEq I] (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → F, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
   let A' : Matrix I (I ⊕ J) F := Matrix.fromColumns 1 A
   convert equalityFarkas A' b using 1 <;> constructor
