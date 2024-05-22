@@ -189,7 +189,7 @@ lemma industepFarkasBartl {m : ℕ} {R V W : Type*} [LinearOrderedDivisionRing R
       rw [smul_sub, finishing_piece]
       abel
 
-theorem nFarkasBartl {n : ℕ} {R V W : Type*} [LinearOrderedDivisionRing R]
+theorem finFarkasBartl {n : ℕ} {R V W : Type*} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] Fin n → R) (b : W →ₗ[R] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : Fin n → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • U i)) := by
@@ -214,38 +214,48 @@ theorem nFarkasBartl {n : ℕ} {R V W : Type*} [LinearOrderedDivisionRing R]
     rw [hb]
     exact sum_nng_aux hU hx
 
-#print axioms nFarkasBartl
-
 variable {I : Type} [Fintype I]
 
-theorem generalizedFarkasBartl {R V W : Type*} [LinearOrderedDivisionRing R]
+lemma finFarkasBartl_to_fintype {I' : Type} [Fintype I'] (e : I' ≃ I) {R V W : Type*} [LinearOrderedDivisionRing R]
+    [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
+    (the_same :
+      ∀ A : W →ₗ[R] I' → R, ∀ b : W →ₗ[R] V,
+        (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔
+        (∃ U : I' → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i' : I' => A w i' • U i'))
+    )
+    (A : W →ₗ[R] I → R) (b : W →ₗ[R] V) :
+    (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
+  convert the_same ⟨⟨fun w : W => fun i' : I' => A w (e i'), by aesop⟩, by aesop⟩ b using 1
+  · constructor <;> intro hyp x <;> convert hyp x <;> constructor <;> intro hx i
+    · simpa using hx (e.invFun i)
+    · simpa using hx (e.toFun i)
+    · simpa using hx (e.toFun i)
+    · simpa using hx (e.invFun i)
+  · constructor <;> intro ⟨U, hU, hyp⟩
+    · use U ∘ e
+      constructor
+      · intro i
+        simpa using hU (e.toFun i)
+      · intro w
+        convert hyp w
+        apply Finset.sum_equiv e <;>
+        · intros
+          simp
+    · use U ∘ e.invFun
+      constructor
+      · intro i
+        simpa using hU (e.invFun i)
+      · intro w
+        convert hyp w
+        apply Finset.sum_equiv e.symm <;>
+        · intros
+          simp
+
+theorem fintypeFarkasBartl {R V W : Type*} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] I → R) (b : W →ₗ[R] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
-  constructor
-  · induction' hI : ‹Fintype I›.elems using Finset.cons_induction_on with _i _I _hi _ih generalizing A b
-    · intro hAb
-      refine ⟨0, by rfl, fun _ : W => ?_⟩
-      simp_rw [Pi.zero_apply, smul_zero, Finset.sum_const_zero]
-      apply eq_of_le_of_le
-      · apply hAb
-        intro i
-        exfalso
-        apply Finset.not_mem_empty i
-        exact hI ▸ ‹Fintype I›.complete i
-      · rw [←neg_zero, ←neg_le, ←LinearMap.map_neg]
-        apply hAb
-        intro i
-        exfalso
-        apply Finset.not_mem_empty i
-        exact hI ▸ ‹Fintype I›.complete i
-    · sorry -- TODO utilize `Encodable.fintypeEquivFin` or `Fintype.equivFin` perhaps
-  · intro ⟨U, hU, hb⟩ x hx
-    rw [hb, ←neg_zero, ←le_neg, ←Finset.sum_neg_distrib]
-    apply Finset.sum_nonneg
-    intro i _
-    rw [le_neg, neg_zero]
-    exact smul_nonpos_of_nonpos_of_nonneg (hx i) (hU i)
+  apply finFarkasBartl_to_fintype (Fintype.equivFin I).symm finFarkasBartl
 
 
 section corollaries
@@ -267,7 +277,7 @@ theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
   have gener :=
     not_neq_of_iff
-      (generalizedFarkasBartl Aᵀ.mulVecLin (⟨⟨(b ⬝ᵥ ·), Matrix.dotProduct_add b⟩, (Matrix.dotProduct_smul · b)⟩))
+      (fintypeFarkasBartl Aᵀ.mulVecLin (⟨⟨(b ⬝ᵥ ·), Matrix.dotProduct_add b⟩, (Matrix.dotProduct_smul · b)⟩))
   push_neg at gener
   convert gener.symm using 1 <;> clear gener <;> constructor
   · intro ⟨x, hx, hAxb⟩
