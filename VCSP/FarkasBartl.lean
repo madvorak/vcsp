@@ -7,8 +7,11 @@ import VCSP.Basic
 class LinearOrderedDivisionRing (R : Type*) extends
   LinearOrderedRing R, DivisionRing R
 
-private def chop {m : ℕ} {F W : Type*} [Ring F] [AddCommGroup W] [Module F W]
-    (A : W →ₗ[F] Fin m.succ → F) : W →ₗ[F] Fin m → F :=
+lemma inv_pos_of_pos' {R : Type*} [LinearOrderedDivisionRing R] {a : R} (ha : 0 < a) : 0 < a⁻¹ :=
+  lt_of_mul_lt_mul_left (by simp [ha.ne.symm]) ha.le
+
+private def chop {m : ℕ} {R W : Type*} [Ring R] [AddCommGroup W] [Module R W]
+    (A : W →ₗ[R] Fin m.succ → R) : W →ₗ[R] Fin m → R :=
   ⟨⟨
     fun w : W => fun i : Fin m => A w i.castSucc,
   by
@@ -22,26 +25,25 @@ private def chop {m : ℕ} {F W : Type*} [Ring F] [AddCommGroup W] [Module F W]
     simp
   ⟩
 
-private def auxLinMaps {m : ℕ} {F W : Type*} [CommRing F] [AddCommGroup W] [Module F W]
-    (A : W →ₗ[F] Fin m.succ → F) (x : W) : W →ₗ[F] Fin m → F :=
+private def auxLinMaps {m : ℕ} {R W : Type*} [Ring R] [AddCommGroup W] [Module R W]
+    (A : W →ₗ[R] Fin m.succ → R) (x : W) : W →ₗ[R] Fin m → R :=
   ⟨⟨
     chop A - (A · ⟨m, lt_add_one m⟩ • chop A x),
   by
     intros
     ext
-    simp only [chop, LinearMap.coe_mk, AddHom.coe_mk, Pi.add_apply, Pi.sub_apply, Pi.smul_apply, map_add, smul_eq_mul]
-    ring
+    simp only [chop, LinearMap.coe_mk, AddHom.coe_mk, Pi.add_apply, Pi.sub_apply, Pi.smul_apply, map_add, smul_eq_mul, add_mul]
+    abel
   ⟩,
   by
     intros
     ext
-    simp only [chop, LinearMap.coe_mk, AddHom.coe_mk, Pi.sub_apply, Pi.smul_apply, LinearMapClass.map_smul, smul_eq_mul, RingHom.id_apply]
-    ring
+    simp [chop, mul_sub, mul_assoc]
   ⟩
 
-private def auxLinMap {m : ℕ} {F V W : Type*} [Ring F]
-    [LinearOrderedAddCommGroup V] [Module F V] [AddCommGroup W] [Module F W]
-    (A : W →ₗ[F] Fin m.succ → F) (b : W →ₗ[F] V) (x : W) : W →ₗ[F] V :=
+private def auxLinMap {m : ℕ} {R V W : Type*} [Ring R]
+    [LinearOrderedAddCommGroup V] [Module R V] [AddCommGroup W] [Module R W]
+    (A : W →ₗ[R] Fin m.succ → R) (b : W →ₗ[R] V) (x : W) : W →ₗ[R] V :=
   ⟨⟨
     b - (A · ⟨m, lt_add_one m⟩ • b x),
   by
@@ -54,22 +56,18 @@ private def auxLinMap {m : ℕ} {F V W : Type*} [Ring F]
     simp only [Pi.smul_apply, Pi.sub_apply, LinearMapClass.map_smul, RingHom.id_apply, smul_sub, IsScalarTower.smul_assoc]
   ⟩
 
-private lemma filter_yielding_singleton_attach_sum {m : ℕ} {F V : Type*} [Ring F] [AddCommMonoid V] [Module F V]
-    (f : Fin m.succ → F) (v : V) :
+private lemma filter_yielding_singleton_attach_sum {m : ℕ} {R V : Type*} [Ring R] [AddCommMonoid V] [Module R V]
+    (f : Fin m.succ → R) (v : V) :
     (Finset.univ.filter (¬ ·.val < m)).attach.sum (fun j => f j.val • v) =
     f ⟨m, lt_add_one m⟩ • v := by
   have singlet : Finset.univ.filter (fun j : Fin m.succ => ¬(j.val < m)) = {⟨m, lt_add_one m⟩}
   · rw [Finset.ext_iff]
     intro i
-    constructor <;> intro hi
-    · rw [Finset.mem_singleton]
-      rw [Finset.mem_filter] at hi
-      have him := hi.right
+    constructor <;> rw [Finset.mem_singleton, Finset.mem_filter] <;> intro hi
+    · have him := hi.right
       push_neg at him
       exact eq_of_le_of_le (Nat.le_of_lt_succ i.isLt) him
-    · rw [Finset.mem_singleton] at hi
-      rw [Finset.mem_filter]
-      refine ⟨Finset.mem_univ i, ?_⟩
+    · refine ⟨Finset.mem_univ i, ?_⟩
       rw [hi]
       push_neg
       rfl
@@ -79,9 +77,9 @@ private lemma impossible_index {m : ℕ} {i : Fin m.succ} (hi : ¬(i.val < m)) (
   push_neg at hi
   exact i_neq_m (eq_of_le_of_le (Fin.succ_le_succ_iff.mp i.isLt) hi)
 
-private lemma sum_nng_aux {m : ℕ} {F V W : Type*} [OrderedRing F]
-    [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
-    {A : W →ₗ[F] Fin m → F} {x : W} {U : Fin m → V} (hU : 0 ≤ U) (hAx : A x ≤ 0) :
+private lemma sum_nng_aux {m : ℕ} {R V W : Type*} [OrderedRing R]
+    [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
+    {A : W →ₗ[R] Fin m → R} {x : W} {U : Fin m → V} (hU : 0 ≤ U) (hAx : A x ≤ 0) :
     (Finset.univ.sum fun i => A x i • U i) ≤ 0 := by
   rw [←neg_zero, ←le_neg, ←Finset.sum_neg_distrib]
   apply Finset.sum_nonneg
@@ -89,9 +87,9 @@ private lemma sum_nng_aux {m : ℕ} {F V W : Type*} [OrderedRing F]
   rw [le_neg, neg_zero]
   exact smul_nonpos_of_nonpos_of_nonneg (hAx i) (hU i)
 
-private lemma finishing_piece {m : ℕ} {F V W : Type*} [Ring F]
-    [LinearOrderedAddCommGroup V] [Module F V] [AddCommGroup W] [Module F W]
-    {A : W →ₗ[F] Fin m.succ → F} {w : W} {U : Fin m → V} :
+private lemma finishing_piece {m : ℕ} {R V W : Type*} [Ring R]
+    [LinearOrderedAddCommGroup V] [Module R V] [AddCommGroup W] [Module R W]
+    {A : W →ₗ[R] Fin m.succ → R} {w : W} {U : Fin m → V} :
     Finset.univ.sum (fun i : Fin m => chop A w i • U i) =
     (Finset.univ.filter _).attach.sum
       (fun i : { _i : Fin m.succ // _i ∈ Finset.univ.filter (·.val < m) } => A w i.val • U ⟨i.val.val, by aesop⟩) := by
@@ -106,12 +104,12 @@ private lemma finishing_piece {m : ℕ} {F V W : Type*} [Ring F]
   intros
   rfl
 
-lemma industepFarkasBartl {m : ℕ} {F V W : Type*} [LinearOrderedField F] -- TODO generalize to `[LinearOrderedDivisionRing F]`
-    [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
-    (ih : ∀ A₀ : W →ₗ[F] Fin m → F, ∀ b₀ : W →ₗ[F] V,
+lemma industepFarkasBartl {m : ℕ} {R V W : Type*} [LinearOrderedDivisionRing R]
+    [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
+    (ih : ∀ A₀ : W →ₗ[R] Fin m → R, ∀ b₀ : W →ₗ[R] V,
       (∀ x : W, A₀ x ≤ 0 → b₀ x ≤ 0) →
         (∃ U : Fin m → V, 0 ≤ U ∧ ∀ w : W, b₀ w = Finset.univ.sum (fun i : Fin m => A₀ w i • U i)))
-    {A : W →ₗ[F] Fin m.succ → F} {b : W →ₗ[F] V} (hAb : ∀ x : W, A x ≤ 0 → b x ≤ 0) :
+    {A : W →ₗ[R] Fin m.succ → R} {b : W →ₗ[R] V} (hAb : ∀ x : W, A x ≤ 0 → b x ≤ 0) :
     ∃ U : Fin m.succ → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin m.succ => A w i • U i) := by
   if is_easy : ∀ x : W, (chop A) x ≤ 0 → b x ≤ 0 then
     obtain ⟨U, hU, hbU⟩ := ih (chop A) b is_easy
@@ -173,7 +171,7 @@ lemma industepFarkasBartl {m : ℕ} {F V W : Type*} [LinearOrderedField F] -- TO
       else
         simp [hi]
         have hAx'inv : 0 ≤ (A x' j)⁻¹
-        · exact (inv_pos_of_pos hAx').le
+        · exact (inv_pos_of_pos' hAx').le
         have hax : chop A x ≤ 0
         · simpa [x] using smul_nonpos_of_nonneg_of_nonpos hAx'inv hax'
         have hbx : 0 ≤ b x
@@ -191,9 +189,9 @@ lemma industepFarkasBartl {m : ℕ} {F V W : Type*} [LinearOrderedField F] -- TO
       rw [smul_sub, finishing_piece]
       abel
 
-theorem nFarkasBartl {n : ℕ} {F V W : Type*} [LinearOrderedField F] -- TODO generalize to `[LinearOrderedDivisionRing F]`
-    [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
-    (A : W →ₗ[F] Fin n → F) (b : W →ₗ[F] V) :
+theorem nFarkasBartl {n : ℕ} {R V W : Type*} [LinearOrderedDivisionRing R]
+    [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
+    (A : W →ₗ[R] Fin n → R) (b : W →ₗ[R] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : Fin n → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • U i)) := by
   constructor
   · induction n generalizing b with -- note that `A` is "generalized" automatically
@@ -220,9 +218,9 @@ theorem nFarkasBartl {n : ℕ} {F V W : Type*} [LinearOrderedField F] -- TODO ge
 
 variable {I : Type} [Fintype I]
 
-theorem generalizedFarkasBartl {F V W : Type*} [LinearOrderedDivisionRing F]
-    [LinearOrderedAddCommGroup V] [Module F V] [PosSMulMono F V] [AddCommGroup W] [Module F W]
-    (A : W →ₗ[F] I → F) (b : W →ₗ[F] V) :
+theorem generalizedFarkasBartl {R V W : Type*} [LinearOrderedDivisionRing R]
+    [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
+    (A : W →ₗ[R] I → R) (b : W →ₗ[R] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
   constructor
   · induction' hI : ‹Fintype I›.elems using Finset.cons_induction_on with _i _I _hi _ih generalizing A b
