@@ -1,5 +1,4 @@
 import Mathlib.LinearAlgebra.Matrix.DotProduct
-import Mathlib.LinearAlgebra.Matrix.ToLin
 import Mathlib.Data.Matrix.ColumnRowPartitioned
 import VCSP.Basic
 
@@ -216,23 +215,23 @@ theorem finFarkasBartl {n : ℕ} {R V W : Type*} [LinearOrderedDivisionRing R]
 
 variable {I : Type*} [Fintype I]
 
-lemma finFarkasBartl_to_fintype {I' : Type*} [Fintype I'] (e : I' ≃ I) {R V W : Type*} [LinearOrderedDivisionRing R]
+private lemma auxFarkasBartl {I' : Type*} [Fintype I'] (e : I' ≃ I) {R V W : Type*} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
-    (the_same :
+    (version_for_I' :
       ∀ A : W →ₗ[R] I' → R, ∀ b : W →ₗ[R] V,
         (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔
         (∃ U : I' → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i' : I' => A w i' • U i'))
     )
     (A : W →ₗ[R] I → R) (b : W →ₗ[R] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
-  convert the_same ⟨⟨fun w : W => fun i' : I' => A w (e i'), by aesop⟩, by aesop⟩ b using 1
+  convert version_for_I' ⟨⟨fun w : W => fun i' : I' => A w (e i'), by aesop⟩, by aesop⟩ b using 1
   · constructor <;> intro hyp x <;> convert hyp x <;> constructor <;> intro hx i
     · simpa using hx (e.invFun i)
     · simpa using hx (e.toFun i)
     · simpa using hx (e.toFun i)
     · simpa using hx (e.invFun i)
   · constructor <;> intro ⟨U, hU, hyp⟩
-    · use U ∘ e
+    · use U ∘ e.toFun
       constructor
       · intro i
         simpa using hU (e.toFun i)
@@ -255,7 +254,7 @@ theorem fintypeFarkasBartl {R V W : Type*} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] I → R) (b : W →ₗ[R] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
-  apply finFarkasBartl_to_fintype (Fintype.equivFin I).symm finFarkasBartl
+  apply auxFarkasBartl (Fintype.equivFin I).symm finFarkasBartl
 
 
 section corollaries
