@@ -82,8 +82,7 @@ theorem StandardLP.weakDuality [OrderedCommRing R] {P : StandardLP n m R}
   exact hx.trans hy
 
 theorem StandardLP.strongDuality [DecidableEq m] --[LinearOrderedField R] [InfSet R] {P : StandardLP m n R}
-    {P : StandardLP m n ℝ}
-    (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
+    {P : StandardLP m n ℝ} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
   --∃ r : R, P.Reaches r ∧ P.dual.Reaches r := by
     ∃ r : ℝ, P.Reaches r ∧ P.dual.Reaches r := by
   let r : ℝ := sInf P.Reaches
