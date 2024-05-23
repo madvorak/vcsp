@@ -1,6 +1,7 @@
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.Data.Matrix.ColumnRowPartitioned
-import VCSP.Basic
+import Mathlib.Data.Real.Archimedean -- TODO delete after generalizing `StandardLP.strongDuality`
+import VCSP.FarkasBartl
 
 open scoped Matrix
 
@@ -26,6 +27,7 @@ We define linear programs over an `OrderedSemiring R` in the standard matrix for
 
 * `StandardLP.weakDuality`: The weak duality theorem (`cᵀx` such that `A x ≤ b` and `x ≥ 0` is
    always less or equal to `bᵀy` such that `Aᵀ y ≥ c` and `y ≥ 0`).
+* `StandardLP.strongDuality`: TODO!
 
 -/
 
@@ -66,8 +68,8 @@ def StandardLP.dual [OrderedRing R] (P : StandardLP m n R) : StandardLP n m R :=
 /-- Objective values reached by linear program `P` are all less or equal to all objective values
 reached by the dual of `P`. -/
 theorem StandardLP.weakDuality [OrderedCommRing R] {P : StandardLP n m R}
-    {v : R} (hP : P.Reaches v) {w : R} (hD : P.dual.Reaches w) :
-    v ≤ w := by
+    {p : R} (hP : P.Reaches p) {q : R} (hD : P.dual.Reaches q) :
+    p ≤ q := by
   obtain ⟨x, ⟨hxb, h0x⟩, rfl⟩ := hP
   obtain ⟨y, ⟨hyc, h0y⟩, rfl⟩ := hD
   dsimp only [StandardLP.dual] at hyc ⊢
@@ -78,6 +80,52 @@ theorem StandardLP.weakDuality [OrderedCommRing R] {P : StandardLP n m R}
     exact Matrix.dotProduct_le_dotProduct_of_nonneg_right hyc h0x
   rw [Matrix.dotProduct_comm (P.Aᵀ *ᵥ y), Matrix.dotProduct_mulVec, Matrix.vecMul_transpose] at hx
   exact hx.trans hy
+
+theorem StandardLP.strongDuality [DecidableEq m] --[LinearOrderedField R] [InfSet R] {P : StandardLP m n R}
+    {P : StandardLP m n ℝ}
+    (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
+  --∃ r : R, P.Reaches r ∧ P.dual.Reaches r := by
+    ∃ r : ℝ, P.Reaches r ∧ P.dual.Reaches r := by
+  let r : ℝ := sInf P.Reaches
+  use r
+  have hPr : P.Reaches r
+  · show sInf P.Reaches ∈ setOf P.Reaches
+    sorry
+    -- We probably have to explicitly provide that `P.Reaches` is an image of a continuous function on a compact set.
+    -- Whether we want to use `IsCompact.sInf_mem` or `IsCompact.exists_isMinOn` some nontrivial steps are missing.
+  constructor
+  · exact hPr
+  have farkas := inequalityFarkas (Matrix.fromRows (-P.Aᵀ) (fun _ : Unit => P.b)) (Sum.elim (-P.c) (fun _ : Unit => r))
+  have impossibility : ¬(∃ y : m ⊕ Unit → ℝ, 0 ≤ y ∧
+      -(Matrix.fromRows (-P.Aᵀ) (fun _ : Unit => P.b))ᵀ *ᵥ y ≤ 0 ∧ Sum.elim (-P.c) (fun _ : Unit => r) ⬝ᵥ y < 0)
+  · push_neg
+    intro y hy hAby
+    have hAby' : (Matrix.fromRows P.Aᵀ (fun _ : Unit => P.b))ᵀ *ᵥ y ≤ 0
+    · convert hAby
+      sorry -- trivial
+    simp [StandardLP.Reaches] at hPr
+    obtain ⟨z, ⟨hAbz, hz⟩, hcz⟩ := hPr
+    rw [←hcz]
+    show 0 ≤ Sum.elim (-P.c) (fun _ : Unit => P.c ⬝ᵥ z) ⬝ᵥ y
+    have y₁ : m → ℝ := sorry
+    have y₀ : Unit → ℝ := sorry
+    suffices : P.c ⬝ᵥ y₁ ≤ (fun _ : Unit => P.c ⬝ᵥ z) ⬝ᵥ y₀
+    · sorry -- easy after defining `y₁` and `y₀`
+    have y₀₀ : ℝ := sorry
+    suffices : P.c ⬝ᵥ y₁ ≤ (P.c ⬝ᵥ z) * y₀₀
+    · sorry -- easy after defining `y₀₀`
+    have hyz : y₁ = y₀₀ • z
+    · sorry -- Does it hold? Something seems to be missing!
+    rw [hyz, Matrix.dotProduct_smul, smul_eq_mul, mul_comm]
+  simp [impossibility] at farkas
+  obtain ⟨x, hx, hAbx⟩ := farkas
+  have dual_le : P.dual.A *ᵥ x ≤ P.dual.b
+  · intro i
+    simpa using hAbx (Sum.inl i)
+  refine ⟨x, ⟨dual_le, hx⟩, ?_⟩
+  · apply eq_of_le_of_le
+    · simpa using hAbx (Sum.inr ())
+    · exact StandardLP.weakDuality hPr ⟨x, ⟨dual_le, hx⟩, rfl⟩
 
 end inequalities_only
 

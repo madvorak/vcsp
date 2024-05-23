@@ -57,20 +57,6 @@ lemma Finset.univ_sum_of_zero_when_neg [Fintype α] [AddCommMonoid β]
 end multisets_and_finsets
 
 
-section matrices
-open scoped Matrix
-variable {I J R : Type*} [Fintype I] [Fintype J]
-
-lemma Matrix.neg_mulVec_neg [Ring R] (v : J → R) (A : Matrix I J R) : (-A) *ᵥ (-v) = A *ᵥ v := by
-  rw [Matrix.mulVec_neg, Matrix.neg_mulVec, neg_neg]
-
-lemma Matrix.zero_le_one_elem [OrderedSemiring R] [DecidableEq I] (i i' : I) :
-    (0 : R) ≤ (1 : Matrix I I R) i i' := by
-  by_cases hi : i = i' <;> simp [hi]
-
-end matrices
-
-
 section uncategorized_stuff
 
 lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by

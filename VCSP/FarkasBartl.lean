@@ -52,6 +52,7 @@ private def auxLinMap {m : ℕ} {R V W : Type*} [Ring R]
   ⟩,
   by
     intros
+    -- `simp` does not work here
     simp only [Pi.smul_apply, Pi.sub_apply, LinearMapClass.map_smul, RingHom.id_apply, smul_sub, IsScalarTower.smul_assoc]
   ⟩
 
