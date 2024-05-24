@@ -57,12 +57,10 @@ lemma Finset.univ_sum_of_zero_when_neg [Fintype α] [AddCommMonoid β]
 end multisets_and_finsets
 
 
-section uncategorized_stuff
+section sum_elims
+variable {α₁ α₂ β : Type*} [LE β]
 
-lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by
-  tauto
-
-lemma elim_le_elim_iff {α₁ α₂ β : Type*} [LE β] (u₁ v₁ : α₁ → β) (u₂ v₂ : α₂ → β) :
+lemma elim_le_elim_iff (u₁ v₁ : α₁ → β) (u₂ v₂ : α₂ → β) :
     Sum.elim u₁ u₂ ≤ Sum.elim v₁ v₂ ↔ u₁ ≤ v₁ ∧ u₂ ≤ v₂ := by
   constructor <;> intro hyp
   · constructor
@@ -81,9 +79,37 @@ lemma elim_le_elim_iff {α₁ α₂ β : Type*} [LE β] (u₁ v₁ : α₁ → �
       rw [Sum.elim_inr, Sum.elim_inr]
       exact hyp.right j₂
 
-lemma zero_le_elim_iff {α₁ α₂ β : Type*} [LE β] [Zero β] (v₁ : α₁ → β) (v₂ : α₂ → β) :
-    0 ≤ Sum.elim v₁ v₂ ↔ 0 ≤ v₁ ∧ 0 ≤ v₂ := by
-  rw [←Sum.elim_zero_zero, elim_le_elim_iff]
+lemma const_le_elim_iff (b : β) (v₁ : α₁ → β) (v₂ : α₂ → β) :
+    (Function.const _ b) ≤ Sum.elim v₁ v₂ ↔ (Function.const _ b) ≤ v₁ ∧ (Function.const _ b) ≤ v₂ := by
+  rw [←Sum.elim_const_const, elim_le_elim_iff]
+
+lemma zero_le_elim_iff [Zero β] (v₁ : α₁ → β) (v₂ : α₂ → β) :
+    0 ≤ Sum.elim v₁ v₂ ↔ 0 ≤ v₁ ∧ 0 ≤ v₂ :=
+  const_le_elim_iff 0 v₁ v₂
+
+lemma one_le_elim_iff [One β] (v₁ : α₁ → β) (v₂ : α₂ → β) :
+    1 ≤ Sum.elim v₁ v₂ ↔ 1 ≤ v₁ ∧ 1 ≤ v₂ :=
+  const_le_elim_iff 1 v₁ v₂
+
+lemma elim_le_const_iff (b : β) (u₁ : α₁ → β) (u₂ : α₂ → β) :
+    Sum.elim u₁ u₂ ≤ (Function.const _ b) ↔ u₁ ≤ (Function.const _ b) ∧ u₂ ≤ (Function.const _ b) := by
+  rw [←Sum.elim_const_const, elim_le_elim_iff]
+
+lemma elim_le_zero_iff [Zero β] (u₁ : α₁ → β) (u₂ : α₂ → β) :
+    Sum.elim u₁ u₂ ≤ 0 ↔ u₁ ≤ 0 ∧ u₂ ≤ 0 :=
+  elim_le_const_iff 0 u₁ u₂
+
+lemma elim_le_one_iff [One β] (u₁ : α₁ → β) (u₂ : α₂ → β) :
+    Sum.elim u₁ u₂ ≤ 1 ↔ u₁ ≤ 1 ∧ u₂ ≤ 1 :=
+  elim_le_const_iff 1 u₁ u₂
+
+end sum_elims
+
+
+section uncategorized_stuff
+
+lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by
+  tauto
 
 lemma le_of_nng_add {α : Type*} [OrderedAddCommGroup α] {a b c : α} (habc : a + b = c) (ha : 0 ≤ a) : b ≤ c := by
   aesop
