@@ -62,7 +62,7 @@ section uncategorized_stuff
 lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by
   tauto
 
-lemma sumElim_le_sumElim_iff {α₁ α₂ β : Type*} [LE β] (u₁ v₁ : α₁ → β) (u₂ v₂ : α₂ → β) :
+lemma elim_le_elim_iff {α₁ α₂ β : Type*} [LE β] (u₁ v₁ : α₁ → β) (u₂ v₂ : α₂ → β) :
     Sum.elim u₁ u₂ ≤ Sum.elim v₁ v₂ ↔ u₁ ≤ v₁ ∧ u₂ ≤ v₂ := by
   constructor <;> intro hyp
   · constructor
@@ -80,6 +80,10 @@ lemma sumElim_le_sumElim_iff {α₁ α₂ β : Type*} [LE β] (u₁ v₁ : α₁
     | inr j₂ =>
       rw [Sum.elim_inr, Sum.elim_inr]
       exact hyp.right j₂
+
+lemma zero_le_elim_iff {α₁ α₂ β : Type*} [LE β] [Zero β] (v₁ : α₁ → β) (v₂ : α₂ → β) :
+    0 ≤ Sum.elim v₁ v₂ ↔ 0 ≤ v₁ ∧ 0 ≤ v₂ := by
+  rw [←Sum.elim_zero_zero, elim_le_elim_iff]
 
 lemma le_of_nng_add {α : Type*} [OrderedAddCommGroup α] {a b c : α} (habc : a + b = c) (ha : 0 ≤ a) : b ≤ c := by
   aesop

@@ -311,7 +311,7 @@ theorem inequalityFarkas [DecidableEq I] (A : Matrix I J F) (b : I → F) :
   · intro ⟨x, hx, hAxb⟩
     use Sum.elim (b - A *ᵥ x) x
     constructor
-    · rw [←Sum.elim_zero_zero, sumElim_le_sumElim_iff]
+    · rw [zero_le_elim_iff]
       exact ⟨fun i : I => sub_nonneg_of_le (hAxb i), hx⟩
     · aesop
   · intro ⟨x, hx, hAxb⟩

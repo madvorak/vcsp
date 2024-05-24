@@ -81,6 +81,95 @@ theorem StandardLP.weakDuality [OrderedCommRing R] {P : StandardLP n m R}
   rw [Matrix.dotProduct_comm (P.Aᵀ *ᵥ y), Matrix.dotProduct_mulVec, Matrix.vecMul_transpose] at hx
   exact hx.trans hy
 
+-- Wrong!
+lemma intersect_of_both_dualities_of_nonempty {P Q : Set ℝ} (hQ : Q.Nonempty)
+    (hPQ : ∀ p ∈ P, ∀ q ∈ Q, p ≤ q) (hR : ∀ r : ℝ, (∃ p ∈ P, r ≤ p) ≠ (∃ q ∈ Q, q < r)) :
+    ∃ x, x ∈ P ∧ x ∈ Q := by
+  specialize hR (sInf Q)
+  have hsInfQ : sInf Q ∈ Q
+  · sorry -- exact csInf_mem hQ
+    -- requires `IsWellOrder ℝ (· < ·)`
+  have right_false : ¬(∃ q ∈ Q, q < sInf Q)
+  · push_neg
+    intro q hq
+    sorry -- exact sInf_le hq
+    -- requires `CompleteLattice ℝ`
+  simp [right_false] at hR
+  obtain ⟨x, hxP, hxQ⟩ := hR
+  refine ⟨x, hxP, ?_⟩
+  specialize hPQ x hxP (sInf Q) hsInfQ
+  have hsInfQx : sInf Q = x
+  · exact eq_of_le_of_le hxQ hPQ
+  rw [←hsInfQx]
+  exact hsInfQ
+
+-- Does not hold as such.
+-- We would need further assumption that the supremum of `P` is attained (i.e., `P` has a maximum).
+-- Our use case actually allow us to derive that `P` is a closed set.
+-- Can we do something easier tho?
+lemma intersect_of_both_dualities_of_both_nonempty {P Q : Set ℝ} (hP : P.Nonempty) (hQ : Q.Nonempty)
+    (hPQ : ∀ p ∈ P, ∀ q ∈ Q, p ≤ q) (hR : ∀ r : ℝ, (∃ p ∈ P, r < p) ≠ (∃ q ∈ Q, q ≤ r)) :
+    ∃ x, x ∈ P ∧ x ∈ Q := by
+  sorry
+
+theorem StandardLP.strongDuality_ [DecidableEq m]
+    {P : StandardLP m n ℝ} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
+    ∃ r : ℝ, P.Reaches r ∧ P.dual.Reaches r := by
+  apply intersect_of_both_dualities_of_both_nonempty
+  · obtain ⟨p, _⟩ := hP
+    use P.c ⬝ᵥ p
+    use p
+  · obtain ⟨d, _⟩ := hD
+    use P.dual.c ⬝ᵥ d
+    use d
+  · intro p hp q hq
+    exact StandardLP.weakDuality hp hq
+  · intro r
+    show
+      (∃ p, (∃ y', (P.A *ᵥ y' ≤ P.b ∧ 0 ≤ y') ∧ P.c ⬝ᵥ y' = p) ∧ r < p) ≠
+      (∃ q, (∃ x', (-P.Aᵀ *ᵥ x' ≤ -P.c ∧ 0 ≤ x') ∧ P.b ⬝ᵥ x' = q) ∧ q ≤ r)
+    simp
+      only [exists_exists_and_eq_and]
+    show
+      (∃ y', (P.A *ᵥ y' ≤ P.b ∧ 0 ≤ y') ∧ r < P.c ⬝ᵥ y') ≠
+      (∃ x', (-P.Aᵀ *ᵥ x' ≤ -P.c ∧ 0 ≤ x') ∧ P.b ⬝ᵥ x' ≤ r)
+    convert
+      (inequalityFarkas
+        (Matrix.fromRows (-P.Aᵀ) (fun _ : Unit => P.b))
+        (Sum.elim (-P.c) (fun _ : Unit => r))
+      ).symm
+          using 1
+    · constructor
+      · intro ⟨y', ⟨hAy', hy'⟩, hcy'⟩
+        use Sum.elim y' (fun _ => 1)
+        constructor
+        · rw [zero_le_elim_iff]
+          exact ⟨hy', fun _ => zero_le_one⟩
+        constructor
+        · sorry -- from `hAy'`
+        · sorry -- from `hcy'`
+      · intro ⟨y, hy, hAby, hcy⟩
+        use (y (Sum.inr ()))⁻¹ • y ∘ Sum.inl
+        -- TODO what if `y (Sum.inr ()) = 0`
+        constructor; constructor
+        · rw [Matrix.mulVec_smul]
+          rw [inv_smul_le_iff_of_pos sorry]
+          sorry -- from `hAby`
+        · apply smul_nonneg
+          · apply inv_nonneg_of_nonneg
+            exact hy (Sum.inr ())
+          · intro i
+            exact hy (Sum.inl i)
+        · sorry -- from `hcy`
+    · constructor
+      · intro ⟨x', ⟨hAx', hx'⟩, hbx'⟩
+        refine ⟨x', hx', ?_⟩
+        rw [Matrix.fromRows_mulVec, elim_le_elim_iff]
+        exact ⟨hAx', fun _ => hbx'⟩
+      · intro ⟨x, hx, hPx⟩
+        rw [Matrix.fromRows_mulVec, elim_le_elim_iff] at hPx
+        exact ⟨x, ⟨hPx.left, hx⟩, hPx.right ()⟩
+
 theorem StandardLP.strongDuality [DecidableEq m] --[LinearOrderedField R] [InfSet R] {P : StandardLP m n R}
     {P : StandardLP m n ℝ} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
   --∃ r : R, P.Reaches r ∧ P.dual.Reaches r := by
@@ -168,7 +257,7 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP n
   constructor
   · intro hyp
     simp only [StandardLP.IsSolution, CanonicalLP.toStandardLP, Matrix.fromRows_mulVec] at hyp
-    rw [sumElim_le_sumElim_iff] at hyp
+    rw [elim_le_elim_iff] at hyp
     obtain ⟨⟨ineqPos, ineqNeg⟩, nonneg⟩ := hyp
     constructor
     · apply eq_of_le_of_le ineqPos
@@ -183,7 +272,7 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP n
     unfold StandardLP.IsSolution
     obtain ⟨equ, nonneg⟩ := hyp
     constructor
-    · rw [Matrix.fromRows_mulVec, sumElim_le_sumElim_iff]
+    · rw [Matrix.fromRows_mulVec, elim_le_elim_iff]
       constructor
       · exact equ.le
       rw [Matrix.neg_mulVec]
