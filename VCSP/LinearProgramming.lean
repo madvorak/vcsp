@@ -81,28 +81,6 @@ theorem StandardLP.weakDuality [OrderedCommRing R] {P : StandardLP n m R}
   rw [Matrix.dotProduct_comm (P.Aᵀ *ᵥ y), Matrix.dotProduct_mulVec, Matrix.vecMul_transpose] at hx
   exact hx.trans hy
 
--- Wrong!
-lemma intersect_of_both_dualities_of_nonempty {P Q : Set ℝ} (hQ : Q.Nonempty)
-    (hPQ : ∀ p ∈ P, ∀ q ∈ Q, p ≤ q) (hR : ∀ r : ℝ, (∃ p ∈ P, r ≤ p) ≠ (∃ q ∈ Q, q < r)) :
-    ∃ x, x ∈ P ∧ x ∈ Q := by
-  specialize hR (sInf Q)
-  have hsInfQ : sInf Q ∈ Q
-  · sorry -- exact csInf_mem hQ
-    -- requires `IsWellOrder ℝ (· < ·)`
-  have right_false : ¬(∃ q ∈ Q, q < sInf Q)
-  · push_neg
-    intro q hq
-    sorry -- exact sInf_le hq
-    -- requires `CompleteLattice ℝ`
-  simp [right_false] at hR
-  obtain ⟨x, hxP, hxQ⟩ := hR
-  refine ⟨x, hxP, ?_⟩
-  specialize hPQ x hxP (sInf Q) hsInfQ
-  have hsInfQx : sInf Q = x
-  · exact eq_of_le_of_le hxQ hPQ
-  rw [←hsInfQx]
-  exact hsInfQ
-
 -- Does not hold as such.
 -- We would need further assumption that the supremum of `P` is attained (i.e., `P` has a maximum).
 -- Our use case actually allow us to derive that `P` is a closed set.
@@ -110,9 +88,22 @@ lemma intersect_of_both_dualities_of_nonempty {P Q : Set ℝ} (hQ : Q.Nonempty)
 lemma intersect_of_both_dualities_of_both_nonempty {P Q : Set ℝ} (hP : P.Nonempty) (hQ : Q.Nonempty)
     (hPQ : ∀ p ∈ P, ∀ q ∈ Q, p ≤ q) (hR : ∀ r : ℝ, (∃ p ∈ P, r < p) ≠ (∃ q ∈ Q, q ≤ r)) :
     ∃ x, x ∈ P ∧ x ∈ Q := by
-  sorry
+  specialize hR (sSup P)
+  have sSupQ_in : sSup P ∈ P
+  · sorry -- `apply IsGreatest.csSup_mem`
+  have left_false : (∃ p ∈ P, sSup P < p) = False
+  · simp_rw [eq_iff_iff, iff_false, not_exists, not_and, not_lt]
+    intro x xin
+    refine le_csSup ?_ xin
+    obtain ⟨q₀, hq₀⟩ := hQ
+    use q₀
+    intro p₀ hp₀
+    exact hPQ p₀ hp₀ q₀ hq₀
+  simp [left_false] at hR
+  obtain ⟨x, hxQ, hxsSupQ⟩ := hR
+  exact ⟨x, eq_of_le_of_le hxsSupQ (hPQ _ sSupQ_in x hxQ) ▸ sSupQ_in, hxQ⟩
 
-theorem StandardLP.strongDuality_ [DecidableEq m]
+theorem StandardLP.strongDuality [DecidableEq m]
     {P : StandardLP m n ℝ} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
     ∃ r : ℝ, P.Reaches r ∧ P.dual.Reaches r := by
   apply intersect_of_both_dualities_of_both_nonempty
@@ -149,18 +140,23 @@ theorem StandardLP.strongDuality_ [DecidableEq m]
         · sorry -- from `hAy'`
         · sorry -- from `hcy'`
       · intro ⟨y, hy, hAby, hcy⟩
-        use (y (Sum.inr ()))⁻¹ • y ∘ Sum.inl
-        -- TODO what if `y (Sum.inr ()) = 0`
-        constructor; constructor
-        · rw [Matrix.mulVec_smul]
-          rw [inv_smul_le_iff_of_pos sorry]
-          sorry -- from `hAby`
-        · apply smul_nonneg
-          · apply inv_nonneg_of_nonneg
-            exact hy (Sum.inr ())
-          · intro i
-            exact hy (Sum.inl i)
-        · sorry -- from `hcy`
+        if last_zero : y (Sum.inr ()) = 0 then
+          exfalso
+          -- I think we need to reach a contradiction with `hP` or `hD` here. How?!
+          sorry
+        else
+          rw [←ne_eq] at last_zero
+          use (y (Sum.inr ()))⁻¹ • y ∘ Sum.inl
+          constructor; constructor
+          · rw [Matrix.mulVec_smul]
+            rw [inv_smul_le_iff_of_pos (lt_of_le_of_ne (hy (Sum.inr ())) last_zero.symm)]
+            sorry -- from `hAby`
+          · apply smul_nonneg
+            · apply inv_nonneg_of_nonneg
+              exact hy (Sum.inr ())
+            · intro i
+              exact hy (Sum.inl i)
+          · sorry -- from `hcy`
     · constructor
       · intro ⟨x', ⟨hAx', hx'⟩, hbx'⟩
         refine ⟨x', hx', ?_⟩
@@ -169,51 +165,6 @@ theorem StandardLP.strongDuality_ [DecidableEq m]
       · intro ⟨x, hx, hPx⟩
         rw [Matrix.fromRows_mulVec, elim_le_elim_iff] at hPx
         exact ⟨x, ⟨hPx.left, hx⟩, hPx.right ()⟩
-
-theorem StandardLP.strongDuality [DecidableEq m] --[LinearOrderedField R] [InfSet R] {P : StandardLP m n R}
-    {P : StandardLP m n ℝ} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
-  --∃ r : R, P.Reaches r ∧ P.dual.Reaches r := by
-    ∃ r : ℝ, P.Reaches r ∧ P.dual.Reaches r := by
-  let r : ℝ := sInf P.Reaches
-  use r
-  have hPr : P.Reaches r
-  · show sInf P.Reaches ∈ setOf P.Reaches
-    sorry
-    -- We probably have to explicitly provide that `P.Reaches` is an image of a continuous function on a compact set.
-    -- Whether we want to use `IsCompact.sInf_mem` or `IsCompact.exists_isMinOn` some nontrivial steps are missing.
-  constructor
-  · exact hPr
-  have farkas := inequalityFarkas (Matrix.fromRows (-P.Aᵀ) (fun _ : Unit => P.b)) (Sum.elim (-P.c) (fun _ : Unit => r))
-  have impossibility : ¬(∃ y : m ⊕ Unit → ℝ, 0 ≤ y ∧
-      -(Matrix.fromRows (-P.Aᵀ) (fun _ : Unit => P.b))ᵀ *ᵥ y ≤ 0 ∧ Sum.elim (-P.c) (fun _ : Unit => r) ⬝ᵥ y < 0)
-  · push_neg
-    intro y hy hAby
-    have hAby' : (Matrix.fromRows P.Aᵀ (fun _ : Unit => P.b))ᵀ *ᵥ y ≤ 0
-    · convert hAby
-      sorry -- trivial
-    simp [StandardLP.Reaches] at hPr
-    obtain ⟨z, ⟨hAbz, hz⟩, hcz⟩ := hPr
-    rw [←hcz]
-    show 0 ≤ Sum.elim (-P.c) (fun _ : Unit => P.c ⬝ᵥ z) ⬝ᵥ y
-    have y₁ : m → ℝ := sorry
-    have y₀ : Unit → ℝ := sorry
-    suffices : P.c ⬝ᵥ y₁ ≤ (fun _ : Unit => P.c ⬝ᵥ z) ⬝ᵥ y₀
-    · sorry -- easy after defining `y₁` and `y₀`
-    have y₀₀ : ℝ := sorry
-    suffices : P.c ⬝ᵥ y₁ ≤ (P.c ⬝ᵥ z) * y₀₀
-    · sorry -- easy after defining `y₀₀`
-    have hyz : y₁ = y₀₀ • z
-    · sorry -- Does it hold? Something seems to be missing!
-    rw [hyz, Matrix.dotProduct_smul, smul_eq_mul, mul_comm]
-  simp [impossibility] at farkas
-  obtain ⟨x, hx, hAbx⟩ := farkas
-  have dual_le : P.dual.A *ᵥ x ≤ P.dual.b
-  · intro i
-    simpa using hAbx (Sum.inl i)
-  refine ⟨x, ⟨dual_le, hx⟩, ?_⟩
-  · apply eq_of_le_of_le
-    · simpa using hAbx (Sum.inr ())
-    · exact StandardLP.weakDuality hPr ⟨x, ⟨dual_le, hx⟩, rfl⟩
 
 end inequalities_only
 
