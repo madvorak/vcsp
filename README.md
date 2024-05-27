@@ -41,6 +41,7 @@ Our long-term goal is to formalize the dichotomy for fixed-template finite-value
 * https://github.com/leanprover-community/mathlib4/pull/12901
 * https://github.com/leanprover-community/mathlib4/pull/12903
 * https://github.com/leanprover-community/mathlib4/pull/12911
+* https://github.com/leanprover-community/mathlib4/pull/13167
 
 ### Proposals for Linear Programming (these PRs are incompatible with each other)
 

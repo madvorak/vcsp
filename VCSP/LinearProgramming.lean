@@ -1,6 +1,6 @@
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.Data.Matrix.ColumnRowPartitioned
-import Mathlib.Data.Real.Archimedean -- TODO delete after generalizing `StandardLP.strongDuality`
+import Mathlib.Algebra.Order.CompleteField
 import VCSP.FarkasBartl
 
 open scoped Matrix
@@ -85,11 +85,12 @@ theorem StandardLP.weakDuality [OrderedCommRing R] {P : StandardLP n m R}
 -- We would need further assumption that the supremum of `P` is attained (i.e., `P` has a maximum).
 -- Our use case actually allow us to derive that `P` is a closed set.
 -- Can we do something easier tho?
-lemma intersect_of_both_dualities_of_both_nonempty {P Q : Set ℝ} (hP : P.Nonempty) (hQ : Q.Nonempty)
-    (hPQ : ∀ p ∈ P, ∀ q ∈ Q, p ≤ q) (hR : ∀ r : ℝ, (∃ p ∈ P, r < p) ≠ (∃ q ∈ Q, q ≤ r)) :
+lemma intersect_of_both_dualities_of_both_nonempty [ConditionallyCompleteLinearOrder R]
+    {P Q : Set R} (hP : P.Nonempty) (hQ : Q.Nonempty)
+    (hPQ : ∀ p ∈ P, ∀ q ∈ Q, p ≤ q) (hR : ∀ r : R, (∃ p ∈ P, r < p) ≠ (∃ q ∈ Q, q ≤ r)) :
     ∃ x, x ∈ P ∧ x ∈ Q := by
   specialize hR (sSup P)
-  have sSupQ_in : sSup P ∈ P
+  have sSupP_in_P : sSup P ∈ P
   · sorry -- `apply IsGreatest.csSup_mem`
   have left_false : (∃ p ∈ P, sSup P < p) = False
   · simp_rw [eq_iff_iff, iff_false, not_exists, not_and, not_lt]
@@ -101,11 +102,11 @@ lemma intersect_of_both_dualities_of_both_nonempty {P Q : Set ℝ} (hP : P.Nonem
     exact hPQ p₀ hp₀ q₀ hq₀
   simp [left_false] at hR
   obtain ⟨x, hxQ, hxsSupQ⟩ := hR
-  exact ⟨x, eq_of_le_of_le hxsSupQ (hPQ _ sSupQ_in x hxQ) ▸ sSupQ_in, hxQ⟩
+  exact ⟨x, eq_of_le_of_le hxsSupQ (hPQ _ sSupP_in_P x hxQ) ▸ sSupP_in_P, hxQ⟩
 
-theorem StandardLP.strongDuality [DecidableEq m]
-    {P : StandardLP m n ℝ} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
-    ∃ r : ℝ, P.Reaches r ∧ P.dual.Reaches r := by
+theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [DecidableEq m]
+    {P : StandardLP m n R} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
+    ∃ r : R, P.Reaches r ∧ P.dual.Reaches r := by
   apply intersect_of_both_dualities_of_both_nonempty
   · obtain ⟨p, _⟩ := hP
     use P.c ⬝ᵥ p
@@ -141,7 +142,14 @@ theorem StandardLP.strongDuality [DecidableEq m]
         · sorry -- from `hcy'`
       · intro ⟨y, hy, hAby, hcy⟩
         if last_zero : y (Sum.inr ()) = 0 then
+          /-
+          By `last_zero` we have...
+          `hAby` : P.Aᵀ *ᵥ y ≤ 0
+          `hcy`  : -P.c ⬝ᵥ y < 0
+          -/
           exfalso
+          unfold StandardLP.IsFeasible StandardLP.IsSolution at hP hD
+          dsimp [StandardLP.dual] at hD
           -- I think we need to reach a contradiction with `hP` or `hD` here. How?!
           sorry
         else
@@ -150,7 +158,18 @@ theorem StandardLP.strongDuality [DecidableEq m]
           constructor; constructor
           · rw [Matrix.mulVec_smul]
             rw [inv_smul_le_iff_of_pos (lt_of_le_of_ne (hy (Sum.inr ())) last_zero.symm)]
-            sorry -- from `hAby`
+            change hAby to -((-P.Aᵀ).fromRows (fun i _ => P.b i)ᵀ)ᵀ *ᵥ y ≤ 0
+            rw [
+              ←Sum.elim_comp_inl_inr y, ←Matrix.transpose_neg P.A,
+              ←Matrix.transpose_fromColumns, Matrix.transpose_transpose,
+              Matrix.neg_mulVec, Matrix.fromColumns_mulVec_sum_elim,
+              neg_add, Matrix.neg_mulVec, neg_neg, add_neg_le_iff_le_add, zero_add
+            ] at hAby
+            convert hAby
+            unfold Matrix.mulVec
+            simp only [Matrix.dotProduct_pUnit, Function.comp_apply]
+            ext i
+            rw [Pi.smul_apply, smul_eq_mul, mul_comm]
           · apply smul_nonneg
             · apply inv_nonneg_of_nonneg
               exact hy (Sum.inr ())
