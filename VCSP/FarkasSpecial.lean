@@ -593,6 +593,6 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
               · exfalso
                 exact hi.left hbi
 
-#print axioms extendedFarkas
-
 end specialFarkas
+
+#print axioms extendedFarkas

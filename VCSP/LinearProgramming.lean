@@ -81,28 +81,51 @@ theorem StandardLP.weakDuality [OrderedCommRing R] {P : StandardLP n m R}
   rw [Matrix.dotProduct_comm (P.Aᵀ *ᵥ y), Matrix.dotProduct_mulVec, Matrix.vecMul_transpose] at hx
   exact hx.trans hy
 
--- Does not hold as such.
--- We would need further assumption that the supremum of `P` is attained (i.e., `P` has a maximum).
--- Our use case actually allow us to derive that `P` is a closed set.
--- Can we do something easier tho?
+lemma StandardLP.unbounded_makes_dual_infeasible [OrderedCommRing R]
+    {P : StandardLP m n R} (hP : ∀ r : R, ∃ p : R, r < p ∧ P.Reaches p) :
+    ¬ P.dual.IsFeasible :=
+  fun ⟨y, hAy, hy⟩ =>
+    let ⟨_, hb, hP'⟩ := hP (P.b ⬝ᵥ y)
+    ((P.weakDuality hP' ⟨y, ⟨hAy, hy⟩, rfl⟩).trans_lt hb).false
+
+lemma StandardLP.unbounded_makes_dual_infeasible' [LinearOrderedCommRing R]
+    {P : StandardLP m n R} (hP : ∀ r : R, ∃ p : R, r ≤ p ∧ P.Reaches p) :
+    ¬ P.dual.IsFeasible :=
+  StandardLP.unbounded_makes_dual_infeasible (fun r : R =>
+    let ⟨p, hrp, hPp⟩ := hP (r + 1)
+    ⟨p, (lt_add_one r).trans_le hrp, hPp⟩)
+
+/-- TODO replace by a theorem about polytopes! -/
+axiom every_nonempty_bounded_set_has_a_maximum [ConditionallyCompleteLinearOrder R] {S : Set R}
+    (nonemptyS : S.Nonempty) (boundedS : BddAbove S) :
+  sSup S ∈ S
+
 lemma intersect_of_both_dualities_of_both_nonempty [ConditionallyCompleteLinearOrder R]
     {P Q : Set R} (hP : P.Nonempty) (hQ : Q.Nonempty)
     (hPQ : ∀ p ∈ P, ∀ q ∈ Q, p ≤ q) (hR : ∀ r : R, (∃ p ∈ P, r < p) ≠ (∃ q ∈ Q, q ≤ r)) :
     ∃ x, x ∈ P ∧ x ∈ Q := by
-  specialize hR (sSup P)
-  have sSupP_in_P : sSup P ∈ P
-  · sorry -- `apply IsGreatest.csSup_mem`
+  have boundedP : BddAbove P
+  · obtain ⟨q₀, hq₀⟩ := hQ
+    use q₀
+    intro a ha
+    exact hPQ a ha q₀ hq₀
   have left_false : (∃ p ∈ P, sSup P < p) = False
   · simp_rw [eq_iff_iff, iff_false, not_exists, not_and, not_lt]
     intro x xin
-    refine le_csSup ?_ xin
-    obtain ⟨q₀, hq₀⟩ := hQ
-    use q₀
-    intro p₀ hp₀
-    exact hPQ p₀ hp₀ q₀ hq₀
+    exact le_csSup boundedP xin
+  specialize hR (sSup P)
   simp [left_false] at hR
-  obtain ⟨x, hxQ, hxsSupQ⟩ := hR
-  exact ⟨x, eq_of_le_of_le hxsSupQ (hPQ _ sSupP_in_P x hxQ) ▸ sSupP_in_P, hxQ⟩
+  obtain ⟨x, hxQ, hxP⟩ := hR
+  refine ⟨x, eq_of_le_of_le hxP (hPQ (sSup P) ?sSupP_in_P x hxQ) ▸ ?sSupP_in_P, hxQ⟩
+  exact every_nonempty_bounded_set_has_a_maximum hP boundedP
+
+-- TODO `LinearOrderedDivisionRing` should be enough
+lemma lt_inv_mul [LinearOrderedField R] {a b c : R} (hb : 0 < b) (habc : a * b < c) : a < b⁻¹ * c := by
+  rw [lt_iff_not_le] at habc ⊢
+  intro contr
+  apply habc
+  rw [mul_comm, mul_inv_le_iff hb] at contr
+  rwa [mul_comm]
 
 theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [DecidableEq m]
     {P : StandardLP m n R} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
@@ -114,17 +137,16 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
   · obtain ⟨d, _⟩ := hD
     use P.dual.c ⬝ᵥ d
     use d
-  · intro p hp q hq
-    exact StandardLP.weakDuality hp hq
+  · apply StandardLP.weakDuality
   · intro r
     show
-      (∃ p, (∃ y', (P.A *ᵥ y' ≤ P.b ∧ 0 ≤ y') ∧ P.c ⬝ᵥ y' = p) ∧ r < p) ≠
-      (∃ q, (∃ x', (-P.Aᵀ *ᵥ x' ≤ -P.c ∧ 0 ≤ x') ∧ P.b ⬝ᵥ x' = q) ∧ q ≤ r)
+      (∃ p : R, (∃ y', (P.A *ᵥ y' ≤ P.b ∧ 0 ≤ y') ∧ P.c ⬝ᵥ y' = p) ∧ r < p) ≠
+      (∃ q : R, (∃ x', (-P.Aᵀ *ᵥ x' ≤ -P.c ∧ 0 ≤ x') ∧ P.b ⬝ᵥ x' = q) ∧ q ≤ r)
     simp
       only [exists_exists_and_eq_and]
     show
-      (∃ y', (P.A *ᵥ y' ≤ P.b ∧ 0 ≤ y') ∧ r < P.c ⬝ᵥ y') ≠
-      (∃ x', (-P.Aᵀ *ᵥ x' ≤ -P.c ∧ 0 ≤ x') ∧ P.b ⬝ᵥ x' ≤ r)
+      (∃ y' : m → R, (P.A *ᵥ y' ≤ P.b ∧ 0 ≤ y') ∧ r < P.c ⬝ᵥ y') ≠
+      (∃ x' : n → R, (-P.Aᵀ *ᵥ x' ≤ -P.c ∧ 0 ≤ x') ∧ P.b ⬝ᵥ x' ≤ r)
     convert
       (inequalityFarkas
         (Matrix.fromRows (-P.Aᵀ) (fun _ : Unit => P.b))
@@ -138,44 +160,85 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
         · rw [zero_le_elim_iff]
           exact ⟨hy', fun _ => zero_le_one⟩
         constructor
-        · sorry -- from `hAy'`
-        · sorry -- from `hcy'`
+        · intro i
+          specialize hAy' i
+          rw [
+            Matrix.transpose_fromRows, Matrix.neg_mulVec, Matrix.fromColumns_mulVec_sum_elim,
+            Matrix.transpose_neg, Matrix.transpose_transpose,
+            Pi.neg_apply, Pi.add_apply, neg_add, Matrix.neg_mulVec, Pi.neg_apply, neg_neg,
+            add_neg_le_iff_le_add]
+          simpa [Matrix.mulVec] using hAy'
+        · rwa [
+            Matrix.sum_elim_dotProduct_sum_elim, Matrix.dotProduct_pUnit, mul_one,
+            Matrix.neg_dotProduct, neg_add_lt_iff_lt_add, add_zero]
       · intro ⟨y, hy, hAby, hcy⟩
+        change hAby to -((-P.Aᵀ).fromRows (fun i _ => P.b i)ᵀ)ᵀ *ᵥ y ≤ 0
+        rw [
+          ←Sum.elim_comp_inl_inr y, ←Matrix.transpose_neg P.A,
+          ←Matrix.transpose_fromColumns, Matrix.transpose_transpose,
+          Matrix.neg_mulVec, Matrix.fromColumns_mulVec_sum_elim,
+          neg_add, Matrix.neg_mulVec, neg_neg, add_neg_le_iff_le_add, zero_add
+        ] at hAby
+        rw [
+          ←Sum.elim_comp_inl_inr y, Matrix.sum_elim_dotProduct_sum_elim,
+          Matrix.neg_dotProduct, neg_add_lt_iff_lt_add, add_zero
+        ] at hcy
         if last_zero : y (Sum.inr ()) = 0 then
-          /-
-          By `last_zero` we have...
-          `hAby` : P.Aᵀ *ᵥ y ≤ 0
-          `hcy`  : -P.c ⬝ᵥ y < 0
-          -/
           exfalso
-          unfold StandardLP.IsFeasible StandardLP.IsSolution at hP hD
-          dsimp [StandardLP.dual] at hD
-          -- I think we need to reach a contradiction with `hP` or `hD` here. How?!
-          sorry
+          have h_Aby : P.A *ᵥ y ∘ Sum.inl ≤ 0
+          · convert hAby
+            unfold Matrix.mulVec
+            simp only [Matrix.dotProduct_pUnit, Function.comp_apply]
+            ext i
+            rw [Pi.zero_apply, last_zero, mul_zero]
+          have h_cy : 0 < P.c ⬝ᵥ y ∘ Sum.inl
+          · simpa [Matrix.dotProduct, last_zero] using hcy
+          refine StandardLP.unbounded_makes_dual_infeasible' ?_ hD
+          unfold StandardLP.Reaches StandardLP.IsSolution
+          by_contra! contr
+          obtain ⟨s, hs⟩ := contr
+          obtain ⟨x, hAx, hx⟩ := hP
+          if s_big : s ≥ P.c ⬝ᵥ x then
+            have coef_nng : 0 ≤ (s - P.c ⬝ᵥ x) / (P.c ⬝ᵥ y ∘ Sum.inl)
+            · have num_nng : 0 ≤ s - P.c ⬝ᵥ x
+              · exact sub_nonneg_of_le s_big
+              positivity
+            apply hs (P.c ⬝ᵥ (x + ((s - P.c ⬝ᵥ x) / (P.c ⬝ᵥ y ∘ Sum.inl)) • y ∘ Sum.inl)) (by rw [
+                Matrix.dotProduct_add, Matrix.dotProduct_smul, smul_eq_mul,
+                div_mul, div_self h_cy.ne.symm, div_one, add_sub, add_comm, ←add_sub, sub_self, add_zero
+              ]) (x + ((s - P.c ⬝ᵥ x) / (P.c ⬝ᵥ y ∘ Sum.inl)) • y ∘ Sum.inl)
+            constructor
+            · rw [Matrix.mulVec_add, ←add_zero P.b]
+              apply add_le_add hAx
+              rw [Matrix.mulVec_smul]
+              exact smul_nonpos_of_nonneg_of_nonpos coef_nng h_Aby
+            · rw [←add_zero 0]
+              apply add_le_add hx
+              apply smul_nonneg coef_nng
+              · intro i
+                exact hy (Sum.inl i)
+            · rfl
+          else
+            exact hs (P.c ⬝ᵥ x) (le_of_not_ge s_big) x ⟨hAx, hx⟩ rfl
         else
           rw [←ne_eq] at last_zero
+          have hyo := hy (Sum.inr ())
+          have hyop := lt_of_le_of_ne hyo last_zero.symm
           use (y (Sum.inr ()))⁻¹ • y ∘ Sum.inl
           constructor; constructor
-          · rw [Matrix.mulVec_smul]
-            rw [inv_smul_le_iff_of_pos (lt_of_le_of_ne (hy (Sum.inr ())) last_zero.symm)]
-            change hAby to -((-P.Aᵀ).fromRows (fun i _ => P.b i)ᵀ)ᵀ *ᵥ y ≤ 0
-            rw [
-              ←Sum.elim_comp_inl_inr y, ←Matrix.transpose_neg P.A,
-              ←Matrix.transpose_fromColumns, Matrix.transpose_transpose,
-              Matrix.neg_mulVec, Matrix.fromColumns_mulVec_sum_elim,
-              neg_add, Matrix.neg_mulVec, neg_neg, add_neg_le_iff_le_add, zero_add
-            ] at hAby
+          · rw [Matrix.mulVec_smul, inv_smul_le_iff_of_pos hyop]
             convert hAby
             unfold Matrix.mulVec
             simp only [Matrix.dotProduct_pUnit, Function.comp_apply]
             ext i
             rw [Pi.smul_apply, smul_eq_mul, mul_comm]
           · apply smul_nonneg
-            · apply inv_nonneg_of_nonneg
-              exact hy (Sum.inr ())
+            · exact inv_nonneg_of_nonneg hyo
             · intro i
               exact hy (Sum.inl i)
-          · sorry -- from `hcy`
+          · rw [Matrix.dotProduct_smul, smul_eq_mul]
+            apply lt_inv_mul hyop
+            simpa using hcy
     · constructor
       · intro ⟨x', ⟨hAx', hx'⟩, hbx'⟩
         refine ⟨x', hx', ?_⟩
@@ -265,3 +328,5 @@ lemma CanonicalLP.toStandardLP_reaches_iff [OrderedRing R] (P : CanonicalLP n m 
   · rwa [CanonicalLP.toStandardLP_isSolution_iff]
 
 end equalities_only
+
+#print axioms StandardLP.strongDuality
