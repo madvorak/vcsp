@@ -197,7 +197,7 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
           by_contra! contr
           obtain ⟨s, hs⟩ := contr
           obtain ⟨x, hAx, hx⟩ := hP
-          if s_big : s ≥ P.c ⬝ᵥ x then
+          if s_big : P.c ⬝ᵥ x ≤ s then
             have coef_nng : 0 ≤ (s - P.c ⬝ᵥ x) / (P.c ⬝ᵥ y ∘ Sum.inl)
             · have num_nng : 0 ≤ s - P.c ⬝ᵥ x
               · exact sub_nonneg_of_le s_big

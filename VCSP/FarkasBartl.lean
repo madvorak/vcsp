@@ -130,7 +130,7 @@ lemma industepFarkasBartl {m : ℕ} {R V W : Type*} [LinearOrderedDivisionRing R
     obtain ⟨x', hax', hbx'⟩ := is_easy
     let j : Fin m.succ := ⟨m, lt_add_one m⟩
     let x := (A x' j)⁻¹ • x'
-    have hAx' : A x' j > 0
+    have hAx' : 0 < A x' j
     · by_contra! contr
       exact (
         (hAb x' (fun i => if hi : i.val < m then hax' ⟨i, hi⟩ else if hij : i = j then hij ▸ contr else by
