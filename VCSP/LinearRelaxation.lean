@@ -1,5 +1,5 @@
 import VCSP.Basic
-import VCSP.LinearProgrammingCanon
+import VCSP.LinearProgrammingC
 import Mathlib.Data.Multiset.Fintype
 
 open scoped Matrix

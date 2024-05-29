@@ -58,6 +58,7 @@ end multisets_and_finsets
 
 
 section sum_elims
+-- TODO remove this section after https://github.com/leanprover-community/mathlib4/pull/13167 gets merged
 variable {α₁ α₂ β : Type*} [LE β]
 
 lemma elim_le_elim_iff (u₁ v₁ : α₁ → β) (u₂ v₂ : α₂ → β) :

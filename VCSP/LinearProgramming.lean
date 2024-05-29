@@ -55,8 +55,8 @@ def StandardLP.Reaches [OrderedSemiring R] (P : StandardLP n m R) (v : R) : Prop
 
 /-- Dual linear program to given linear program `P` in the standard form.
 The matrix gets transposed and its values flip signs.
-The original cost function gets flipped signs as well and becomes the new righ-hand side vector.
-The original righ-hand side vector becomes the new vector of objective function coefficients. -/
+The original cost function gets flipped signs as well and becomes the new right-hand-side vector.
+The original right-hand-side vector becomes the new vector of objective function coefficients. -/
 def StandardLP.dual [OrderedRing R] (P : StandardLP m n R) : StandardLP n m R :=
   ⟨-P.Aᵀ, -P.c, P.b⟩
 
