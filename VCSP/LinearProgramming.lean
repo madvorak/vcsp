@@ -1,4 +1,3 @@
-import Mathlib.LinearAlgebra.Matrix.DotProduct
 import Mathlib.Data.Matrix.ColumnRowPartitioned
 import Mathlib.Algebra.Order.CompleteField
 import VCSP.FarkasBartl
@@ -6,7 +5,7 @@ import VCSP.FarkasBartl
 open scoped Matrix
 
 
-section inequalities_only
+section standard_version
 
 /-!
 
@@ -95,29 +94,26 @@ lemma StandardLP.unbounded_makes_dual_infeasible' [LinearOrderedCommRing R]
     let ⟨p, hrp, hPp⟩ := hP (r + 1)
     ⟨p, (lt_add_one r).trans_le hrp, hPp⟩)
 
-/-- TODO replace by a theorem about polytopes! -/
-axiom every_nonempty_bounded_set_has_a_maximum [ConditionallyCompleteLinearOrder R] {S : Set R}
-    (nonemptyS : S.Nonempty) (boundedS : BddAbove S) :
-  sSup S ∈ S
-
-lemma intersect_of_both_dualities_of_both_nonempty [ConditionallyCompleteLinearOrder R]
+lemma sInf_le_sSup_of_both_dualities_of_both_nonempty [ConditionallyCompleteLinearOrder R]
     {P Q : Set R} (hP : P.Nonempty) (hQ : Q.Nonempty)
     (hPQ : ∀ p ∈ P, ∀ q ∈ Q, p ≤ q) (hR : ∀ r : R, (∃ p ∈ P, r < p) ≠ (∃ q ∈ Q, q ≤ r)) :
-    ∃ x, x ∈ P ∧ x ∈ Q := by
+    sInf Q ≤ sSup P := by
   have boundedP : BddAbove P
   · obtain ⟨q₀, hq₀⟩ := hQ
     use q₀
     intro a ha
     exact hPQ a ha q₀ hq₀
+  have boundedQ : BddBelow Q
+  · obtain ⟨p₀, hp₀⟩ := hP
+    use p₀
+    intro a ha
+    exact hPQ p₀ hp₀ a ha
   have left_false : (∃ p ∈ P, sSup P < p) = False
-  · simp_rw [eq_iff_iff, iff_false, not_exists, not_and, not_lt]
-    intro x xin
-    exact le_csSup boundedP xin
+  · simpa using (fun _ => le_csSup boundedP)
   specialize hR (sSup P)
   simp [left_false] at hR
   obtain ⟨x, hxQ, hxP⟩ := hR
-  refine ⟨x, eq_of_le_of_le hxP (hPQ (sSup P) ?sSupP_in_P x hxQ) ▸ ?sSupP_in_P, hxQ⟩
-  exact every_nonempty_bounded_set_has_a_maximum hP boundedP
+  exact csInf_le_of_le boundedQ hxQ hxP
 
 lemma lt_inv_mul [LinearOrderedField R] {a b c : R} (hb : 0 < b) (habc : a * b < c) : a < b⁻¹ * c := by
   rw [lt_iff_not_le] at habc ⊢
@@ -127,14 +123,20 @@ lemma lt_inv_mul [LinearOrderedField R] {a b c : R} (hb : 0 < b) (habc : a * b <
 
 theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [DecidableEq m]
     {P : StandardLP m n R} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
-    ∃ r : R, P.Reaches r ∧ P.dual.Reaches r := by
-  apply intersect_of_both_dualities_of_both_nonempty
-  · obtain ⟨p, _⟩ := hP
-    use P.c ⬝ᵥ p
-    use p
-  · obtain ⟨d, _⟩ := hD
-    use P.dual.c ⬝ᵥ d
-    use d
+    sSup P.Reaches = sInf P.dual.Reaches := by
+  have hP' : Set.Nonempty P.Reaches
+  · obtain ⟨x, _⟩ := hP
+    use P.c ⬝ᵥ x, x
+  have hQ' : Set.Nonempty P.dual.Reaches
+  · obtain ⟨y, _⟩ := hD
+    use P.dual.c ⬝ᵥ y, y
+  apply eq_of_le_of_le
+  · apply csSup_le hP'
+    intro _ hP''
+    apply le_csInf hQ'
+    intro _ hQ''
+    exact StandardLP.weakDuality hP'' hQ''
+  apply sInf_le_sSup_of_both_dualities_of_both_nonempty hP' hQ'
   · apply StandardLP.weakDuality
   · intro r
     show
@@ -159,21 +161,19 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
           exact ⟨hy', fun _ => zero_le_one⟩
         constructor
         · intro i
-          specialize hAy' i
           rw [
             Matrix.transpose_fromRows, Matrix.fromColumns_mulVec_sum_elim,
             Matrix.transpose_neg, Matrix.transpose_transpose,
             Pi.add_apply, Matrix.neg_mulVec, Pi.neg_apply]
-          simpa [Matrix.mulVec] using hAy'
+          simpa [Matrix.mulVec] using hAy' i
         · rwa [
             Matrix.sum_elim_dotProduct_sum_elim, Matrix.dotProduct_pUnit, mul_one,
             Matrix.neg_dotProduct, neg_add_lt_iff_lt_add, add_zero]
       · intro ⟨y, hy, hAby, hcy⟩
-        change hAby to 0 ≤ ((-P.Aᵀ).fromRows (fun i _ => P.b i)ᵀ)ᵀ *ᵥ y
+        change hAby to 0 ≤ (Matrix.fromRows (-P.Aᵀ) (fun i _ => P.b i)ᵀ)ᵀ *ᵥ y
         rw [
-          ←Sum.elim_comp_inl_inr y,
           ←Matrix.transpose_neg P.A, ←Matrix.transpose_fromColumns, Matrix.transpose_transpose,
-          Matrix.fromColumns_mulVec_sum_elim,
+          ←Sum.elim_comp_inl_inr y, Matrix.fromColumns_mulVec_sum_elim,
           Matrix.neg_mulVec, le_neg_add_iff_le
         ] at hAby
         rw [
@@ -191,7 +191,7 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
           have h_cy : 0 < P.c ⬝ᵥ y ∘ Sum.inl
           · simpa [Matrix.dotProduct, last_zero] using hcy
           refine StandardLP.unbounded_makes_dual_infeasible' ?_ hD
-          unfold StandardLP.Reaches StandardLP.IsSolution
+          unfold StandardLP.Reaches
           by_contra! contr
           obtain ⟨s, hs⟩ := contr
           obtain ⟨x, hAx, hx⟩ := hP
@@ -212,8 +212,8 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
             · rw [←add_zero 0]
               apply add_le_add hx
               apply smul_nonneg coef_nng
-              · intro i
-                exact hy (Sum.inl i)
+              intro i
+              exact hy (Sum.inl i)
             · rfl
           else
             exact hs (P.c ⬝ᵥ x) (le_of_not_ge s_big) x ⟨hAx, hx⟩ rfl
@@ -229,10 +229,9 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
             simp only [Matrix.dotProduct_pUnit, Function.comp_apply]
             ext i
             rw [Pi.smul_apply, smul_eq_mul, mul_comm]
-          · apply smul_nonneg
-            · exact inv_nonneg_of_nonneg hyo
-            · intro i
-              exact hy (Sum.inl i)
+          · apply smul_nonneg (inv_nonneg_of_nonneg hyo)
+            intro i
+            exact hy (Sum.inl i)
           · rw [Matrix.dotProduct_smul, smul_eq_mul]
             apply lt_inv_mul hyop
             simpa using hcy
@@ -245,10 +244,10 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
         rw [Matrix.fromRows_mulVec, elim_le_elim_iff] at hPx
         exact ⟨x, ⟨hPx.left, hx⟩, hPx.right ()⟩
 
-end inequalities_only
+end standard_version
 
 
-section equalities_only
+section canonical_version
 
 /-- Linear program in the canonical form. Variables are of type `n`. Conditions are indexed by type `m`. -/
 structure CanonicalLP (n m R : Type*) [Fintype n] [Fintype m] [OrderedSemiring R] where
@@ -297,10 +296,8 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP n
         rwa [Matrix.neg_mulVec] at ineqNeg
       rwa [neg_le_neg_iff] at almost
     · exact nonneg
-  · intro hyp
-    unfold CanonicalLP.toStandardLP
-    unfold StandardLP.IsSolution
-    obtain ⟨equ, nonneg⟩ := hyp
+  · intro ⟨equ, nonneg⟩
+    unfold CanonicalLP.toStandardLP StandardLP.IsSolution
     constructor
     · rw [Matrix.fromRows_mulVec, elim_le_elim_iff]
       constructor
@@ -324,6 +321,7 @@ lemma CanonicalLP.toStandardLP_reaches_iff [OrderedRing R] (P : CanonicalLP n m 
   · rwa [CanonicalLP.toStandardLP_isSolution_iff] at hx
   · rwa [CanonicalLP.toStandardLP_isSolution_iff]
 
-end equalities_only
+end canonical_version
+
 
 #print axioms StandardLP.strongDuality
