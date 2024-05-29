@@ -119,7 +119,6 @@ lemma intersect_of_both_dualities_of_both_nonempty [ConditionallyCompleteLinearO
   refine ⟨x, eq_of_le_of_le hxP (hPQ (sSup P) ?sSupP_in_P x hxQ) ▸ ?sSupP_in_P, hxQ⟩
   exact every_nonempty_bounded_set_has_a_maximum hP boundedP
 
--- TODO `LinearOrderedDivisionRing` should be enough
 lemma lt_inv_mul [LinearOrderedField R] {a b c : R} (hb : 0 < b) (habc : a * b < c) : a < b⁻¹ * c := by
   rw [lt_iff_not_le] at habc ⊢
   intro contr
