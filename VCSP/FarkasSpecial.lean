@@ -277,7 +277,8 @@ def Matrix.Good'' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
   ¬ (∃ i : I, (∃ j : J, A i j = ⊤) ∧ b i = ⊤)
 
 set_option maxHeartbeats 666666 in
-/-- Just like `mainFarkas` but for `A` and `b` over extended rationals; neither is generalization of the other. -/
+/-- Just like `inequalityFarkas_neg` but for `A` and `b` over extended rationals;
+    neither is a generalization of the other. -/
 theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
     (hA : A.Good) (hAT : Aᵀ.Good) (hAb' : A.Good' b) (hAb : A.Good'' b) :
     (∃ x : J → ℚ, 0 ≤ x ∧ A ₘ* x ≤ b) ≠ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0) := by
