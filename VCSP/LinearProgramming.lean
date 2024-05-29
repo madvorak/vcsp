@@ -163,21 +163,20 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
         · intro i
           specialize hAy' i
           rw [
-            Matrix.transpose_fromRows, Matrix.neg_mulVec, Matrix.fromColumns_mulVec_sum_elim,
+            Matrix.transpose_fromRows, Matrix.fromColumns_mulVec_sum_elim,
             Matrix.transpose_neg, Matrix.transpose_transpose,
-            Pi.neg_apply, Pi.add_apply, neg_add, Matrix.neg_mulVec, Pi.neg_apply, neg_neg,
-            add_neg_le_iff_le_add]
+            Pi.add_apply, Matrix.neg_mulVec, Pi.neg_apply]
           simpa [Matrix.mulVec] using hAy'
         · rwa [
             Matrix.sum_elim_dotProduct_sum_elim, Matrix.dotProduct_pUnit, mul_one,
             Matrix.neg_dotProduct, neg_add_lt_iff_lt_add, add_zero]
       · intro ⟨y, hy, hAby, hcy⟩
-        change hAby to -((-P.Aᵀ).fromRows (fun i _ => P.b i)ᵀ)ᵀ *ᵥ y ≤ 0
+        change hAby to 0 ≤ ((-P.Aᵀ).fromRows (fun i _ => P.b i)ᵀ)ᵀ *ᵥ y
         rw [
-          ←Sum.elim_comp_inl_inr y, ←Matrix.transpose_neg P.A,
-          ←Matrix.transpose_fromColumns, Matrix.transpose_transpose,
-          Matrix.neg_mulVec, Matrix.fromColumns_mulVec_sum_elim,
-          neg_add, Matrix.neg_mulVec, neg_neg, add_neg_le_iff_le_add, zero_add
+          ←Sum.elim_comp_inl_inr y,
+          ←Matrix.transpose_neg P.A, ←Matrix.transpose_fromColumns, Matrix.transpose_transpose,
+          Matrix.fromColumns_mulVec_sum_elim,
+          Matrix.neg_mulVec, le_neg_add_iff_le
         ] at hAby
         rw [
           ←Sum.elim_comp_inl_inr y, Matrix.sum_elim_dotProduct_sum_elim,

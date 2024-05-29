@@ -319,7 +319,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
         | (q : ℚ) => q
         | ⊥ => False.elim (hbot ⟨i', hbi⟩)
         | ⊤ => False.elim (i'.property.left hbi)
-    convert inequalityFarkas A' b'
+    convert inequalityFarkas_neg A' b'
     · constructor <;> intro ⟨x, hx, ineqalities⟩
       · use (fun j' : J' => x j'.val)
         constructor

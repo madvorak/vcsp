@@ -272,7 +272,7 @@ macro "finishit" : tactic => `(tactic| -- should be `private macro` which Lean d
   simp_rw [Finset.sum_mul] <;> rw [Finset.sum_comm] <;>
   congr <;> ext <;> congr <;> ext <;> ring)
 
-theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
+theorem equalityFarkas_neg (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
   have gener :=
     not_neq_of_iff
@@ -304,10 +304,10 @@ theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
       simpa [Matrix.mulVecLin] using hAx
     · simpa [Matrix.mulVecLin] using hbx
 
-theorem inequalityFarkas [DecidableEq I] (A : Matrix I J F) (b : I → F) :
+theorem inequalityFarkas_neg [DecidableEq I] (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → F, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
   let A' : Matrix I (I ⊕ J) F := Matrix.fromColumns 1 A
-  convert equalityFarkas A' b using 1 <;> constructor
+  convert equalityFarkas_neg A' b using 1 <;> constructor
   · intro ⟨x, hx, hAxb⟩
     use Sum.elim (b - A *ᵥ x) x
     constructor
@@ -349,5 +349,20 @@ theorem inequalityFarkas [DecidableEq I] (A : Matrix I J F) (b : I → F) :
     · intro j
       rw [Matrix.neg_mulVec, Pi.neg_apply, neg_le, Pi.zero_apply, neg_zero]
       exact h1Ay (Sum.inr j)
+
+macro "convertit" : tactic => `(tactic| -- should be `private macro` again
+  conv => { rhs; rw [Matrix.neg_mulVec, ←neg_zero] } <;>
+  constructor <;> intro hyp i <;>
+  simpa [Pi.neg_apply, Pi.neg_apply, Pi.zero_apply, neg_le_neg_iff] using hyp i)
+
+theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
+    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, 0 ≤ Aᵀ *ᵥ y ∧ b ⬝ᵥ y < 0) := by
+  convert equalityFarkas_neg A b using 4
+  convertit
+
+theorem inequalityFarkas [DecidableEq I] (A : Matrix I J F) (b : I → F) :
+    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → F, 0 ≤ y ∧ 0 ≤ Aᵀ *ᵥ y ∧ b ⬝ᵥ y < 0) := by
+  convert inequalityFarkas_neg A b using 5
+  convertit
 
 end corollaries
