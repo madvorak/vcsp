@@ -1,4 +1,4 @@
-import VCSP.LinearProgramming
+import VCSP.LinearProgrammingCanon
 import Mathlib.Tactic.Qify
 
 
