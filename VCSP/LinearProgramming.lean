@@ -123,8 +123,7 @@ lemma lt_inv_mul [LinearOrderedField R] {a b c : R} (hb : 0 < b) (habc : a * b <
   rw [lt_iff_not_le] at habc ⊢
   intro contr
   apply habc
-  rw [mul_comm, mul_inv_le_iff hb] at contr
-  rwa [mul_comm]
+  rwa [inv_mul_le_iff' hb] at contr
 
 theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [DecidableEq m]
     {P : StandardLP m n R} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
