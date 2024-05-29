@@ -352,8 +352,7 @@ theorem inequalityFarkas_neg [DecidableEq I] (A : Matrix I J F) (b : I → F) :
 
 macro "convertit" : tactic => `(tactic| -- should be `private macro` again
   conv => { rhs; rw [Matrix.neg_mulVec, ←neg_zero] } <;>
-  constructor <;> intro hyp i <;>
-  simpa [Pi.neg_apply, Pi.neg_apply, Pi.zero_apply, neg_le_neg_iff] using hyp i)
+  constructor <;> intro hyp i <;> simpa using hyp i)
 
 theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, 0 ≤ Aᵀ *ᵥ y ∧ b ⬝ᵥ y < 0) := by
