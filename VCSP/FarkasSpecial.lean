@@ -1,5 +1,5 @@
 import VCSP.ExtendedRationals
-import VCSP.FarkasBartl
+import VCSP.FarkasBasic
 
 
 section extrasERat

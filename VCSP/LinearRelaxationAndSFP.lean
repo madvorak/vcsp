@@ -1,5 +1,5 @@
-import VCSP.LinearRelaxation
 import VCSP.LinearProgrammingQ
+import VCSP.LinearRelaxation
 
 
 lemma Sum.fun_elim_index {α β γ : Type*} (x : α → γ) (y : β → γ) :

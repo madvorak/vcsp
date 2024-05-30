@@ -4,38 +4,38 @@ open scoped Matrix
 
 
 /-- Linear program in the canonical form. Variables are of type `n`. Conditions are indexed by type `m`. -/
-structure CanonicalLP (n m R : Type*) [Fintype n] [Fintype m] [OrderedSemiring R] where
+structure CanonicalLP (I J R : Type*) where
   /-- Matrix of coefficients -/
-  A : Matrix m n R
+  A : Matrix I J R
   /-- Right-hand side -/
-  b : m → R
+  b : I → R
   /-- Objective function coefficients -/
-  c : n → R
+  c : J → R
 
-variable {n m R : Type*} [Fintype n] [Fintype m]
+variable {I J R : Type*} [Fintype I] [Fintype J]
 
 /-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and
-its multiplication by matrix `A` from the left yields the vector `b`. -/
-def CanonicalLP.IsSolution [OrderedSemiring R] (P : CanonicalLP n m R) (x : n → R) : Prop :=
+    its multiplication by matrix `A` from the left yields the vector `b`. -/
+def CanonicalLP.IsSolution [OrderedSemiring R] (P : CanonicalLP I J R) (x : J → R) : Prop :=
   P.A *ᵥ x = P.b ∧ 0 ≤ x
 
 /-- Linear program `P` is feasible iff there is a vector `x` that is a solution to `P`. -/
-def CanonicalLP.IsFeasible [OrderedSemiring R] (P : CanonicalLP n m R) : Prop :=
-  ∃ x : n → R, P.IsSolution x
+def CanonicalLP.IsFeasible [OrderedSemiring R] (P : CanonicalLP I J R) : Prop :=
+  ∃ x : J → R, P.IsSolution x
 
 /-- Linear program `P` reaches objective value `v` iff there is a solution `x` such that,
-when its entries are elementwise multiplied by the costs (given by the vector `c`) and summed up,
-the result is the value `v`. -/
-def CanonicalLP.Reaches [OrderedSemiring R] (P : CanonicalLP n m R) (v : R) : Prop :=
-  ∃ x : n → R, P.IsSolution x ∧ P.c ⬝ᵥ x = v
+    when its entries are elementwise multiplied by the costs (given by the vector `c`) and summed up,
+    the result is the value `v`. -/
+def CanonicalLP.Reaches [OrderedSemiring R] (P : CanonicalLP I J R) (v : R) : Prop :=
+  ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = v
 
-def CanonicalLP.toStandardLP [OrderedRing R] (P : CanonicalLP n m R) : StandardLP n (m ⊕ m) R :=
+def CanonicalLP.toStandardLP [OrderedRing R] (P : CanonicalLP I J R) : StandardLP (I ⊕ I) J R :=
   StandardLP.mk
     (Matrix.fromRows P.A (-P.A))
     (Sum.elim P.b (-P.b))
     P.c
 
-lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP n m R) (x : n → R) :
+lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP I J R) (x : J → R) :
     P.toStandardLP.IsSolution x ↔ P.IsSolution x := by
   constructor
   · intro hyp
@@ -63,14 +63,16 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP n
       exact equ.symm.le i
     · exact nonneg
 
-lemma CanonicalLP.toStandardLP_isFeasible_iff [OrderedRing R] (P : CanonicalLP n m R) :
+lemma CanonicalLP.toStandardLP_isFeasible_iff [OrderedRing R] (P : CanonicalLP I J R) :
     P.toStandardLP.IsFeasible ↔ P.IsFeasible := by
-  constructor <;> intro ⟨x, hx⟩ <;> use x
-  · rwa [CanonicalLP.toStandardLP_isSolution_iff] at hx
-  · rwa [CanonicalLP.toStandardLP_isSolution_iff]
+  constructor <;>
+  · intro ⟨x, hx⟩
+    use x
+    simpa [CanonicalLP.toStandardLP_isSolution_iff] using hx
 
-lemma CanonicalLP.toStandardLP_reaches_iff [OrderedRing R] (P : CanonicalLP n m R) (v : R) :
+lemma CanonicalLP.toStandardLP_reaches_iff [OrderedRing R] (P : CanonicalLP I J R) (v : R) :
     P.toStandardLP.Reaches v ↔ P.Reaches v := by
-  constructor <;> intro ⟨x, hx⟩ <;> use x
-  · rwa [CanonicalLP.toStandardLP_isSolution_iff] at hx
-  · rwa [CanonicalLP.toStandardLP_isSolution_iff]
+  constructor <;>
+  · intro ⟨x, hx⟩
+    use x
+    simpa [CanonicalLP.toStandardLP_isSolution_iff] using hx

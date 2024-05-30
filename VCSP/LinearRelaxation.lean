@@ -1,6 +1,5 @@
-import VCSP.Basic
-import VCSP.LinearProgrammingC
 import Mathlib.Data.Multiset.Fintype
+import VCSP.LinearProgrammingC
 
 open scoped Matrix
 
@@ -43,8 +42,8 @@ instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
 
 def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
     CanonicalLP
-      ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- variables
       ((Σ t : I, (Fin t.fst.n × D)) ⊕ (ι ⊕ I)) -- equalities
+      ((Σ t : I, (Fin t.fst.n → D)) ⊕ (ι × D)) -- variables
       C :=
   CanonicalLP.mk
     (Matrix.fromBlocks
