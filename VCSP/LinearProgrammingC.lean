@@ -3,7 +3,7 @@ import VCSP.LinearProgramming
 open scoped Matrix
 
 
-/-- Linear program in the canonical form. Variables are of type `n`. Conditions are indexed by type `m`. -/
+/-- Linear program in the canonical form. Variables are of type `J`. Conditions are indexed by type `I`. -/
 structure CanonicalLP (I J R : Type*) where
   /-- Matrix of coefficients -/
   A : Matrix I J R
@@ -30,10 +30,7 @@ def CanonicalLP.Reaches [OrderedSemiring R] (P : CanonicalLP I J R) (v : R) : Pr
   ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = v
 
 def CanonicalLP.toStandardLP [OrderedRing R] (P : CanonicalLP I J R) : StandardLP (I ⊕ I) J R :=
-  StandardLP.mk
-    (Matrix.fromRows P.A (-P.A))
-    (Sum.elim P.b (-P.b))
-    P.c
+  ⟨Matrix.fromRows P.A (-P.A), Sum.elim P.b (-P.b), P.c⟩
 
 lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP I J R) (x : J → R) :
     P.toStandardLP.IsSolution x ↔ P.IsSolution x := by
