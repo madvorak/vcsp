@@ -21,8 +21,6 @@ We define linear programs over an `OrderedSemiring R` in the standard matrix for
 
 * `StandardLP.weakDuality`: The weak duality theorem (`cᵀx` such that `A x ≤ b` and `x ≥ 0` is
    always less or equal to `bᵀy` such that `Aᵀ y ≥ c` and `y ≥ 0`) is provided for matrices over any `OrderedCommRing`.
-* `StandardLP.strongDuality`: The strong duality theorem (`sup cᵀx` such that `A x ≤ b` and `x ≥ 0` is
-   equal to `inf bᵀy` such that `Aᵀ y ≥ c` and `y ≥ 0`) is currently provided only for matrices over `ℝ`.
 
 -/
 
@@ -119,7 +117,7 @@ lemma lt_inv_mul [LinearOrderedField R] {a b c : R} (hb : 0 < b) (habc : a * b <
 
 /-- The supremum of objective values reached by linear program `P` is equal to
     the infimum of objective values reached by the dual of `P`. -/
-theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [DecidableEq J]
+theorem StandardLP.strongishDuality [ConditionallyCompleteLinearOrderedField R] [DecidableEq J]
     {P : StandardLP I J R} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
     sSup P.Reaches = sInf P.dual.Reaches := by
   have hP' : Set.Nonempty P.Reaches
@@ -209,8 +207,7 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
             · rw [←add_zero 0]
               apply add_le_add hx
               apply smul_nonneg coef_nng
-              intro i
-              exact hy (Sum.inl i)
+              apply nng_com hy
             · rfl
           else
             exact hs (P.c ⬝ᵥ x) (le_of_not_ge s_big) x ⟨hAx, hx⟩ rfl
@@ -226,8 +223,7 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
             simp only [Matrix.mulVec, Matrix.dotProduct_pUnit, Function.comp_apply]
             rw [Pi.smul_apply, smul_eq_mul, mul_comm]
           · apply smul_nonneg (inv_nonneg_of_nonneg hyo)
-            intro i
-            exact hy (Sum.inl i)
+            apply nng_com hy
           · rw [Matrix.dotProduct_smul, smul_eq_mul]
             apply lt_inv_mul hyop
             simpa using hcy
@@ -240,4 +236,110 @@ theorem StandardLP.strongDuality [ConditionallyCompleteLinearOrderedField R] [De
         rw [Matrix.fromRows_mulVec, elim_le_elim_iff] at hPx
         exact ⟨x, ⟨hPx.left, hx⟩, hPx.right ()⟩
 
+lemma Matrix.transpose_mulVec_dotProduct [CommSemiring R] (A : Matrix I J R) (v : I → R) (w : J → R) :
+    Aᵀ *ᵥ v ⬝ᵥ w = A *ᵥ w ⬝ᵥ v := by
+  rw [Matrix.dotProduct_comm, Matrix.dotProduct_mulVec, Matrix.vecMul_transpose]
+
+theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedField R]
+    {P : StandardLP I J R} (hP : P.IsFeasible) (hD : P.dual.IsFeasible) :
+    ∃ r : R, P.Reaches r ∧ P.dual.Reaches r := by
+  cases
+    or_of_neq
+      (inequalityFarkas
+        (Matrix.fromRows
+          (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
+          (Matrix.row (Sum.elim (-P.c) P.b)))
+        (Sum.elim (Sum.elim P.b (-P.c)) 0)) with
+  | inl case_x =>
+    obtain ⟨x, hx, hAx⟩ := case_x
+    rw [Matrix.fromRows_mulVec, Matrix.fromBlocks_mulVec, elim_le_elim_iff, elim_le_elim_iff] at hAx
+    have hPx : P.Reaches (P.c ⬝ᵥ x ∘ Sum.inl)
+    · exact ⟨x ∘ Sum.inl, ⟨by simpa using hAx.left.left, nng_com hx Sum.inl⟩, rfl⟩
+    have hDx : P.dual.Reaches (P.b ⬝ᵥ x ∘ Sum.inr)
+    · exact ⟨x ∘ Sum.inr, ⟨by simpa using hAx.left.right, nng_com hx Sum.inr⟩, rfl⟩
+    have objectives_eq : P.b ⬝ᵥ (x ∘ Sum.inr) = P.c ⬝ᵥ (x ∘ Sum.inl)
+    · apply eq_of_le_of_le
+      · rw [←add_zero (P.c ⬝ᵥ x ∘ Sum.inl), ←neg_add_le_iff_le_add, ←Matrix.neg_dotProduct, ←Matrix.sum_elim_dotProduct_sum_elim]
+        simpa using hAx.right ()
+      · exact StandardLP.weakDuality hPx hDx
+    rw [objectives_eq] at hDx
+    exact ⟨P.c ⬝ᵥ (x ∘ Sum.inl), hPx, hDx⟩
+  | inr case_y =>
+    obtain ⟨y, hy, hAy, hbcy⟩ := case_y
+    exfalso
+    simp [Matrix.transpose_fromRows, Matrix.fromBlocks_transpose] at hAy
+    have hhh : Matrix.col (Sum.elim (-P.c) P.b) *ᵥ y ∘ Sum.inr = -(Sum.elim (y (Sum.inr ()) • P.c) (y (Sum.inr ()) • -P.b))
+    · ext k
+      cases k with
+      | inl j => simp [Matrix.mulVec, mul_comm]
+      | inr i => simp [Matrix.mulVec, mul_comm]
+    rw [
+      ←Sum.elim_comp_inl_inr y, Matrix.fromColumns_mulVec_sum_elim, Matrix.fromBlocks_mulVec,
+      Matrix.zero_mulVec, add_zero, Matrix.zero_mulVec, zero_add,
+      hhh, le_add_neg_iff_le, elim_le_elim_iff
+    ] at hAy
+    clear hhh
+    obtain ⟨hAyb, hAyc⟩ := hAy
+    rw [
+      ←Sum.elim_comp_inl_inr y, ←Sum.elim_comp_inl_inr (y ∘ Sum.inl),
+      Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct, add_zero, Matrix.sum_elim_dotProduct_sum_elim,
+      Matrix.neg_dotProduct, add_neg_lt_iff_lt_add, zero_add
+    ] at hbcy
+    have y_last_pos : 0 < y (Sum.inr ())
+    · by_contra contr
+      have last_zero : y (Sum.inr ()) = 0
+      · exact (eq_of_le_of_not_lt (hy (Sum.inr ())) contr).symm
+      clear contr
+      /-
+      rw [last_zero, zero_smul] at hAyb hAyc
+      rw [Matrix.neg_mulVec, Right.nonneg_neg_iff] at hAyc
+      -/
+      have hAylr : P.A *ᵥ (y ∘ Sum.inl) ∘ Sum.inr ≤ 0
+      · simpa [last_zero, zero_smul, Matrix.neg_mulVec] using hAyc
+      have hcylr : P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr ≠ 0
+      · rw [last_zero, zero_smul] at hAyb
+        intro contr
+        rw [contr] at hbcy
+        sorry
+      refine StandardLP.unbounded_makes_dual_infeasible' ?_ hD
+      unfold StandardLP.Reaches
+      by_contra! contr
+      obtain ⟨s, hs⟩ := contr
+      obtain ⟨x, hAx, hx⟩ := hP
+      if s_big : P.c ⬝ᵥ x ≤ s then
+        have coef_nng : 0 ≤ (s - P.c ⬝ᵥ x) / (P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr)
+        · have num_nng : 0 ≤ s - P.c ⬝ᵥ x
+          · exact sub_nonneg_of_le s_big
+          apply div_nonneg num_nng
+          sorry
+        apply hs (P.c ⬝ᵥ (x + ((s - P.c ⬝ᵥ x) / (P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr)) • (y ∘ Sum.inl) ∘ Sum.inr)) (by rw [
+            Matrix.dotProduct_add, Matrix.dotProduct_smul, smul_eq_mul,
+            div_mul, div_self hcylr, div_one, add_sub, add_comm, ←add_sub, sub_self, add_zero
+          ]) (x + ((s - P.c ⬝ᵥ x) / (P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr)) • (y ∘ Sum.inl) ∘ Sum.inr)
+        constructor
+        · rw [Matrix.mulVec_add, ←add_zero P.b]
+          apply add_le_add hAx
+          rw [Matrix.mulVec_smul]
+          exact smul_nonpos_of_nonneg_of_nonpos coef_nng hAylr
+        · rw [←add_zero 0]
+          apply add_le_add hx
+          apply smul_nonneg coef_nng
+          apply nng_com hy
+        · rfl
+      else
+        exact hs (P.c ⬝ᵥ x) (le_of_not_ge s_big) x ⟨hAx, hx⟩ rfl
+    have hbcy' : (y (Sum.inr ()) • P.b) ⬝ᵥ ((y ∘ Sum.inl)) ∘ Sum.inl < (y (Sum.inr ()) • P.c) ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
+    · rw [←mul_lt_mul_left y_last_pos] at hbcy
+      convert hbcy <;> simp
+    have hAyb' : y (Sum.inr ()) • P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr ≤ P.Aᵀ *ᵥ (y ∘ Sum.inl) ∘ Sum.inl ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
+    · apply Matrix.dotProduct_le_dotProduct_of_nonneg_right hAyb
+      apply nng_com hy
+    have hAyc' : P.A *ᵥ (y ∘ Sum.inl) ∘ Sum.inr ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl ≤ y (Sum.inr ()) • P.b ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl
+    · rw [smul_neg, Matrix.neg_mulVec, neg_le_neg_iff] at hAyc
+      apply Matrix.dotProduct_le_dotProduct_of_nonneg_right hAyc
+      apply nng_com hy
+    rw [Matrix.transpose_mulVec_dotProduct] at hAyb'
+    exact ((hbcy'.trans_le hAyb').trans_le hAyc').false
+
+#print axioms StandardLP.strongishDuality
 #print axioms StandardLP.strongDuality
