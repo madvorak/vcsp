@@ -21,7 +21,7 @@ Our long-term goal is to formalize the dichotomy for fixed-template finite-value
 * [Equality version](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/FarkasBasic.lean#L102)
 * [Inequality version](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/FarkasBasic.lean#L107)
 * [Special version for extended rationals](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/FarkasSpecial.lean#L282)
-* [Strong LP duality](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/LinearProgramming.lean#L122) (only the most basic version)
+* [Strong LP duality](https://github.com/madvorak/vcsp/blob/1a0a171c92b34d144948176469dae3830b536edc/VCSP/LinearProgramming.lean#L111)
 
 ## Mathlib contributions that stem from this project
 
