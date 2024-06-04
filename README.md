@@ -10,18 +10,18 @@ Our long-term goal is to formalize the dichotomy for fixed-template finite-value
 
 ### Main results (please see the definitions in [ValuedCSP.lean](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Combinatorics/Optimization/ValuedCSP.lean) first)
 
-* [If a VCSP template over LinearOrderedCancelAddCommMonoid can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/Hardness.lean#L70)
-* [Basic LP relaxation for VCSP over any OrderedRing of CharZero is valid.](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/LinearRelaxation.lean#L268)
-* [If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then Basic LP relaxation is tight.](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/LinearRelaxationAndSFP.lean#L398)
+* [If a VCSP template over LinearOrderedCancelAddCommMonoid can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/Hardness.lean#L70)
+* [Basic LP relaxation for VCSP over any OrderedRing of CharZero is valid.](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/LinearRelaxation.lean#L268)
+* [If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then Basic LP relaxation is tight.](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/LinearRelaxationAndSFP.lean#L398)
 
 ### Farkas-like theorems (can be use independently of the VCSP)
 
-* [David Bartl's version](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/FarkasBartl.lean#L192)
-* [The most general version](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/FarkasBartl.lean#L252)
-* [Equality version](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/FarkasBasic.lean#L102)
-* [Inequality version](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/FarkasBasic.lean#L107)
-* [Special version for extended rationals](https://github.com/madvorak/vcsp/blob/a96896872daccd490913d37e159a093a6dde50cb/VCSP/FarkasSpecial.lean#L282)
-* [Strong LP duality](https://github.com/madvorak/vcsp/blob/1a0a171c92b34d144948176469dae3830b536edc/VCSP/LinearProgramming.lean#L111)
+* [David Bartl's version](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasBartl.lean#L192)
+* [Our most general version](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasBartl.lean#L252)
+* [Equality version](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasBasic.lean#L102)
+* [Inequality version](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasBasic.lean#L107)
+* [Special version for extended rationals](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasSpecial.lean#L282)
+* [Strong LP duality](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/LinearProgramming.lean#L133)
 
 ## Mathlib contributions that stem from this project
 
