@@ -14,7 +14,7 @@ open scoped Matrix
 variable {I J R : Type*} [Fintype I] [Fintype J]
 
 /-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and
-    its multiplication by matrix `A` from the left yields the vector `b`. -/
+    multiplication by matrix `A` from the left yields the vector `b`. -/
 def CanonicalLP.IsSolution [OrderedSemiring R] (P : CanonicalLP I J R) (x : J → R) : Prop :=
   P.A *ᵥ x = P.b ∧ 0 ≤ x
 
@@ -35,9 +35,9 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP I
     P.toStandardLP.IsSolution x ↔ P.IsSolution x := by
   constructor
   · intro hyp
-    simp only [StandardLP.IsSolution, CanonicalLP.toStandardLP, Matrix.fromRows_mulVec] at hyp
-    rw [elim_le_elim_iff] at hyp
-    obtain ⟨⟨ineqPos, ineqNeg⟩, nonneg⟩ := hyp
+    unfold StandardLP.IsSolution CanonicalLP.toStandardLP at hyp
+    rw [Matrix.fromRows_mulVec, elim_le_elim_iff] at hyp
+    obtain ⟨⟨ineqPos, ineqNeg⟩, hx⟩ := hyp
     constructor
     · apply eq_of_le_of_le ineqPos
       intro i
@@ -45,8 +45,8 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP I
       · specialize ineqNeg i
         rwa [Matrix.neg_mulVec] at ineqNeg
       rwa [neg_le_neg_iff] at almost
-    · exact nonneg
-  · intro ⟨equ, nonneg⟩
+    · exact hx
+  · intro ⟨equ, hx⟩
     unfold CanonicalLP.toStandardLP StandardLP.IsSolution
     constructor
     · rw [Matrix.fromRows_mulVec, elim_le_elim_iff]
@@ -57,7 +57,7 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP I
       show -((P.A *ᵥ x) i) ≤ -(P.b i)
       rw [neg_le_neg_iff]
       exact equ.symm.le i
-    · exact nonneg
+    · exact hx
 
 lemma CanonicalLP.toStandardLP_isFeasible_iff [OrderedRing R] (P : CanonicalLP I J R) :
     P.toStandardLP.IsFeasible ↔ P.IsFeasible := by

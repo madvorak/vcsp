@@ -52,22 +52,19 @@ def StandardLP.IsFeasible [OrderedSemiring R] (P : StandardLP I J R) : Prop :=
 def StandardLP.Reaches [OrderedSemiring R] (P : StandardLP I J R) (v : R) : Prop :=
   ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = v
 
-/-- Dual linear program to given linear program `P` in the standard form.
+/-- Dualizes a linear program in the standard form.
     The matrix gets transposed and its values flip signs.
     The original cost function gets flipped signs as well and becomes the new right-hand-side vector.
     The original right-hand-side vector becomes the new vector of objective function coefficients. -/
 def StandardLP.dualize [Ring R] (P : StandardLP I J R) : StandardLP J I R :=
   ⟨-P.Aᵀ, -P.c, P.b⟩
 
-lemma StandardLP.dualize_dualize [Ring R] (P : StandardLP I J R) :
-    P.dualize.dualize = ⟨P.A, -P.b, -P.c⟩ := by
-  simp [StandardLP.dualize]
 
 lemma Matrix.transpose_mulVec_dotProduct [CommSemiring R] (M : Matrix I J R) (v : I → R) (w : J → R) :
     Mᵀ *ᵥ v ⬝ᵥ w = M *ᵥ w ⬝ᵥ v := by
   rw [Matrix.dotProduct_comm, Matrix.dotProduct_mulVec, Matrix.vecMul_transpose]
 
-/-- All objective values reached by prim are all less or equal to all objective values reached by the dual. -/
+/-- All objective values reached by the prim are all less or equal to all objective values reached by the dual. -/
 theorem StandardLP.weakDuality [OrderedCommRing R] {P : StandardLP I J R}
     {p : R} (hP : P.Reaches p) {q : R} (hQ : P.dualize.Reaches q) :
     p ≤ q := by
@@ -131,7 +128,8 @@ theorem StandardLP.feasible_prim_makes_dual_bounded [LinearOrderedCommRing R]
   simp_rw [and_comm] at contr
   exact P.unbounded_dual_makes_prim_infeasible contr hP
 
-/-- If both prim and dual are feasible, there is an objective value that is reached by both prim and dual. -/
+/-- If both the prim and the dual are feasible, there is an objective value that is reached
+    by both the prim and the dual. -/
 theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedField R]
     {P : StandardLP I J R} (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     ∃ r : R, P.Reaches r ∧ P.dualize.Reaches r := by
