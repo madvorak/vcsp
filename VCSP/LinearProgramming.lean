@@ -205,7 +205,8 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
           exact hs (P.c ⬝ᵥ p) (le_of_not_ge s_big) p ⟨hAp, hp⟩ rfl
       else
         have hbyll : P.b ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl < 0
-        · linarith
+        · rw [not_lt] at hcylr
+          exact hbcy.trans_le hcylr
         clear hcylr
         refine P.unbounded_dual_makes_prim_infeasible ?_ hP
         unfold StandardLP.Reaches
