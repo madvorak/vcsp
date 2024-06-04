@@ -599,10 +599,10 @@ lemma coe_mul_top_of_pos {x : ℚ} (h : 0 < x) : (x : ERat) * ⊤ = ⊤ :=
 lemma top_mul_coe_of_pos {x : ℚ} (h : 0 < x) : (⊤ : ERat) * x = ⊤ :=
   if_pos h
 
-lemma coe_mul_bot_of_nng {x : ℚ} (h : 0 ≤ x) : (x : ERat) * ⊥ = ⊥ :=
+lemma coe_mul_bot_of_nneg {x : ℚ} (h : 0 ≤ x) : (x : ERat) * ⊥ = ⊥ :=
   if_pos h
 
-lemma bot_mul_coe_of_nng {x : ℚ} (h : 0 ≤ x) : (⊥ : ERat) * x = ⊥ :=
+lemma bot_mul_coe_of_nneg {x : ℚ} (h : 0 ≤ x) : (⊥ : ERat) * x = ⊥ :=
   if_pos h
 
 lemma coe_mul_top_of_neg {x : ℚ} (h : x < 0) : (x : ERat) * ⊤ = ⊥ :=

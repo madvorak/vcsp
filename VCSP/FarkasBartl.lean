@@ -77,7 +77,7 @@ private lemma impossible_index {m : ℕ} {i : Fin m.succ} (hi : ¬(i.val < m)) (
 
 variable {R V W : Type*}
 
-private lemma sum_nng_aux {m : ℕ} [OrderedRing R]
+private lemma sum_nneg_aux {m : ℕ} [OrderedRing R]
     [OrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommMonoid W] [Module R W]
     {A : W →ₗ[R] Fin m → R} {x : W} {U : Fin m → V} (hU : 0 ≤ U) (hAx : A x ≤ 0) :
     Finset.univ.sum (fun i : Fin m => A x i • U i) ≤ 0 := by
@@ -176,7 +176,7 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
         · simpa [x] using smul_nonpos_of_nonneg_of_nonpos hAx'inv hax'
         have hbx : 0 ≤ b x
         · simpa [x] using smul_nonneg hAx'inv hbx'.le
-        exact (sum_nng_aux hU' hax).trans hbx
+        exact (sum_nneg_aux hU' hax).trans hbx
     · intro w
       have key : b w - A w j • b x = Finset.univ.sum (fun i : Fin m => (chop A w i - A w j * chop A x i) • U' i)
       · simpa using hbU' w
@@ -212,7 +212,7 @@ theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
   · intro ⟨U, hU, hb⟩
     intro x hx
     rw [hb]
-    exact sum_nng_aux hU hx
+    exact sum_nneg_aux hU hx
 
 private lemma auxFarkasBartl {I I' : Type*} [Fintype I] [Fintype I'] (e : I' ≃ I) [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]

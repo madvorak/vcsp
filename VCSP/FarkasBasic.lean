@@ -67,7 +67,7 @@ theorem inequalityFarkas_neg [DecidableEq I] (A : Matrix I J F) (b : I → F) :
     · intro i
       have hi := congr_fun hAxb i
       simp [A', Matrix.mulVec, Matrix.dotProduct, Matrix.fromColumns] at hi
-      apply le_of_nng_add hi
+      apply le_of_nneg_add hi
       apply Fintype.sum_nonneg
       rw [Pi.le_def]
       intro

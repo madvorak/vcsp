@@ -146,9 +146,9 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
     obtain ⟨x, hx, hAx⟩ := case_x
     rw [Matrix.fromRows_mulVec, Matrix.fromBlocks_mulVec, elim_le_elim_iff, elim_le_elim_iff] at hAx
     have hPx : P.Reaches (P.c ⬝ᵥ x ∘ Sum.inl)
-    · exact ⟨x ∘ Sum.inl, ⟨by simpa using hAx.left.left, nng_com hx Sum.inl⟩, rfl⟩
+    · exact ⟨x ∘ Sum.inl, ⟨by simpa using hAx.left.left, nneg_comp hx Sum.inl⟩, rfl⟩
     have hQx : P.dualize.Reaches (P.b ⬝ᵥ x ∘ Sum.inr)
-    · exact ⟨x ∘ Sum.inr, ⟨by simpa using hAx.left.right, nng_com hx Sum.inr⟩, rfl⟩
+    · exact ⟨x ∘ Sum.inr, ⟨by simpa using hAx.left.right, nneg_comp hx Sum.inr⟩, rfl⟩
     have objectives_eq : P.b ⬝ᵥ (x ∘ Sum.inr) = P.c ⬝ᵥ (x ∘ Sum.inl)
     · apply eq_of_le_of_le
       · rw [←add_zero (P.c ⬝ᵥ x ∘ Sum.inl), ←neg_add_le_iff_le_add, ←Matrix.neg_dotProduct, ←Matrix.sum_elim_dotProduct_sum_elim]
@@ -188,7 +188,7 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
         obtain ⟨s, hs⟩ := contr
         obtain ⟨p, hAp, hp⟩ := hP
         if s_big : P.c ⬝ᵥ p ≤ s then
-          have coef_nng : 0 ≤ (s - P.c ⬝ᵥ p) / (P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr)
+          have coef_nneg : 0 ≤ (s - P.c ⬝ᵥ p) / (P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr)
           · exact div_nonneg (sub_nonneg_of_le s_big) hcylr.le
           refine hs (P.c ⬝ᵥ (p + ((s - P.c ⬝ᵥ p) / (P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr)) • (y ∘ Sum.inl) ∘ Sum.inr)) (by rw [
               Matrix.dotProduct_add, Matrix.dotProduct_smul, smul_eq_mul,
@@ -198,11 +198,11 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
           · rw [Matrix.mulVec_add, ←add_zero P.b]
             apply add_le_add hAp
             rw [Matrix.mulVec_smul]
-            exact smul_nonpos_of_nonneg_of_nonpos coef_nng hAyc
+            exact smul_nonpos_of_nonneg_of_nonpos coef_nneg hAyc
           · rw [←add_zero 0]
             apply add_le_add hp
-            apply smul_nonneg coef_nng
-            apply nng_com hy
+            apply smul_nonneg coef_nneg
+            apply nneg_comp hy
         else
           exact hs (P.c ⬝ᵥ p) (le_of_not_ge s_big) p ⟨hAp, hp⟩ rfl
       else
@@ -215,7 +215,7 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
         obtain ⟨s, hs⟩ := contr
         obtain ⟨q, hAq, hq⟩ := hQ
         if s_low : s ≤ P.b ⬝ᵥ q then
-          have coef_nng : 0 ≤ (s - P.b ⬝ᵥ q) / P.b ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl
+          have coef_nneg : 0 ≤ (s - P.b ⬝ᵥ q) / P.b ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl
           · exact div_nonneg_of_nonpos (sub_nonpos_of_le s_low) hbyll.le
           refine hs (P.b ⬝ᵥ (q + ((s - P.b ⬝ᵥ q) / (P.b ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl)) • (y ∘ Sum.inl) ∘ Sum.inl)) (by rw [
               Matrix.dotProduct_add, Matrix.dotProduct_smul, smul_eq_mul,
@@ -225,12 +225,12 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
           · rw [Matrix.mulVec_add, ←add_zero P.dualize.b]
             apply add_le_add hAq
             rw [Matrix.mulVec_smul]
-            apply smul_nonpos_of_nonneg_of_nonpos coef_nng
+            apply smul_nonpos_of_nonneg_of_nonpos coef_nneg
             simpa [StandardLP.dualize, Matrix.neg_mulVec] using neg_nonpos_of_nonneg hAyb
           · rw [←add_zero 0]
             apply add_le_add hq
-            apply smul_nonneg coef_nng
-            apply nng_com hy
+            apply smul_nonneg coef_nneg
+            apply nneg_comp hy
         else
           exact hs (P.b ⬝ᵥ q) (le_of_not_ge s_low) q ⟨hAq, hq⟩ rfl
     have hbcy' : (y (Sum.inr ()) • P.b) ⬝ᵥ ((y ∘ Sum.inl)) ∘ Sum.inl < (y (Sum.inr ()) • P.c) ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
@@ -238,11 +238,11 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
       convert hbcy <;> simp
     have hAyb' : y (Sum.inr ()) • P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr ≤ P.Aᵀ *ᵥ (y ∘ Sum.inl) ∘ Sum.inl ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
     · apply Matrix.dotProduct_le_dotProduct_of_nonneg_right hAyb
-      apply nng_com hy
+      apply nneg_comp hy
     have hAyc' : P.A *ᵥ (y ∘ Sum.inl) ∘ Sum.inr ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl ≤ y (Sum.inr ()) • P.b ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl
     · rw [smul_neg, Matrix.neg_mulVec, neg_le_neg_iff] at hAyc
       apply Matrix.dotProduct_le_dotProduct_of_nonneg_right hAyc
-      apply nng_com hy
+      apply nneg_comp hy
     rw [Matrix.transpose_mulVec_dotProduct] at hAyb'
     exact ((hbcy'.trans_le hAyb').trans_le hAyc').false
 

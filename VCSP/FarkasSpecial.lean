@@ -18,7 +18,7 @@ instance : SMulZeroClass ℚ ℚ∞ where
 
 lemma zero_smul_ERat_neq_bot {a : ℚ∞} (ha : a ≠ ⊥) : (0 : ℚ) • a = 0 := ERat.zero_mul ha
 
-lemma smul_eq_ERat_bot_iff_of_nng {c : ℚ} {a : ℚ∞} (hc : 0 ≤ c) : c • a = ⊥ ↔ a = ⊥ := by
+lemma smul_eq_ERat_bot_iff_of_nneg {c : ℚ} {a : ℚ∞} (hc : 0 ≤ c) : c • a = ⊥ ↔ a = ⊥ := by
   constructor
   · intro hca
     change hca to c.toERat * a = ⊥
@@ -39,7 +39,7 @@ lemma smul_eq_ERat_bot_iff_of_nng {c : ℚ} {a : ℚ∞} (hc : 0 ≤ c) : c • 
       exact ERat.coe_ne_bot _ hca
   · intro ha
     rw [ha]
-    exact ERat.coe_mul_bot_of_nng hc
+    exact ERat.coe_mul_bot_of_nneg hc
 
 lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (s : Finset ι) (f : ι → ℚ) :
     (s.sum f).toERat = s.sum (fun i : ι => (f i).toERat) :=
@@ -175,21 +175,21 @@ lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     rewrite [zero_mul]
     rfl
 
-lemma Matrix.has_bot_dotProd_nng {v : I → ℚ∞} {i : I} (hvi : v i = ⊥) {w : I → ℚ} (hw : 0 ≤ w) :
+lemma Matrix.has_bot_dotProd_nneg {v : I → ℚ∞} {i : I} (hvi : v i = ⊥) {w : I → ℚ} (hw : 0 ≤ w) :
     v ᵥ⬝ w = (⊥ : ℚ∞) := by
   simp only [Matrix.dotProd, Finset.sum, Multiset.sum_eq_ERat_bot_iff, Multiset.mem_map, Finset.mem_val, Finset.mem_univ, true_and]
   use i
   rw [hvi]
-  apply ERat.bot_mul_coe_of_nng
+  apply ERat.bot_mul_coe_of_nneg
   apply hw
 
-lemma Matrix.no_bot_dotProd_nng {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : I → ℚ} (hw : 0 ≤ w) :
+lemma Matrix.no_bot_dotProd_nneg {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) {w : I → ℚ} (hw : 0 ≤ w) :
     v ᵥ⬝ w ≠ (⊥ : ℚ∞) := by
   simp only [Matrix.dotProd, Finset.sum]
   intro contr
   simp only [Multiset.sum_eq_ERat_bot_iff, Multiset.mem_map, Finset.mem_val, Finset.mem_univ, true_and] at contr
   obtain ⟨i, hi⟩ := contr
-  rw [smul_eq_ERat_bot_iff_of_nng (hw i)] at hi
+  rw [smul_eq_ERat_bot_iff_of_nneg (hw i)] at hi
   apply hv
   exact hi
 
@@ -232,7 +232,7 @@ lemma Matrix.no_bot_has_top_dotProd_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ �
   rw [Matrix.no_bot_has_top_dotProd_pos hv hvi hw contr, top_le_iff] at hq
   exact ERat.coe_ne_top q hq
 
-lemma Matrix.no_bot_has_top_dotProd_nng_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
+lemma Matrix.no_bot_has_top_dotProd_nneg_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     {w : I → ℚ} (hw : 0 ≤ w) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
     w i = 0 :=
   eq_of_le_of_le (Matrix.no_bot_has_top_dotProd_le hv hvi hw hq) (hw i)
@@ -243,7 +243,7 @@ lemma Matrix.dotProd_zero_le_zero (v : I → ℚ∞) :
     rw [Matrix.no_bot_dotProd_zero hv]
   else
     push_neg at hv
-    rw [Matrix.has_bot_dotProd_nng]
+    rw [Matrix.has_bot_dotProd_nneg]
     · apply bot_le
     · exact hv.choose_spec
     · rfl
@@ -290,14 +290,14 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
         intro x ⟨hx, hAxb⟩
         specialize hAxb i
         rw [hi, le_bot_iff] at hAxb
-        refine Matrix.no_bot_dotProd_nng hi' hx hAxb
+        refine Matrix.no_bot_dotProd_nneg hi' hx hAxb
       · rw [iff_true]
         use 0
         constructor
         · rfl
         constructor
         · apply Matrix.mulWeig_zero_le_zero
-        · rw [Matrix.has_bot_dotProd_nng hi (by rfl)]
+        · rw [Matrix.has_bot_dotProd_nneg hi (by rfl)]
           exact ERat.bot_lt_zero
     else
       push_neg at hi'
@@ -375,7 +375,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
                 exfalso
                 apply t.property.left
                 exact hbt
-            exact Matrix.no_bot_has_top_dotProd_nng_le (t.property.right) ht hx (hq ▸ ineqalities t.val)
+            exact Matrix.no_bot_has_top_dotProd_nneg_le (t.property.right) ht hx (hq ▸ ineqalities t.val)
           rw [hxj]
           apply ERat.zero_mul
           apply i'.property.right
@@ -429,7 +429,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
           else
             obtain ⟨j, hAij⟩ := hi hbi
             convert_to ⊥ ≤ b i
-            · apply Matrix.has_bot_dotProd_nng hAij
+            · apply Matrix.has_bot_dotProd_nneg hAij
               intro _
               aesop
             apply bot_le
@@ -567,7 +567,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             push_neg at hj
             obtain ⟨i, Aij_eq_top⟩ := hj
             unfold Matrix.mulWeig
-            rw [Matrix.has_bot_dotProd_nng]
+            rw [Matrix.has_bot_dotProd_nneg]
             · apply bot_le
             · rwa [Matrix.neg_apply, Matrix.transpose_apply, ERat.neg_eq_bot_iff]
             · exact nonneg

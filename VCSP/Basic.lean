@@ -115,10 +115,10 @@ lemma or_of_neq {P Q : Prop} (hPQ : P ≠ Q) : P ∨ Q := by
 lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by
   tauto
 
-lemma le_of_nng_add {α : Type*} [OrderedAddCommGroup α] {a b c : α} (habc : a + b = c) (ha : 0 ≤ a) : b ≤ c := by
+lemma le_of_nneg_add {α : Type*} [OrderedAddCommGroup α] {a b c : α} (habc : a + b = c) (ha : 0 ≤ a) : b ≤ c := by
   aesop
 
-lemma nng_com {α β ι : Type*} [Zero β] [LE β] {x : α → β} (hx : 0 ≤ x) (f : ι → α) : 0 ≤ x ∘ f :=
+lemma nneg_comp {α β ι : Type*} [Zero β] [LE β] {x : α → β} (hx : 0 ≤ x) (f : ι → α) : 0 ≤ x ∘ f :=
   fun (i : ι) => hx (f i)
 
 lemma FractionalOperation.IsValid.tt_nonempty {D ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
