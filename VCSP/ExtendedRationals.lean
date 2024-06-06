@@ -15,8 +15,7 @@ noncomputable section
 
 /-- `ERat` is the type of extended rationals `[-∞, +∞]` or rather `ℚ ∪ {⊥, ⊤}` where, informally speaking,
     `⊥` (negative infinity) is stronger than `⊤` (positive infinity). -/
-def ERat := WithBot (WithTop ℚ)
-  deriving LinearOrderedAddCommMonoid, AddCommMonoidWithOne
+def ERat := WithBot (WithTop ℚ) deriving LinearOrderedAddCommMonoid, AddCommMonoidWithOne
 
 instance : BoundedOrder ERat := inferInstanceAs (BoundedOrder (WithBot (WithTop ℚ)))
 
