@@ -142,7 +142,7 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
         (Sum.elim (Sum.elim P.b (-P.c)) 0)) with
   | inl case_x =>
     obtain ⟨x, hx, hAx⟩ := case_x
-    rw [Matrix.fromRows_mulVec, Matrix.fromBlocks_mulVec, elim_le_elim_iff, elim_le_elim_iff] at hAx
+    rw [Matrix.fromRows_mulVec, Matrix.fromBlocks_mulVec, Sum.elim_le_elim_iff, Sum.elim_le_elim_iff] at hAx
     have hPx : P.Reaches (P.c ⬝ᵥ x ∘ Sum.inl)
     · exact ⟨x ∘ Sum.inl, ⟨by simpa using hAx.left.left, nneg_comp hx Sum.inl⟩, rfl⟩
     have hQx : P.dualize.Reaches (P.b ⬝ᵥ x ∘ Sum.inr)
@@ -164,7 +164,7 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
     rw [
       ←Sum.elim_comp_inl_inr y, Matrix.fromColumns_mulVec_sum_elim, Matrix.fromBlocks_mulVec,
       Matrix.zero_mulVec, add_zero, Matrix.zero_mulVec, zero_add,
-      hcb, le_add_neg_iff_le, elim_le_elim_iff
+      hcb, le_add_neg_iff_le, Sum.elim_le_elim_iff
     ] at hAy
     obtain ⟨hAyb, hAyc⟩ := hAy
     rw [

@@ -36,7 +36,7 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP I
   constructor
   · intro hyp
     unfold StandardLP.IsSolution CanonicalLP.toStandardLP at hyp
-    rw [Matrix.fromRows_mulVec, elim_le_elim_iff] at hyp
+    rw [Matrix.fromRows_mulVec, Sum.elim_le_elim_iff] at hyp
     obtain ⟨⟨ineqPos, ineqNeg⟩, hx⟩ := hyp
     constructor
     · apply eq_of_le_of_le ineqPos
@@ -49,7 +49,7 @@ lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP I
   · intro ⟨equ, hx⟩
     unfold CanonicalLP.toStandardLP StandardLP.IsSolution
     constructor
-    · rw [Matrix.fromRows_mulVec, elim_le_elim_iff]
+    · rw [Matrix.fromRows_mulVec, Sum.elim_le_elim_iff]
       constructor
       · exact equ.le
       rw [Matrix.neg_mulVec]
