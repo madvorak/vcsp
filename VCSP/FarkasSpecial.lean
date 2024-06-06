@@ -266,15 +266,15 @@ section specialFarkas
 
 /-- `A` must not have both `⊥` and `⊤` on the same row. -/
 def Matrix.Good (A : Matrix I J ℚ∞) : Prop :=
-  ¬ (∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤))
+  ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤)
 
 /-- `A` must not have `⊥` on any row where `b` has `⊥`. -/
 def Matrix.Good' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
-  ¬ (∃ i : I, (∃ j : J, A i j = ⊥) ∧ b i = ⊥)
+  ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ b i = ⊥
 
 /-- `A` must not have `⊤` on any row where `b` has `⊤`. -/
 def Matrix.Good'' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
-  ¬ (∃ i : I, (∃ j : J, A i j = ⊤) ∧ b i = ⊤)
+  ¬∃ i : I, (∃ j : J, A i j = ⊤) ∧ b i = ⊤
 
 set_option maxHeartbeats 666666 in
 /-- Just like `inequalityFarkas_neg` but for `A` and `b` over extended rationals;

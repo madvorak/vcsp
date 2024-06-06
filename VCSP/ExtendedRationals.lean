@@ -24,6 +24,8 @@ instance : DenselyOrdered ERat := inferInstanceAs (DenselyOrdered (WithBot (With
 
 instance : CharZero ERat := inferInstanceAs (CharZero (WithBot (WithTop ℚ)))
 
+instance : ZeroLEOneClass ERat := inferInstanceAs (ZeroLEOneClass (WithBot (WithTop ℚ)))
+
 /-- The canonical inclusion from `Rat`s to `ERat`s. Registered as a coercion. -/
 @[coe] def Rat.toERat : ℚ → ERat := some ∘ some
 

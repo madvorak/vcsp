@@ -6,7 +6,7 @@ section multisets_and_finsets
 variable {α β γ : Type*}
 
 /-- Summation à la `Finset.sum` (but without notation). -/
-abbrev Multiset.summap {α β : Type*} [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
+abbrev Multiset.summap [AddCommMonoid β] (s : Multiset α) (f : α → β) : β :=
   (s.map f).sum
 
 lemma Multiset.nsmul_summap [AddCommMonoid β] (s : Multiset α) (f : α → β) (n : ℕ) :
