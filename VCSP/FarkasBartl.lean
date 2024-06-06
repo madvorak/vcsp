@@ -214,43 +214,34 @@ theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
     rw [hb]
     exact sum_nneg_aux hU hx
 
-private lemma auxFarkasBartl {I I' : Type*} [Fintype I] [Fintype I'] (e : I' ≃ I) [LinearOrderedDivisionRing R]
-    [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
-    (version_for_I' :
-      ∀ A : W →ₗ[R] I' → R, ∀ b : W →ₗ[R] V,
-        (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔
-        (∃ U : I' → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i' : I' => A w i' • U i'))
-    )
-    (A : W →ₗ[R] I → R) (b : W →ₗ[R] V) :
-    (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
-  convert version_for_I' ⟨⟨fun w : W => fun i' : I' => A w (e i'), by aesop⟩, by aesop⟩ b using 1
-  · constructor <;> intro hyp x <;> convert hyp x <;> constructor <;> intro hx i
-    · simpa using hx (e.invFun i)
-    · simpa using hx (e.toFun i)
-    · simpa using hx (e.toFun i)
-    · simpa using hx (e.invFun i)
-  · constructor <;> intro ⟨U, hU, hyp⟩
-    · use U ∘ e.toFun
-      constructor
-      · intro i
-        simpa using hU (e.toFun i)
-      · intro w
-        convert hyp w
-        apply Finset.sum_equiv e <;>
-        · intros
-          simp
-    · use U ∘ e.invFun
-      constructor
-      · intro i
-        simpa using hU (e.invFun i)
-      · intro w
-        convert hyp w
-        apply Finset.sum_equiv e.symm <;>
-        · intros
-          simp
-
 theorem fintypeFarkasBartl {I : Type*} [Fintype I] [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] I → R) (b : W →ₗ[R] V) :
     (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
-  apply auxFarkasBartl (Fintype.equivFin I).symm finFarkasBartl
+  convert
+    finFarkasBartl ⟨⟨fun w : W => fun i' => A w ((Fintype.equivFin I).symm i'), by aesop⟩, by aesop⟩ b
+      using 1
+  · constructor <;> intro hyp x <;> convert hyp x <;> constructor <;> intro hx i
+    · simpa using hx ((Fintype.equivFin I).toFun i)
+    · simpa using hx ((Fintype.equivFin I).invFun i)
+    · simpa using hx ((Fintype.equivFin I).invFun i)
+    · simpa using hx ((Fintype.equivFin I).toFun i)
+  · constructor <;> intro ⟨U, hU, hyp⟩
+    · use U ∘ (Fintype.equivFin I).invFun
+      constructor
+      · intro i
+        simpa using hU ((Fintype.equivFin I).invFun i)
+      · intro w
+        convert hyp w
+        apply Finset.sum_equiv (Fintype.equivFin I).symm <;>
+        · intros
+          simp
+    · use U ∘ (Fintype.equivFin I).toFun
+      constructor
+      · intro i
+        simpa using hU ((Fintype.equivFin I).toFun i)
+      · intro w
+        convert hyp w
+        apply Finset.sum_equiv (Fintype.equivFin I) <;>
+        · intros
+          simp
