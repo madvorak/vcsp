@@ -66,8 +66,8 @@ lemma CanonicalLP.toStandardLP_isFeasible_iff [OrderedRing R] (P : CanonicalLP I
     use x
     simpa [CanonicalLP.toStandardLP_isSolution_iff] using hx
 
-lemma CanonicalLP.toStandardLP_reaches_iff [OrderedRing R] (P : CanonicalLP I J R) (v : R) :
-    P.toStandardLP.Reaches v ↔ P.Reaches v := by
+lemma CanonicalLP.toStandardLP_reaches_iff [OrderedRing R] (P : CanonicalLP I J R) (r : R) :
+    P.toStandardLP.Reaches r ↔ P.Reaches r := by
   constructor <;>
   · intro ⟨x, hx⟩
     use x
