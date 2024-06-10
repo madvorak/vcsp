@@ -1,3 +1,4 @@
+import Mathlib.Algebra.Order.Sum
 import Mathlib.Data.Matrix.ColumnRowPartitioned
 import Mathlib.LinearAlgebra.Matrix.DotProduct
 import VCSP.FarkasBartl
@@ -56,7 +57,7 @@ theorem inequalityFarkas_neg [DecidableEq I] (A : Matrix I J F) (b : I → F) :
   · intro ⟨x, hx, hAxb⟩
     use Sum.elim (b - A *ᵥ x) x
     constructor
-    · rw [zero_le_elim_iff]
+    · rw [Sum.nonneg_elim_iff]
       exact ⟨fun i : I => sub_nonneg_of_le (hAxb i), hx⟩
     · aesop
   · intro ⟨x, hx, hAxb⟩
