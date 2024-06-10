@@ -49,8 +49,8 @@ def StandardLP.IsFeasible [OrderedSemiring R] (P : StandardLP I J R) : Prop :=
 /-- Linear program `P` reaches objective value `v` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the the coefficients `c` and summed up,
     the result is the value `v`. -/
-def StandardLP.Reaches [OrderedSemiring R] (P : StandardLP I J R) (v : R) : Prop :=
-  ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = v
+def StandardLP.Reaches [OrderedSemiring R] (P : StandardLP I J R) (r : R) : Prop :=
+  ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = r
 
 /-- Dualizes a linear program in the standard form.
     The matrix gets transposed and its values flip signs.

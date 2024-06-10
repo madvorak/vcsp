@@ -58,5 +58,5 @@ def CoordinateFreeLP.IsSolution (P : CoordinateFreeLP V W R) (x : V) : Prop :=
 def CoordinateFreeLP.IsFeasible (P : CoordinateFreeLP V W R) : Prop :=
   ∃ x : V, P.IsSolution x
 
-def CoordinateFreeLP.Reaches (P : CoordinateFreeLP V W R) (v : R) : Prop :=
-  ∃ x : V, P.IsSolution x ∧ P.c x = v
+def CoordinateFreeLP.Reaches (P : CoordinateFreeLP V W R) (r : R) : Prop :=
+  ∃ x : V, P.IsSolution x ∧ P.c x = r

@@ -23,8 +23,8 @@ def ExtendedLP.IsSolution (P : ExtendedLP I J) (x : J → ℚ) : Prop :=
 /-- Linear program `P` reaches objective value `v` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the the coefficients `c` and summed up,
     the result is the value `v`. -/
-def ExtendedLP.Reaches (P : ExtendedLP I J) (v : ℚ∞) : Prop :=
-  ∃ x : J → ℚ, P.IsSolution x ∧ P.c ᵥ⬝ x = v
+def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
+  ∃ x : J → ℚ, P.IsSolution x ∧ P.c ᵥ⬝ x = r
 
 /-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`. -/
 def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=

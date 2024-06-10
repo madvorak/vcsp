@@ -25,8 +25,8 @@ def CanonicalLP.IsFeasible [OrderedSemiring R] (P : CanonicalLP I J R) : Prop :=
 /-- Linear program `P` reaches objective value `v` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the coefficients `c` and summed up,
     the result is the value `v`. -/
-def CanonicalLP.Reaches [OrderedSemiring R] (P : CanonicalLP I J R) (v : R) : Prop :=
-  ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = v
+def CanonicalLP.Reaches [OrderedSemiring R] (P : CanonicalLP I J R) (r : R) : Prop :=
+  ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = r
 
 def CanonicalLP.toStandardLP [Ring R] (P : CanonicalLP I J R) : StandardLP (I ⊕ I) J R :=
   ⟨Matrix.fromRows P.A (-P.A), Sum.elim P.b (-P.b), P.c⟩
