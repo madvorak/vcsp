@@ -4,14 +4,12 @@ import Mathlib.LinearAlgebra.Matrix.DotProduct
 import VCSP.FarkasBartl
 
 
-variable {F : Type*} [LinearOrderedField F]
+instance LinearOrderedField.toLinearOrderedDivisionRing {F : Type*} [instF : LinearOrderedField F] :
+    LinearOrderedDivisionRing F := { instF with }
 
-instance LinearOrderedField.toLinearOrderedDivisionRing : LinearOrderedDivisionRing F :=
-  { ‹LinearOrderedField F› with }
-
+variable {I J F : Type*} [Fintype I] [Fintype J] [LinearOrderedField F]
 
 open scoped Matrix
-variable {I J : Type*} [Fintype I] [Fintype J]
 
 macro "finishit" : tactic => `(tactic| -- should be `private macro` which Lean does not allow
   unfold Matrix.mulVec Matrix.vecMul Matrix.dotProduct <;>

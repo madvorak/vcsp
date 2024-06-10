@@ -15,16 +15,15 @@ noncomputable section
 
 /-- `ERat` is the type of extended rationals `[-∞, +∞]` or rather `ℚ ∪ {⊥, ⊤}` where, informally speaking,
     `⊥` (negative infinity) is stronger than `⊤` (positive infinity). -/
-def ERat := WithBot (WithTop ℚ)
-  deriving LinearOrderedAddCommMonoid, AddCommMonoidWithOne
+def ERat := WithBot (WithTop ℚ) deriving LinearOrderedAddCommMonoid, AddCommMonoidWithOne
+
+instance : ZeroLEOneClass ERat := inferInstanceAs (ZeroLEOneClass (WithBot (WithTop ℚ)))
 
 instance : BoundedOrder ERat := inferInstanceAs (BoundedOrder (WithBot (WithTop ℚ)))
 
 instance : DenselyOrdered ERat := inferInstanceAs (DenselyOrdered (WithBot (WithTop ℚ)))
 
 instance : CharZero ERat := inferInstanceAs (CharZero (WithBot (WithTop ℚ)))
-
-instance : ZeroLEOneClass ERat := inferInstanceAs (ZeroLEOneClass (WithBot (WithTop ℚ)))
 
 /-- The canonical inclusion from `Rat`s to `ERat`s. Registered as a coercion. -/
 @[coe] def Rat.toERat : ℚ → ERat := some ∘ some
