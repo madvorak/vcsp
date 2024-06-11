@@ -2,7 +2,8 @@ import Mathlib.Algebra.Order.Pi
 import VCSP.FarkasSpecial
 
 
-/-- Linear program in the standard form. Variables are of type `J`. Conditions are indexed by type `I`. -/
+/-- Linear program over `ℚ∞` in the standard form (system of linear inequalities with nonnegative `ℚ` variables).
+    Variables are of type `J`. Conditions are indexed by type `I`. -/
 structure ExtendedLP (I J : Type*) where
   /-- The left-hand-side matrix -/
   A : Matrix I J ℚ∞
@@ -18,7 +19,7 @@ variable {I J : Type*} [Fintype I] [Fintype J]
     multiplication by matrix `A` from the left yields a vector whose all entries are less or equal
     to corresponding entries of the vector `b`. -/
 def ExtendedLP.IsSolution (P : ExtendedLP I J) (x : J → ℚ) : Prop :=
-  P.A ₘ* x ≤ P.b ∧ 0 ≤ x
+  P.A ₘ* x ≤ P.b ∧ 0 ≤ x -- Do not refactor `x` to `J → ℚ≥0` even tho it would look nicer here!
 
 /-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`.
     Linear program `P` is considered feasible even if all solutions yield `⊥` as the objective. -/
@@ -36,9 +37,9 @@ def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
 def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
   ∀ p : ℚ∞, P.Reaches p → p ≤ r
 
+open scoped Classical in
 /-- Extended notion of "maximum" of LP (covers literally everything). -/
 noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
-  have := Classical.propDecidable
   if P.IsFeasible then
     if hr : ∃ r : ℚ∞, P.Reaches r ∧ P.IsBoundedBy r then
       hr.choose -- the "maximum" or `some ⊤` (the latter happens iff `P.Reaches ⊤`)
