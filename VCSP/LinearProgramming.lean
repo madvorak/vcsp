@@ -46,9 +46,9 @@ def StandardLP.IsSolution [OrderedSemiring R] (P : StandardLP I J R) (x : J → 
 def StandardLP.IsFeasible [OrderedSemiring R] (P : StandardLP I J R) : Prop :=
   ∃ x : J → R, P.IsSolution x
 
-/-- Linear program `P` reaches objective value `v` iff there is a solution `x` such that,
+/-- Linear program `P` reaches objective value `r` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the the coefficients `c` and summed up,
-    the result is the value `v`. -/
+    the result is the value `r`. -/
 def StandardLP.Reaches [OrderedSemiring R] (P : StandardLP I J R) (r : R) : Prop :=
   ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = r
 

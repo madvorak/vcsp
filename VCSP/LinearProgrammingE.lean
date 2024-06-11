@@ -20,43 +20,40 @@ variable {I J : Type*} [Fintype I] [Fintype J]
 def ExtendedLP.IsSolution (P : ExtendedLP I J) (x : J → ℚ) : Prop :=
   P.A ₘ* x ≤ P.b ∧ 0 ≤ x
 
-/-- Linear program `P` reaches objective value `v` iff there is a solution `x` such that,
+/-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`.
+    Linear program `P` is considered feasible even if all solutions yield `⊥` as the objective. -/
+def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
+  ∃ x : J → ℚ, P.IsSolution x
+
+/-- Linear program `P` reaches objective value `r` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the the coefficients `c` and summed up,
-    the result is the value `v`. -/
+    the result is the value `r`. -/
 def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
   ∃ x : J → ℚ, P.IsSolution x ∧ P.c ᵥ⬝ x = r
 
-/-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`. -/
-def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
-  ∃ x : J → ℚ, P.IsSolution x -- Does it even mean anything? What if `P.c ᵥ⬝ x = ⊥` here?
-
-/-- Linear program `P` is bounded by `r` iff all values reached by `P` are less or equal to `r`. -/
+/-- Linear program `P` is bounded by `r` iff all values reached by `P` are less or equal to `r`.
+    Linear program `P` is always bounded by `⊤` which is allowed by this definition. -/
 def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
   ∀ p : ℚ∞, P.Reaches p → p ≤ r
 
-/-- Linear program `P` is bounded iff there exists a finite upper bound on values reached by `P`. -/
-def ExtendedLP.IsBounded (P : ExtendedLP I J) : Prop :=
-  ∃ r : ℚ, P.IsBoundedBy r.toERat
+/-- Extended notion of "maximum" of LP (covers literally everything). -/
+noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
+  have := Classical.propDecidable
+  if P.IsFeasible then
+    if hr : ∃ r : ℚ∞, P.Reaches r ∧ P.IsBoundedBy r then
+      hr.choose -- the "maximum" or `some ⊤` (the latter happens iff `P.Reaches ⊤`)
+    else
+      none -- invalid finite value (if supremum was not reached; later, we prove it cannot happen)
+  else
+    some ⊥ -- note that `some ⊥` is the maximum of both (all) infeasible LPs and (some) feasible LPs
 
 /-- Note that `ExtendedLP.dualize` is significantly different from `StandardLP.dualize`;
-    here we keep maximizing but the sign is flipped. -/
+    here we keep maximizing in the dual problem but the sign is flipped;
+    as a result, `ExtendedLP.dualize` is involution (good),
+    but the strong LP duality can no longer be written as equality (bad). -/
 def ExtendedLP.dualize (P : ExtendedLP I J) : ExtendedLP J I :=
   ⟨-P.Aᵀ, -P.c, -P.b⟩
 
 lemma ExtendedLP.dualize_dualize (P : ExtendedLP I J) : P.dualize.dualize = P := by
   obtain ⟨A, b, c⟩ := P
   simp [ExtendedLP.dualize, ←Matrix.ext_iff]
-
-open scoped Classical
-
-noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
-  if P.IsFeasible then
-    if P.IsBounded then
-      if hr : ∃ r : ℚ, P.Reaches r.toERat ∧ P.IsBoundedBy r.toERat then
-        hr.choose -- the "maximum"
-      else
-        none -- invalid "finite" value
-    else
-      some ⊤
-  else
-    some ⊥
