@@ -1,4 +1,3 @@
-
 import VCSP.FarkasBartl
 
 

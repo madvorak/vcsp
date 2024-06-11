@@ -47,9 +47,12 @@ lemma ExtendedLP.dualize_dualize (P : ExtendedLP I J) : P.dualize.dualize = P :=
   obtain ⟨A, b, c⟩ := P
   simp [ExtendedLP.dualize, ←Matrix.ext_iff]
 
-open Classical
+--open Classical
 
 noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
+  have := Classical.propDecidable P.IsFeasible
+  have := Classical.propDecidable P.IsBounded
+  have := Classical.propDecidable (∃ r : ℚ, P.Reaches r.toERat ∧ P.IsBoundedBy r.toERat)
   if P.IsFeasible then
     if P.IsBounded then
       if hr : ∃ r : ℚ, P.Reaches r.toERat ∧ P.IsBoundedBy r.toERat then
