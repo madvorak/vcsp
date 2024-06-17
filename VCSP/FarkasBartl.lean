@@ -104,7 +104,6 @@ private lemma finishing_piece {m : ℕ} [Semiring R]
   intros
   rfl
 
-set_option maxHeartbeats 333333
 lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (ih : ∀ A₀ : W →ₗ[R] Fin m → R, ∀ b₀ : W →ₗ[R] V,
@@ -118,6 +117,7 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     constructor
     · intro i
       if hi : i.val < m then
+        clear * - hi hU
         aesop
       else
         simp [hi]
@@ -166,6 +166,7 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     constructor
     · intro i
       if hi : i.val < m then
+        clear * - hi hU'
         aesop
       else
         have hAx'inv : 0 ≤ (A x' j)⁻¹
