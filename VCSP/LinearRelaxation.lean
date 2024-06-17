@@ -32,9 +32,9 @@ lemma indicator_of_neg {α R : Type*} [Fintype α] [Ring R] (P : α → Prop) [D
 
 
 variable
-  {D : Type} [Fintype D] [DecidableEq D]
-  {ι : Type} [Fintype ι] [DecidableEq ι]
-  {C : Type} [OrderedRing C]
+  {D : Type*} [Fintype D] [DecidableEq D]
+  {ι : Type*} [Fintype ι] [DecidableEq ι]
+  {C : Type*} [OrderedRing C]
   {Γ : ValuedCSP D C} [DecidableEq (Γ.Term ι)]
 
 instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
@@ -162,7 +162,8 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
       ) =
     (1 : C)
         using 2
-  · aesop
+  · clear * -
+    aesop
   rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
   use ⟨cₜ, x ∘ cₜ.fst.app⟩
   rw [Finset.eq_singleton_iff_unique_mem]

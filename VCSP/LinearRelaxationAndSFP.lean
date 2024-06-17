@@ -22,7 +22,7 @@ lemma Finset.univ_sum_multisetToType {α β : Type*} [DecidableEq α] [AddCommMo
     Finset.univ.sum (fun a : s.ToType => f a.fst) = s.summap f := by
   rw [Finset.sum, Multiset.map_univ]
 
-lemma Finset.sigma_univ_sum_to_sum_sum {α : Type} [Fintype α] {σ : α → Type} [∀ a : α, Fintype (σ a)]
+lemma Finset.sigma_univ_sum_to_sum_sum {α : Type*} [Fintype α] {σ : α → Type*} [∀ a : α, Fintype (σ a)]
     {β : Type*} [AddCommMonoid β]
     (f : (Σ a, σ a) → β) :
     Finset.univ.sum f = Finset.univ.sum (fun a : α => Finset.univ.sum (fun s : σ a => f ⟨a, s⟩)) := by
@@ -101,7 +101,7 @@ lemma Finset.univ_sum_aux {α : Type*} [Fintype α] (f : α → ℚ) (g : α →
   simp_rw [mul_comm]
 
 
-variable {D : Type} [Fintype D]
+variable {D : Type*} [Fintype D]
 
 lemma Finset.univ_sum_mul_of_list_replicate {n m : ℕ} (f : (Fin m → D) → ℚ) (g : (Fin m → D) → ℕ)
     (hn : n = (List.join (Finset.univ.val.toList.map (fun v => List.replicate (g v) v))).length) :
@@ -117,7 +117,7 @@ noncomputable abbrev buildVertically (p : D → ℕ) : List D :=
   (Finset.univ.val.toList.map (fun d : D => List.replicate (p d) d)).join
 
 open scoped Matrix
-variable [DecidableEq D] {ι : Type} [Fintype ι] [DecidableEq ι] {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
+variable [DecidableEq D] {ι : Type*} [Fintype ι] [DecidableEq ι] {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
 
 lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_marginal (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
