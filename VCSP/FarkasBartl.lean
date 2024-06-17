@@ -104,6 +104,7 @@ private lemma finishing_piece {m : ℕ} [Semiring R]
   intros
   rfl
 
+set_option maxHeartbeats 333333
 lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (ih : ∀ A₀ : W →ₗ[R] Fin m → R, ∀ b₀ : W →ₗ[R] V,
@@ -117,8 +118,7 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     constructor
     · intro i
       if hi : i.val < m then
-        simp [hi]
-        apply hU
+        aesop
       else
         simp [hi]
     · intro w
@@ -166,17 +166,15 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     constructor
     · intro i
       if hi : i.val < m then
-        simp [hi]
-        apply hU'
+        aesop
       else
-        simp [hi]
         have hAx'inv : 0 ≤ (A x' j)⁻¹
         · exact (inv_pos_of_pos' hAx').le
         have hax : chop A x ≤ 0
         · simpa [x] using smul_nonpos_of_nonneg_of_nonpos hAx'inv hax'
         have hbx : 0 ≤ b x
         · simpa [x] using smul_nonneg hAx'inv hbx'.le
-        exact (sum_nneg_aux hU' hax).trans hbx
+        simpa [hi] using (sum_nneg_aux hU' hax).trans hbx
     · intro w
       have key : b w - A w j • b x = Finset.univ.sum (fun i : Fin m => (chop A w i - A w j * chop A x i) • U' i)
       · simpa using hbU' w

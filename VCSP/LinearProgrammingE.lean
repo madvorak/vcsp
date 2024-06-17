@@ -138,9 +138,31 @@ lemma ExtendedLP.dualize_dualize (P : ExtendedLP I J) : P.dualize.dualize = P :=
   obtain ⟨A, b, c⟩ := P
   simp [ExtendedLP.dualize, ←Matrix.ext_iff]
 
+lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
+    PolarOpposites P.optimum P.dualize.optimum := by
+  cases
+    or_of_neq
+      (@extendedFarkas _ _ _ _
+        (Matrix.fromRows
+          (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
+          (Matrix.row (Sum.elim (-P.c) (-P.b)))) -- ??
+        (Sum.elim (Sum.elim P.b (-P.c)) 0)
+      sorry sorry sorry sorry) with
+  | inl case_x =>
+    obtain ⟨x, hx, hAx⟩ := case_x
+    sorry
+  | inr case_y =>
+    obtain ⟨y, hy, hAy, hbcy⟩ := case_y
+    exfalso
+    simp [Matrix.transpose_fromRows, Matrix.fromBlocks_transpose] at hAy
+    have hcb : Matrix.col (Sum.elim (-P.c) P.b) ₘ* y ∘ Sum.inr = -(Sum.elim (y (Sum.inr ()) • P.c) (y (Sum.inr ()) • -P.b))
+    · ext k
+      sorry
+    sorry
+
 theorem ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFeasible) :
     PolarOpposites P.optimum P.dualize.optimum := by
-  sorry -- majority of my work will go here
+  sorry
 
 theorem ExtendedLP.strongDuality_of_dual_feas {P : ExtendedLP I J} (hP : P.dualize.IsFeasible) :
     PolarOpposites P.optimum P.dualize.optimum := by
