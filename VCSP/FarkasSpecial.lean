@@ -125,7 +125,7 @@ lemma Multiset.sum_eq_ERat_top {s : Multiset ℚ∞} (htop : ⊤ ∈ s) (hbot : 
         rw [←Multiset.sum_eq_ERat_bot_iff]
         exact hm
     | inr hm =>
-      rw [ih hm (by aesop)]
+      rw [ih hm ((hbot ∘ mem_cons_of_mem) ·)]
       match a with
       | (q : ℚ) => rfl
       | ⊤ => rfl
@@ -264,24 +264,21 @@ end heteroMatrixProductsLemmasERat
 
 section specialFarkas
 
-/-- `A` must not have both `⊥` and `⊤` on the same row. -/
-def Matrix.Good (A : Matrix I J ℚ∞) : Prop :=
-  ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤)
-
-/-- `A` must not have `⊥` on any row where `b` has `⊥`. -/
-def Matrix.Good' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
-  ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ b i = ⊥
-
-/-- `A` must not have `⊤` on any row where `b` has `⊤`. -/
-def Matrix.Good'' (A : Matrix I J ℚ∞) (b : I → ℚ∞) : Prop :=
-  ¬∃ i : I, (∃ j : J, A i j = ⊤) ∧ b i = ⊤
-
 set_option maxHeartbeats 666666 in
 /-- Just like `inequalityFarkas_neg` but for `A` and `b` over extended rationals;
     neither is a generalization of the other. -/
 theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
-    (hA : A.Good) (hAT : Aᵀ.Good) (hAb' : A.Good' b) (hAb : A.Good'' b) :
+    -- `A` must not have both `⊥` and `⊤` in the same row
+    (hA : ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤))
+    -- `A` must not have both `⊥` and `⊤` in the same column
+    (hAT : ¬∃ i, (∃ j, Aᵀ i j = ⊥) ∧ (∃ j, Aᵀ i j = ⊤))
+    -- `A` must not have `⊤` on any row where `b` has `⊤`
+    (hAb : ¬∃ i : I, (∃ j : J, A i j = ⊤) ∧ b i = ⊤)
+    -- `A` must not have `⊥` on any row where `b` has `⊥`
+    (hAb' : ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ b i = ⊥) :
+    --
     (∃ x : J → ℚ, 0 ≤ x ∧ A ₘ* x ≤ b) ≠ (∃ y : I → ℚ, 0 ≤ y ∧ -Aᵀ ₘ* y ≤ 0 ∧ b ᵥ⬝ y < 0) := by
+    --
   if hbot : ∃ i : I, b i = ⊥ then
     obtain ⟨i, hi⟩ := hbot
     if hi' : (∀ j : J, A i j ≠ ⊥) then
@@ -386,6 +383,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             convert hx ⟨j, hj⟩
             simp [hj]
           else
+            clear * - hx
             aesop
         intro i
         if hi : (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥) then
@@ -431,6 +429,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             convert_to ⊥ ≤ b i
             · apply Matrix.has_bot_dotProd_nneg hAij
               intro _
+              clear * - hx
               aesop
             apply bot_le
     · constructor <;> intro ⟨y, hy, ineqalities, sharpine⟩
@@ -529,6 +528,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             convert hy ⟨i, hi⟩
             simp [hi]
           else
+            clear * - hy
             aesop
         constructor
         · exact nonneg
