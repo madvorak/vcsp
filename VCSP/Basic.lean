@@ -65,6 +65,9 @@ lemma or_of_neq {P Q : Prop} (hPQ : P ≠ Q) : P ∨ Q := by
 lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by
   tauto
 
+lemma neq_of_iff_neg {P Q : Prop} (hpq : P ↔ ¬Q) : P ≠ Q := by
+  tauto
+
 lemma le_of_nneg_add {α : Type*} [OrderedAddCommGroup α] {a b c : α} (habc : a + b = c) (ha : 0 ≤ a) : b ≤ c := by
   aesop
 

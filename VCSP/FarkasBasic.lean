@@ -18,35 +18,27 @@ macro "finishit" : tactic => `(tactic| -- should be `private macro` which Lean d
 
 theorem equalityFarkas_neg (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
-  have gener :=
-    not_neq_of_iff
-      (fintypeFarkasBartl Aᵀ.mulVecLin (⟨⟨(b ⬝ᵥ ·), Matrix.dotProduct_add b⟩, (Matrix.dotProduct_smul · b)⟩)).symm
-  push_neg at gener
-  -- TODO eliminate double `.symm`
-  convert gener.symm using 1 <;> clear gener <;> constructor
-  · intro ⟨x, hx, hAxb⟩
-    refine ⟨x, hx, ?_⟩
-    intro
-    simp
-    rw [←hAxb]
-    finishit
-  · intro ⟨x, hx, hAx⟩
-    refine ⟨x, hx, ?_⟩
-    simp at hAx
-    apply Matrix.dotProduct_eq
-    intro w
-    rw [hAx w]
-    finishit
-  · intro ⟨y, hAy, hby⟩
-    use -y
-    constructor
+  convert
+    fintypeFarkasBartl Aᵀ.mulVecLin (⟨⟨(b ⬝ᵥ ·), Matrix.dotProduct_add b⟩, (Matrix.dotProduct_smul · b)⟩)
+        using 1
+  · constructor
+    · intro ⟨x, hx, hAxb⟩
+      refine ⟨x, hx, ?_⟩
+      intro
+      simp
+      rw [←hAxb]
+      finishit
+    · intro ⟨x, hx, hAx⟩
+      refine ⟨x, hx, ?_⟩
+      simp at hAx
+      apply Matrix.dotProduct_eq
+      intro w
+      rw [hAx w]
+      finishit
+  · constructor <;> intro ⟨y, hAy, hby⟩ <;> use -y <;> constructor
     · simpa [Matrix.mulVecLin, Matrix.neg_mulVec] using hAy
     · simpa [Matrix.mulVecLin] using hby
-  · intro ⟨y, hAy, hby⟩
-    use -y
-    constructor
-    · rw [Matrix.neg_mulVec_neg]
-      simpa [Matrix.mulVecLin] using hAy
+    · simpa [Matrix.mulVecLin, Matrix.neg_mulVec_neg] using hAy
     · simpa [Matrix.mulVecLin] using hby
 
 theorem inequalityFarkas_neg [DecidableEq I] (A : Matrix I J F) (b : I → F) :

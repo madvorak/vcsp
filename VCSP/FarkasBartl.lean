@@ -191,19 +191,20 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
 theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] Fin n → R) (b : W →ₗ[R] V) :
-    (∃ x : Fin n → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • x i)) ↔ (∀ y : W, A y ≤ 0 → b y ≤ 0) := by
+    (∃ x : Fin n → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun j : Fin n => A w j • x j)) ≠ (∃ y : W, A y ≤ 0 ∧ 0 < b y) := by
+  apply neq_of_iff_neg
+  push_neg -- TODO maybe try to rephrase the induction step with `∃ y` and then simplify this proof
   constructor
-  · intro ⟨x, hx, hb⟩
-    intro y hy
+  · intro ⟨x, hx, hb⟩ y hy
     rw [hb]
     exact sum_nneg_aux hx hy
   · induction n generalizing b with -- note that `A` is "generalized" automatically
     | zero =>
       have A_tauto (w : W) : A w ≤ 0
-      · intro i
+      · intro j
         exfalso
         apply Nat.not_lt_zero
-        exact i.isLt
+        exact j.isLt
       intro hAb
       refine ⟨0, le_refl 0, fun y : W => ?_⟩
       simp_rw [Pi.zero_apply, smul_zero, Finset.sum_const_zero]
@@ -216,8 +217,7 @@ theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
 theorem fintypeFarkasBartl {J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] J → R) (b : W →ₗ[R] V) :
-    (∃ x : J → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun i : J => A w i • x i)) ↔ (∀ y : W, A y ≤ 0 → b y ≤ 0) := by
---  (∃ x : J → R, 0 ≤ x ∧            b = A *ᵥ x) ≠                          (∃ y : I → R, Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y > 0)
+    (∃ x : J → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun j : J => A w j • x j)) ≠ (∃ y : W, A y ≤ 0 ∧ 0 < b y) := by
   convert
     finFarkasBartl ⟨⟨fun w : W => fun j' => A w ((Fintype.equivFin J).symm j'), by aesop⟩, by aesop⟩ b
       using 1
@@ -240,8 +240,6 @@ theorem fintypeFarkasBartl {J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
         apply Finset.sum_equiv (Fintype.equivFin J) <;>
         · intros
           simp
-  · constructor <;> intro hyp y <;> convert hyp y <;> constructor <;> intro hy j
-    · simpa using hy ((Fintype.equivFin J).toFun j)
-    · simpa using hy ((Fintype.equivFin J).invFun j)
-    · simpa using hy ((Fintype.equivFin J).invFun j)
-    · simpa using hy ((Fintype.equivFin J).toFun j)
+  · constructor <;> intro ⟨y, hAy, hby⟩ <;> refine ⟨y, fun j => ?_, hby⟩
+    · simpa using hAy ((Fintype.equivFin J).invFun j)
+    · simpa using hAy ((Fintype.equivFin J).toFun j)
