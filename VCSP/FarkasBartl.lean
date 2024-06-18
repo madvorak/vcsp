@@ -191,8 +191,12 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
 theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] Fin n → R) (b : W →ₗ[R] V) :
-    (∀ y : W, A y ≤ 0 → b y ≤ 0) ↔ (∃ x : Fin n → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • x i)) := by
+    (∃ x : Fin n → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • x i)) ↔ (∀ y : W, A y ≤ 0 → b y ≤ 0) := by
   constructor
+  · intro ⟨x, hx, hb⟩
+    intro y hy
+    rw [hb]
+    exact sum_nneg_aux hx hy
   · induction n generalizing b with -- note that `A` is "generalized" automatically
     | zero =>
       have A_tauto (w : W) : A w ≤ 0
@@ -208,24 +212,15 @@ theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
       · simpa using hAb (-y) (A_tauto (-y))
     | succ m ih =>
       exact industepFarkasBartl ih
-  · intro ⟨x, hx, hb⟩
-    intro y hy
-    rw [hb]
-    exact sum_nneg_aux hx hy
 
 theorem fintypeFarkasBartl {J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] J → R) (b : W →ₗ[R] V) :
-    (∀ y : W, A y ≤ 0 → b y ≤ 0) ↔ (∃ x : J → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun i : J => A w i • x i)) := by
---  (∃ y : I → R, Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y > 0) ≠ (∃ x : J → R, 0 ≤ x ∧ b = A *ᵥ x)
+    (∃ x : J → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun i : J => A w i • x i)) ↔ (∀ y : W, A y ≤ 0 → b y ≤ 0) := by
+--  (∃ x : J → R, 0 ≤ x ∧            b = A *ᵥ x) ≠                          (∃ y : I → R, Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y > 0)
   convert
     finFarkasBartl ⟨⟨fun w : W => fun j' => A w ((Fintype.equivFin J).symm j'), by aesop⟩, by aesop⟩ b
       using 1
-  · constructor <;> intro hyp y <;> convert hyp y <;> constructor <;> intro hy j
-    · simpa using hy ((Fintype.equivFin J).toFun j)
-    · simpa using hy ((Fintype.equivFin J).invFun j)
-    · simpa using hy ((Fintype.equivFin J).invFun j)
-    · simpa using hy ((Fintype.equivFin J).toFun j)
   · constructor <;> intro ⟨x, hx, hyp⟩
     · use x ∘ (Fintype.equivFin J).invFun
       constructor
@@ -245,3 +240,8 @@ theorem fintypeFarkasBartl {J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
         apply Finset.sum_equiv (Fintype.equivFin J) <;>
         · intros
           simp
+  · constructor <;> intro hyp y <;> convert hyp y <;> constructor <;> intro hy j
+    · simpa using hy ((Fintype.equivFin J).toFun j)
+    · simpa using hy ((Fintype.equivFin J).invFun j)
+    · simpa using hy ((Fintype.equivFin J).invFun j)
+    · simpa using hy ((Fintype.equivFin J).toFun j)
