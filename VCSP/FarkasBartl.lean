@@ -129,14 +129,18 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
   else
     push_neg at is_easy
     obtain ⟨y', hay', hby'⟩ := is_easy
-    let j : Fin m.succ := ⟨m, lt_add_one m⟩
-    let y := (A y' j)⁻¹ • y'
+    let j : Fin m.succ := ⟨m, lt_add_one m⟩ -- the last (new) index
+    let y := (A y' j)⁻¹ • y' -- rescaled `y'`
     have hAy' : 0 < A y' j
     · by_contra! contr
       exact (
-        (hAb y' (fun i => if hi : i.val < m then hay' ⟨i, hi⟩ else if hij : i = j then hij ▸ contr else by
-          exfalso
-          exact impossible_index hi hij
+        (hAb y' (fun i : Fin m.succ =>
+          if hi : i.val < m then
+            hay' ⟨i, hi⟩
+          else if hij : i = j then
+            hij ▸ contr
+          else
+            (impossible_index hi hij).elim
         )).trans_lt hby'
       ).false
     have hAy : A y j = 1
@@ -145,7 +149,7 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     have hAA : ∀ w : W, A (w - (A w j • y)) j = 0
     · intro w
       simp [hAy]
-    have haAbA : ∀ w : W, chop A (w - (A w j • y)) ≤ 0 → b (w - (A w j • y)) ≤ 0
+    have hbA : ∀ w : W, chop A (w - (A w j • y)) ≤ 0 → b (w - (A w j • y)) ≤ 0
     · intro w hw
       apply hAb
       intro i
@@ -157,11 +161,11 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
       else
         exfalso
         exact impossible_index hi hij
-    have haaAbbA : ∀ w : W, chop A w - chop A (A w j • y) ≤ 0 → b w - b (A w j • y) ≤ 0
-    · simpa using haAbA
-    have haAabAb : ∀ w : W, (chop A - (A · j • chop A y)) w ≤ 0 → (b - (A · j • b y)) w ≤ 0
-    · simpa using haaAbbA
-    obtain ⟨x', hx', hbx'⟩ := ih (auxLinMaps A y) (auxLinMap A b y) haAabAb
+    have hbbA : ∀ w : W, chop A w - chop A (A w j • y) ≤ 0 → b w - b (A w j • y) ≤ 0
+    · simpa using hbA
+    have hbAb : ∀ w : W, (chop A - (A · j • chop A y)) w ≤ 0 → (b - (A · j • b y)) w ≤ 0
+    · simpa using hbbA
+    obtain ⟨x', hx', hbx'⟩ := ih (auxLinMaps A y) (auxLinMap A b y) hbAb
     use (fun i : Fin m.succ => if hi : i.val < m then x' ⟨i.val, hi⟩ else b y - Finset.univ.sum (fun i : Fin m => chop A y i • x' i))
     constructor
     · intro i
@@ -169,12 +173,12 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
         clear * - hi hx'
         aesop
       else
-        have hAy'inv : 0 ≤ (A y' j)⁻¹
+        have hAy'' : 0 ≤ (A y' j)⁻¹
         · exact (inv_pos_of_pos' hAy').le
         have hay : chop A y ≤ 0
-        · simpa [y] using smul_nonpos_of_nonneg_of_nonpos hAy'inv hay'
+        · simpa [y] using smul_nonpos_of_nonneg_of_nonpos hAy'' hay'
         have hby : 0 ≤ b y
-        · simpa [y] using smul_nonneg hAy'inv hby'.le
+        · simpa [y] using smul_nonneg hAy'' hby'.le
         simpa [hi] using (sum_nneg_aux hx' hay).trans hby
     · intro w
       have key : b w - A w j • b y = Finset.univ.sum (fun i : Fin m => (chop A w i - A w j * chop A y i) • x' i)
