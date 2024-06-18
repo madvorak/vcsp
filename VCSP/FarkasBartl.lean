@@ -24,9 +24,9 @@ private def chop {m : ℕ} {R W : Type*} [Semiring R] [AddCommMonoid W] [Module 
   ⟩
 
 private def auxLinMaps {m : ℕ} {R W : Type*} [Ring R] [AddCommMonoid W] [Module R W]
-    (A : W →ₗ[R] Fin m.succ → R) (x : W) : W →ₗ[R] Fin m → R :=
+    (A : W →ₗ[R] Fin m.succ → R) (y : W) : W →ₗ[R] Fin m → R :=
   ⟨⟨
-    chop A - (A · ⟨m, lt_add_one m⟩ • chop A x),
+    chop A - (A · ⟨m, lt_add_one m⟩ • chop A y),
   by
     intros
     ext
@@ -40,9 +40,9 @@ private def auxLinMaps {m : ℕ} {R W : Type*} [Ring R] [AddCommMonoid W] [Modul
   ⟩
 
 private def auxLinMap {m : ℕ} {R V W : Type*} [Semiring R] [AddCommGroup V] [Module R V] [AddCommMonoid W] [Module R W]
-    (A : W →ₗ[R] Fin m.succ → R) (b : W →ₗ[R] V) (x : W) : W →ₗ[R] V :=
+    (A : W →ₗ[R] Fin m.succ → R) (b : W →ₗ[R] V) (y : W) : W →ₗ[R] V :=
   ⟨⟨
-    b - (A · ⟨m, lt_add_one m⟩ • b x),
+    b - (A · ⟨m, lt_add_one m⟩ • b y),
   by
     intros
     simp only [Pi.add_apply, Pi.sub_apply, map_add, add_smul]
@@ -69,7 +69,7 @@ private lemma filter_yielding_singleton_attach_sum {m : ℕ} {R V : Type*} [Semi
       rw [hi]
       push_neg
       rfl
-  rw [singlet, Finset.sum_attach _ (fun j => f j • v), Finset.sum_singleton]
+  rw [singlet, Finset.sum_attach _ (fun j : Fin m.succ => f j • v), Finset.sum_singleton]
 
 private lemma impossible_index {m : ℕ} {i : Fin m.succ} (hi : ¬(i.val < m)) (i_neq_m : i ≠ ⟨m, lt_add_one m⟩) : False := by
   push_neg at hi
@@ -79,20 +79,20 @@ variable {R V W : Type*}
 
 private lemma sum_nneg_aux {m : ℕ} [OrderedRing R]
     [OrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommMonoid W] [Module R W]
-    {A : W →ₗ[R] Fin m → R} {x : W} {U : Fin m → V} (hU : 0 ≤ U) (hAx : A x ≤ 0) :
-    Finset.univ.sum (fun i : Fin m => A x i • U i) ≤ 0 := by
+    {A : W →ₗ[R] Fin m → R} {y : W} {x : Fin m → V} (hx : 0 ≤ x) (hAy : A y ≤ 0) :
+    Finset.univ.sum (fun i : Fin m => A y i • x i) ≤ 0 := by
   rw [←neg_zero, ←le_neg, ←Finset.sum_neg_distrib]
   apply Finset.sum_nonneg
   intro i _
   rw [le_neg, neg_zero]
-  exact smul_nonpos_of_nonpos_of_nonneg (hAx i) (hU i)
+  exact smul_nonpos_of_nonpos_of_nonneg (hAy i) (hx i)
 
 private lemma finishing_piece {m : ℕ} [Semiring R]
     [AddCommMonoid V] [Module R V] [AddCommMonoid W] [Module R W]
-    {A : W →ₗ[R] Fin m.succ → R} {w : W} {U : Fin m → V} :
-    Finset.univ.sum (fun i : Fin m => chop A w i • U i) =
+    {A : W →ₗ[R] Fin m.succ → R} {w : W} {x : Fin m → V} :
+    Finset.univ.sum (fun i : Fin m => chop A w i • x i) =
     (Finset.univ.filter _).attach.sum
-      (fun i : { _i : Fin m.succ // _i ∈ Finset.univ.filter (·.val < m) } => A w i.val • U ⟨i.val.val, by aesop⟩) := by
+      (fun i : { _i : Fin m.succ // _i ∈ Finset.univ.filter (·.val < m) } => A w i.val • x ⟨i.val.val, by aesop⟩) := by
   apply
     Finset.sum_bij'
       (fun i : Fin m => fun _ => (⟨⟨i.val, by omega⟩, by aesop⟩ : { a : Fin m.succ // a ∈ Finset.univ.filter (·.val < m) }))
@@ -107,45 +107,45 @@ private lemma finishing_piece {m : ℕ} [Semiring R]
 lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (ih : ∀ A₀ : W →ₗ[R] Fin m → R, ∀ b₀ : W →ₗ[R] V,
-      (∀ x : W, A₀ x ≤ 0 → b₀ x ≤ 0) →
-        (∃ U : Fin m → V, 0 ≤ U ∧ ∀ w : W, b₀ w = Finset.univ.sum (fun i : Fin m => A₀ w i • U i)))
-    {A : W →ₗ[R] Fin m.succ → R} {b : W →ₗ[R] V} (hAb : ∀ x : W, A x ≤ 0 → b x ≤ 0) :
-    ∃ U : Fin m.succ → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin m.succ => A w i • U i) := by
-  if is_easy : ∀ x : W, chop A x ≤ 0 → b x ≤ 0 then
-    obtain ⟨U, hU, hbU⟩ := ih (chop A) b is_easy
-    use (fun i : Fin m.succ => if hi : i.val < m then U ⟨i.val, hi⟩ else 0)
+      (∀ y₀ : W, A₀ y₀ ≤ 0 → b₀ y₀ ≤ 0) →
+        (∃ x₀ : Fin m → V, 0 ≤ x₀ ∧ ∀ w₀ : W, b₀ w₀ = Finset.univ.sum (fun i₀ : Fin m => A₀ w₀ i₀ • x₀ i₀)))
+    {A : W →ₗ[R] Fin m.succ → R} {b : W →ₗ[R] V} (hAb : ∀ y : W, A y ≤ 0 → b y ≤ 0) :
+    ∃ x : Fin m.succ → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin m.succ => A w i • x i) := by
+  if is_easy : ∀ y : W, chop A y ≤ 0 → b y ≤ 0 then
+    obtain ⟨x, hx, hbx⟩ := ih (chop A) b is_easy
+    use (fun i : Fin m.succ => if hi : i.val < m then x ⟨i.val, hi⟩ else 0)
     constructor
     · intro i
       if hi : i.val < m then
-        clear * - hi hU
+        clear * - hi hx
         aesop
       else
         simp [hi]
     · intro w
       simp_rw [smul_dite, smul_zero]
       rw [Finset.sum_dite, Finset.sum_const_zero, add_zero]
-      convert hbU w using 1
+      convert hbx w using 1
       rw [finishing_piece]
   else
     push_neg at is_easy
-    obtain ⟨x', hax', hbx'⟩ := is_easy
+    obtain ⟨y', hay', hby'⟩ := is_easy
     let j : Fin m.succ := ⟨m, lt_add_one m⟩
-    let x := (A x' j)⁻¹ • x'
-    have hAx' : 0 < A x' j
+    let y := (A y' j)⁻¹ • y'
+    have hAy' : 0 < A y' j
     · by_contra! contr
       exact (
-        (hAb x' (fun i => if hi : i.val < m then hax' ⟨i, hi⟩ else if hij : i = j then hij ▸ contr else by
+        (hAb y' (fun i => if hi : i.val < m then hay' ⟨i, hi⟩ else if hij : i = j then hij ▸ contr else by
           exfalso
           exact impossible_index hi hij
-        )).trans_lt hbx'
+        )).trans_lt hby'
       ).false
-    have hAx : A x j = 1
-    · convert inv_mul_cancel hAx'.ne.symm
-      simp [x]
-    have hAA : ∀ w : W, A (w - (A w j • x)) j = 0
+    have hAy : A y j = 1
+    · convert inv_mul_cancel hAy'.ne.symm
+      simp [y]
+    have hAA : ∀ w : W, A (w - (A w j • y)) j = 0
     · intro w
-      simp [hAx]
-    have haAbA : ∀ w : W, chop A (w - (A w j • x)) ≤ 0 → b (w - (A w j • x)) ≤ 0
+      simp [hAy]
+    have haAbA : ∀ w : W, chop A (w - (A w j • y)) ≤ 0 → b (w - (A w j • y)) ≤ 0
     · intro w hw
       apply hAb
       intro i
@@ -157,28 +157,28 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
       else
         exfalso
         exact impossible_index hi hij
-    have haaAbbA : ∀ w : W, chop A w - chop A (A w j • x) ≤ 0 → b w - b (A w j • x) ≤ 0
+    have haaAbbA : ∀ w : W, chop A w - chop A (A w j • y) ≤ 0 → b w - b (A w j • y) ≤ 0
     · simpa using haAbA
-    have haAabAb : ∀ w : W, (chop A - (A · j • chop A x)) w ≤ 0 → (b - (A · j • b x)) w ≤ 0
+    have haAabAb : ∀ w : W, (chop A - (A · j • chop A y)) w ≤ 0 → (b - (A · j • b y)) w ≤ 0
     · simpa using haaAbbA
-    obtain ⟨U', hU', hbU'⟩ := ih (auxLinMaps A x) (auxLinMap A b x) haAabAb
-    use (fun i : Fin m.succ => if hi : i.val < m then U' ⟨i.val, hi⟩ else b x - Finset.univ.sum (fun i : Fin m => chop A x i • U' i))
+    obtain ⟨x', hx', hbx'⟩ := ih (auxLinMaps A y) (auxLinMap A b y) haAabAb
+    use (fun i : Fin m.succ => if hi : i.val < m then x' ⟨i.val, hi⟩ else b y - Finset.univ.sum (fun i : Fin m => chop A y i • x' i))
     constructor
     · intro i
       if hi : i.val < m then
-        clear * - hi hU'
+        clear * - hi hx'
         aesop
       else
-        have hAx'inv : 0 ≤ (A x' j)⁻¹
-        · exact (inv_pos_of_pos' hAx').le
-        have hax : chop A x ≤ 0
-        · simpa [x] using smul_nonpos_of_nonneg_of_nonpos hAx'inv hax'
-        have hbx : 0 ≤ b x
-        · simpa [x] using smul_nonneg hAx'inv hbx'.le
-        simpa [hi] using (sum_nneg_aux hU' hax).trans hbx
+        have hAy'inv : 0 ≤ (A y' j)⁻¹
+        · exact (inv_pos_of_pos' hAy').le
+        have hay : chop A y ≤ 0
+        · simpa [y] using smul_nonpos_of_nonneg_of_nonpos hAy'inv hay'
+        have hby : 0 ≤ b y
+        · simpa [y] using smul_nonneg hAy'inv hby'.le
+        simpa [hi] using (sum_nneg_aux hx' hay).trans hby
     · intro w
-      have key : b w - A w j • b x = Finset.univ.sum (fun i : Fin m => (chop A w i - A w j * chop A x i) • U' i)
-      · simpa using hbU' w
+      have key : b w - A w j • b y = Finset.univ.sum (fun i : Fin m => (chop A w i - A w j * chop A y i) • x' i)
+      · simpa using hbx' w
       rw [←add_eq_of_eq_sub key.symm]
       simp_rw [smul_dite]
       rw [Finset.sum_dite, filter_yielding_singleton_attach_sum]
@@ -191,7 +191,7 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
 theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] Fin n → R) (b : W →ₗ[R] V) :
-    (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : Fin n → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • U i)) := by
+    (∀ y : W, A y ≤ 0 → b y ≤ 0) ↔ (∃ x : Fin n → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun i : Fin n => A w i • x i)) := by
   constructor
   · induction n generalizing b with -- note that `A` is "generalized" automatically
     | zero =>
@@ -201,46 +201,47 @@ theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
         apply Nat.not_lt_zero
         exact i.isLt
       intro hAb
-      refine ⟨0, by rfl, fun x : W => ?_⟩
+      refine ⟨0, le_refl 0, fun y : W => ?_⟩
       simp_rw [Pi.zero_apply, smul_zero, Finset.sum_const_zero]
       apply eq_of_le_of_le
-      · exact hAb x (A_tauto x)
-      · simpa using hAb (-x) (A_tauto (-x))
+      · exact hAb y (A_tauto y)
+      · simpa using hAb (-y) (A_tauto (-y))
     | succ m ih =>
       exact industepFarkasBartl ih
-  · intro ⟨U, hU, hb⟩
-    intro x hx
+  · intro ⟨x, hx, hb⟩
+    intro y hy
     rw [hb]
-    exact sum_nneg_aux hU hx
+    exact sum_nneg_aux hx hy
 
-theorem fintypeFarkasBartl {I : Type*} [Fintype I] [LinearOrderedDivisionRing R]
+theorem fintypeFarkasBartl {J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
-    (A : W →ₗ[R] I → R) (b : W →ₗ[R] V) :
-    (∀ x : W, A x ≤ 0 → b x ≤ 0) ↔ (∃ U : I → V, 0 ≤ U ∧ ∀ w : W, b w = Finset.univ.sum (fun i : I => A w i • U i)) := by
+    (A : W →ₗ[R] J → R) (b : W →ₗ[R] V) :
+    (∀ y : W, A y ≤ 0 → b y ≤ 0) ↔ (∃ x : J → V, 0 ≤ x ∧ ∀ w : W, b w = Finset.univ.sum (fun i : J => A w i • x i)) := by
+--  (∃ y : I → R, Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y > 0) ≠ (∃ x : J → R, 0 ≤ x ∧ b = A *ᵥ x)
   convert
-    finFarkasBartl ⟨⟨fun w : W => fun i' => A w ((Fintype.equivFin I).symm i'), by aesop⟩, by aesop⟩ b
+    finFarkasBartl ⟨⟨fun w : W => fun j' => A w ((Fintype.equivFin J).symm j'), by aesop⟩, by aesop⟩ b
       using 1
-  · constructor <;> intro hyp x <;> convert hyp x <;> constructor <;> intro hx i
-    · simpa using hx ((Fintype.equivFin I).toFun i)
-    · simpa using hx ((Fintype.equivFin I).invFun i)
-    · simpa using hx ((Fintype.equivFin I).invFun i)
-    · simpa using hx ((Fintype.equivFin I).toFun i)
-  · constructor <;> intro ⟨U, hU, hyp⟩
-    · use U ∘ (Fintype.equivFin I).invFun
+  · constructor <;> intro hyp y <;> convert hyp y <;> constructor <;> intro hy j
+    · simpa using hy ((Fintype.equivFin J).toFun j)
+    · simpa using hy ((Fintype.equivFin J).invFun j)
+    · simpa using hy ((Fintype.equivFin J).invFun j)
+    · simpa using hy ((Fintype.equivFin J).toFun j)
+  · constructor <;> intro ⟨x, hx, hyp⟩
+    · use x ∘ (Fintype.equivFin J).invFun
       constructor
-      · intro i
-        simpa using hU ((Fintype.equivFin I).invFun i)
+      · intro j
+        simpa using hx ((Fintype.equivFin J).invFun j)
       · intro w
         convert hyp w
-        apply Finset.sum_equiv (Fintype.equivFin I).symm <;>
+        apply Finset.sum_equiv (Fintype.equivFin J).symm <;>
         · intros
           simp
-    · use U ∘ (Fintype.equivFin I).toFun
+    · use x ∘ (Fintype.equivFin J).toFun
       constructor
-      · intro i
-        simpa using hU ((Fintype.equivFin I).toFun i)
+      · intro j
+        simpa using hx ((Fintype.equivFin J).toFun j)
       · intro w
         convert hyp w
-        apply Finset.sum_equiv (Fintype.equivFin I) <;>
+        apply Finset.sum_equiv (Fintype.equivFin J) <;>
         · intros
           simp

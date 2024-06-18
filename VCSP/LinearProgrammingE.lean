@@ -147,7 +147,43 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
           (Matrix.row (Sum.elim (-P.c) (-P.b)))) -- ??
         (Sum.elim (Sum.elim P.b (-P.c)) 0)
-      sorry sorry sorry sorry) with
+        (by
+          intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
+          cases k with
+          | inl k' =>
+            cases k' with
+            | inl i =>
+              rw [Matrix.fromRows_apply_inl] at hks hkt
+              rw [←Matrix.transpose_transpose P.A, ←@Matrix.transpose_zero I, ←@Matrix.transpose_zero J,
+                  ←Matrix.transpose_neg, ←Matrix.fromBlocks_transpose, Matrix.transpose_transpose, Matrix.transpose_apply
+              ] at hks
+              sorry
+            | inr j =>
+              rw [Matrix.fromRows_apply_inl] at hks hkt
+              sorry
+          | inr _ =>
+            rw [Matrix.fromRows_apply_inr, Matrix.row_apply] at hks hkt
+            cases t with
+            | inl jₜ =>
+              rw [Sum.elim_inl, Pi.neg_apply, ERat.neg_eq_top_iff] at hkt
+              apply P.hcj
+              use jₜ
+            | inr iₜ =>
+              rw [Sum.elim_inr] at hkt
+              apply P.hAb
+              use iₜ
+              constructor
+              · cases s with
+                | inl jₛ =>
+                  sorry -- TODO !!
+                | inr iₛ =>
+                  exfalso
+                  apply P.hbi
+                  use iₛ
+                  simpa using hks
+              · simpa using hkt
+        )
+        sorry sorry sorry) with
   | inl case_x =>
     obtain ⟨x, hx, hAx⟩ := case_x
     sorry
