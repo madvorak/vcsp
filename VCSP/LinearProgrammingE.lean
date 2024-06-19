@@ -40,21 +40,21 @@ def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
 
 /-- Linear program `P` reaches objective value `r` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the the coefficients `c` and summed up,
-    the result is the value `r`. -/
+    the result is the value `r`. Note that `⊤` can be reached but `⊥` cannot. -/
 def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
   ∃ x : J → ℚ, P.IsSolution x ∧ P.c ᵥ⬝ x = r
 
 /-- Linear program `P` is bounded by `r` iff all values reached by `P` are less or equal to `r`. -/
-def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
-  ∀ p : ℚ∞, P.Reaches p → p ≤ r
+def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ) : Prop :=
+  ∀ p : ℚ∞, P.Reaches p → p ≤ r.toERat
 
 open scoped Classical in
 /-- Extended notion of "maximum" of LP. -/
 noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
   if P.IsFeasible then
-    if ∃ u : ℚ, P.IsBoundedBy u.toERat then
-      if hr : ∃ r : ℚ∞, P.Reaches r ∧ P.IsBoundedBy r then
-        hr.choose -- the "maximum" (a finite value or `⊥`)
+    if ∃ u : ℚ, P.IsBoundedBy u then
+      if hr : ∃ r : ℚ, P.Reaches r.toERat ∧ P.IsBoundedBy r then
+        hr.choose -- the "maximum"
       else
         none -- invalid finite value (supremum is not attained; later, we prove it cannot happen)
     else
@@ -145,7 +145,8 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
       (@extendedFarkas _ _ _ _
         (Matrix.fromRows
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
-          (Matrix.row (Sum.elim (-P.c) (-P.b)))) -- ??
+          (Matrix.row (Sum.elim (-P.c) (-P.b))))
+        -- This will not work!
         (Sum.elim (Sum.elim P.b (-P.c)) 0)
         (by
           intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
@@ -175,7 +176,7 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
               constructor
               · cases s with
                 | inl jₛ =>
-                  sorry -- TODO !!
+                  sorry -- Because this cannot be resolved.
                 | inr iₛ =>
                   exfalso
                   apply P.hbi
