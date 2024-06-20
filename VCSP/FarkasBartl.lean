@@ -91,7 +91,7 @@ private lemma finishing_piece {m : ℕ} [Semiring R]
     [AddCommMonoid V] [Module R V] [AddCommMonoid W] [Module R W]
     {A : W →ₗ[R] Fin m.succ → R} {w : W} {x : Fin m → V} :
     ∑ i : Fin m, chop A w i • x i =
-    ∑ i : { _i : Fin m.succ // _i ∈ Finset.univ.filter (·.val < m) }, A w i.val • x ⟨i.val.val, by aesop⟩ := by
+    ∑ i : { a : Fin m.succ // a ∈ Finset.univ.filter (·.val < m) }, A w i.val • x ⟨i.val.val, by aesop⟩ := by
   apply
     Finset.sum_bij'
       (fun i : Fin m => fun _ => (⟨⟨i.val, by omega⟩, by aesop⟩ : { a : Fin m.succ // a ∈ Finset.univ.filter (·.val < m) }))
@@ -246,3 +246,13 @@ theorem fintypeFarkasBartl {J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
   · constructor <;> intro ⟨y, hAy, hby⟩ <;> refine ⟨y, fun j => ?_, hby⟩
     · simpa using hAy ((Fintype.equivFin J).invFun j)
     · simpa using hAy ((Fintype.equivFin J).toFun j)
+
+theorem scalarFarkas {J : Type*} [Fintype J] [LinearOrderedDivisionRing R] [AddCommGroup W] [Module R W]
+    (A : W →ₗ[R] J → R) (b : W →ₗ[R] R) :
+    (∃ x : J → R, 0 ≤ x ∧ ∀ w : W, ∑ j : J, A w j • x j = b w) ≠ (∃ y : W, A y ≤ 0 ∧ 0 < b y) :=
+  fintypeFarkasBartl A b
+
+theorem coordinateFarkas {I J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
+    (A : (I → R) →ₗ[R] J → R) (b : (I → R) →ₗ[R] R) :
+    (∃ x : J → R, 0 ≤ x ∧ ∀ w : (I → R), ∑ j : J, A w j • x j = b w) ≠ (∃ y : I → R, A y ≤ 0 ∧ 0 < b y) :=
+  scalarFarkas A b

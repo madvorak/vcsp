@@ -19,7 +19,7 @@ macro "finishit" : tactic => `(tactic| -- should be `private macro` which Lean d
 theorem equalityFarkas_neg (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
   convert
-    fintypeFarkasBartl Aᵀ.mulVecLin (⟨⟨(b ⬝ᵥ ·), Matrix.dotProduct_add b⟩, (Matrix.dotProduct_smul · b)⟩)
+    coordinateFarkas Aᵀ.mulVecLin ⟨⟨(b ⬝ᵥ ·), Matrix.dotProduct_add b⟩, (Matrix.dotProduct_smul · b)⟩
       using 1
   · constructor
     · intro ⟨x, hx, hAxb⟩
