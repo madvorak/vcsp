@@ -144,8 +144,7 @@ variable {α γ : Type*} [AddCommMonoid α] [SMul γ α] -- elements come from `
 /-- `Matrix.dotProd v w` is the sum of the element-wise products `w i • v i` akin the dot product but heterogeneous
     (mnemonic: "vector times weights").
     Note that the order of arguments (also with the infix notation) is opposite than in the `SMul` it builds upon. -/
-def Matrix.dotProd (v : I → α) (w : I → γ) : α :=
-  Finset.univ.sum (fun i : I => w i • v i)
+def Matrix.dotProd (v : I → α) (w : I → γ) : α := ∑ i : I, w i • v i
 
 infixl:72 " ᵥ⬝ " => Matrix.dotProd
 
@@ -271,7 +270,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
     -- `A` must not have both `⊥` and `⊤` in the same row
     (hA : ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤))
     -- `A` must not have both `⊥` and `⊤` in the same column
-    (hAT : ¬∃ i, (∃ j, Aᵀ i j = ⊥) ∧ (∃ j, Aᵀ i j = ⊤))
+    (hAT : ¬∃ j : J, (∃ i : I, A i j = ⊥) ∧ (∃ i : I, A i j = ⊤))
     -- `A` must not have `⊤` on any row where `b` has `⊤`
     (hAb : ¬∃ i : I, (∃ j : J, A i j = ⊤) ∧ b i = ⊤)
     -- `A` must not have `⊥` on any row where `b` has `⊥`
@@ -338,9 +337,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             exact hbi
         simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
         rw [Finset.sum_toERat]
-        show
-          Finset.univ.sum (fun j' : J' => (A' i' j' * x j'.val).toERat) =
-          Finset.univ.sum (fun j : J => (x j).toERat * A i'.val j)
+        show ∑ j' : J', (A' i' j' * x j'.val).toERat = ∑ j : J, (x j).toERat * A i'.val j
         rw [Finset.univ_sum_of_zero_when_neg (fun j : J => ∀ i' : I', A i'.val j ≠ ⊤)]
         · congr
           ext j'
@@ -476,7 +473,7 @@ theorem extendedFarkas {A : Matrix I J ℚ∞} {b : I → ℚ∞}
             apply hAb
             use i
           intro j'
-          have inequality : Finset.univ.sum (fun i : I => y i • (-Aᵀ) j'.val i) ≤ 0 := ineqalities j'
+          have inequality : ∑ i : I, y i • (-Aᵀ) j'.val i ≤ 0 := ineqalities j'
           rw [Finset.univ_sum_of_zero_when_neg (fun i : I => b i ≠ ⊤ ∧ ∀ (j : J), A i j ≠ ⊥)] at inequality
           · rw [←ERat.coe_le_coe_iff]
             convert inequality

@@ -33,7 +33,7 @@ theorem equalityFarkas_neg (A : Matrix I J F) (b : I → F) :
       simp at hAx
       apply Matrix.dotProduct_eq
       intro w
-      rw [hAx w]
+      rw [←hAx w]
       finishit
   · constructor <;> intro ⟨y, hAy, hby⟩ <;> use -y <;> constructor
     · simpa [Matrix.mulVecLin, Matrix.neg_mulVec] using hAy

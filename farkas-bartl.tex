@@ -1,0 +1,103 @@
+\documentclass[]{article}
+\usepackage[portrait, margin=5mm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{listings}
+\pagenumbering{gobble}
+
+\begin{document}
+	
+\lstset{
+	basicstyle=\ttfamily\small,
+	literate=
+	{→}{{$\rightarrow$}}1
+	{∀}{{$\forall$}}1
+	{∃}{{$\exists$}}1
+	{×}{{$\times$}}1
+	{σ}{{$\sigma$}}1
+	{τ}{{$\tau$}}1
+	{≠}{{$\neq$}}1
+	{≤}{{$\leq$}}1
+	{≥}{{$\geq$}}1
+	{↔}{{$\iff$}}1
+	{¬}{{$\neg$}}1
+	{∧}{{$\wedge$}}1
+	{•}{$\bullet$}1
+	{·}{$\cdot$}1
+	{ℕ}{{$\mathbb{N}$}}1
+	{ₗ}{{$_l$}}1
+	{₀}{{$_0$}}1
+	{∑}{{$\sum$}}1
+}
+
+\section {Farkas-Bartl theorem}
+
+\begin{lstlisting}
+theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
+    [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
+    (A : W →ₗ[R] Fin n → R) (b : W →ₗ[R] V) :
+    (∃ x : Fin n → V, 0 ≤ x ∧ ∀ w : W, b w = ∑ j : Fin n, A w j • x j) ≠ (∃ y : W, A y ≤ 0 ∧ 0 < b y)
+\end{lstlisting}
+Let \texttt{n} be a natural number.
+Let \texttt{R} be a linearly ordered division ring.
+Let \texttt{V} be a linearly ordered module over \texttt{R}.
+Let \texttt{W} be a module over \texttt{R}.
+Let \texttt{A} be a linear (w.r.t.~\texttt{R}) map from \texttt{W} to $\texttt{R}^{\texttt{n}}$.
+Let \texttt{b} be a linear (w.r.t.~\texttt{R}) map from \texttt{W} to \texttt{V}.
+We claim that exactly one of the following is true;
+(1) there is nonnegative \texttt{x} in $\texttt{V}^{\texttt{n}}$ such that \texttt{b} is equal to
+the sum of elementwise mutliplications of \texttt{x} by scalars from \texttt{A}, or
+(2) there exists \texttt{y} in \texttt{W} such that \texttt{A} applied to \texttt{y}
+gives a nonpositive vector from \texttt{V} and \texttt{b} applied to \texttt{y} gives
+a positive vector from \texttt{V}.
+
+The part ``exists at most one'' is straightforward.
+Now assume there is no \texttt{y} with desired properties, i.e.,
+every \texttt{y} in \texttt{W} such that \texttt{A}~applied to \texttt{y}
+gives a nonpositive vector from \texttt{V} also gives a nonpositive vector from \texttt{V}
+when \texttt{b} is applied to \texttt{y}.
+We prove the existence of~\texttt{x} with desired properties by induction on \texttt{n}
+with universally-quantified \texttt{A} and \texttt{b}.
+
+In the base case, observe that \texttt{A y $\le$ 0} is a tautology.
+We choose \texttt{x} to be the zero vector. The part \texttt{0 $\le$ x} is satisfied.
+It remains to show that for every \texttt{w} in \texttt{W}, the application \texttt{b w}
+is zero (because we sum over an empty set on the right-hand side).
+We do so by using the assumption twice; for \texttt{w} and for \texttt{(-w)}.
+
+We express the induction step of the ``at least one'' direction as a lemma:
+\begin{lstlisting}
+lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
+    [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
+    (ih : ∀ A₀ : W →ₗ[R] Fin m → R, ∀ b₀ : W →ₗ[R] V,
+      (∀ y₀ : W, A₀ y₀ ≤ 0 → b₀ y₀ ≤ 0) →
+        (∃ x₀ : Fin m → V, 0 ≤ x₀ ∧ ∀ w₀ : W, b₀ w₀ = ∑ i₀ : Fin m, A₀ w₀ i₀ • x₀ i₀))
+    {A : W →ₗ[R] Fin m.succ → R} {b : W →ₗ[R] V} (hAb : ∀ y : W, A y ≤ 0 → b y ≤ 0) :
+    ∃ x : Fin m.succ → V, 0 ≤ x ∧ ∀ w : W, b w = ∑ i : Fin m.succ, A w i • x i
+\end{lstlisting}
+We distinguish two cases.
+
+First, if the assumption reduced to the first \texttt{m} lines of \texttt{A} still holds,
+we can simply take $\texttt{x}_0$ from the induction hypothesis and attach one more zero vector
+to the end. Such \texttt{x} is nonnegative, and $\texttt{b w = b}_0\texttt{ w}_0$ provides
+the desired identity.
+
+Otherwise, let \texttt{y'} witness \texttt{0 < b y'} while mapping by the first \texttt{m} rows
+of \texttt{A} onto \texttt{y'} gives everything nonnegative.
+Let's rescale \texttt{y'} by $\texttt{(A y' j)}^{\texttt{-1}}$ and call the result \texttt{y}.
+We make a series of observations:
+\begin{lstlisting}
+A y j = 1
+
+∀ w : W, A (w - (A w j • y)) j = 0
+
+∀ w : W, chop A (w - (A w j • y)) ≤ 0 → b (w - (A w j • y)) ≤ 0
+
+∀ w : W, chop A w - chop A (A w j • y) ≤ 0 → b w - b (A w j • y) ≤ 0
+
+∀ w : W, (chop A - (A · j • chop A y)) w ≤ 0 → (b - (A · j • b y)) w ≤ 0
+\end{lstlisting}
+Now we are ready to apply the induction hypothesis.
+	
+\end{document}
