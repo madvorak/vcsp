@@ -69,6 +69,34 @@ def PolarOpposites : Option ℚ∞ → Option ℚ∞ → Prop
 | some ⊤ , some ⊥  => True
 | _      , _       => False -- namely `none ≠ -none`
 
+lemma opposites_of_neg {r s : ℚ∞} (hrs : -r = s) : PolarOpposites (some r) (some s) := by
+  match r with
+  | ⊥ =>
+    have hs : s = ⊤
+    · symm
+      simpa using hrs
+    rw [hs]
+    trivial
+  | ⊤ =>
+    have hs : s = ⊥
+    · symm
+      simpa using hrs
+    rw [hs]
+    trivial
+  | (p : ℚ) =>
+    match s with
+    | ⊥ =>
+      exfalso
+      simp at hrs
+    | ⊤ =>
+      exfalso
+      simp at hrs
+    | (q : ℚ) =>
+      have hpq : p + q = 0
+      · cases hrs
+        apply add_right_neg
+      trivial
+
 lemma opposites_comm (p q : Option ℚ∞) : PolarOpposites p q ↔ PolarOpposites q p := by
   match p with
   | none | some ⊥ | some ⊤ =>
@@ -205,7 +233,22 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
         sorry sorry sorry) with
   | inl case_x =>
     obtain ⟨x, hx, hAx⟩ := case_x
-    sorry
+    --rw [Matrix.fromRows_mulWei, Matrix.fromBlocks_mulWei, Sum.elim_le_elim_iff, Sum.elim_le_elim_iff] at hAx
+    have hPx : P.Reaches (P.c ᵥ⬝ x ∘ Sum.inl)
+    · sorry
+    have hQx : P.dualize.Reaches (- (P.b ᵥ⬝ x ∘ Sum.inr))
+    · sorry
+    have hPopt : P.optimum = some (P.c ᵥ⬝ x ∘ Sum.inl)
+    · sorry
+    have hQopt : P.dualize.optimum = some (- (P.b ᵥ⬝ x ∘ Sum.inr))
+    · sorry
+    rw [hPopt, hQopt]
+    apply opposites_of_neg
+    apply congr_arg
+    apply eq_of_le_of_le
+    · sorry -- weak duality
+    · rw [←add_zero (P.c ᵥ⬝ x ∘ Sum.inl)]
+      sorry -- from `hAy`
   | inr case_y =>
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
     exfalso
