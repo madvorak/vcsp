@@ -254,5 +254,5 @@ theorem scalarFarkas {J : Type*} [Fintype J] [LinearOrderedDivisionRing R] [AddC
 
 theorem coordinateFarkas {I J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
     (A : (I → R) →ₗ[R] J → R) (b : (I → R) →ₗ[R] R) :
-    (∃ x : J → R, 0 ≤ x ∧ ∀ w : (I → R), ∑ j : J, A w j • x j = b w) ≠ (∃ y : I → R, A y ≤ 0 ∧ 0 < b y) :=
+    (∃ x : J → R, 0 ≤ x ∧ ∀ w : I → R, ∑ j : J, A w j • x j = b w) ≠ (∃ y : I → R, A y ≤ 0 ∧ 0 < b y) :=
   scalarFarkas A b

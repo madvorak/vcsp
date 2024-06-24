@@ -145,8 +145,7 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
       (@extendedFarkas _ _ _ _
         (Matrix.fromRows
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
-          (Matrix.row (Sum.elim (-P.c) (-P.b))))
-        -- This will not work!
+          (Matrix.row (Sum.elim (-P.c) P.b)))
         (Sum.elim (Sum.elim P.b (-P.c)) 0)
         (by
           intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
@@ -155,13 +154,42 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
             cases k' with
             | inl i =>
               rw [Matrix.fromRows_apply_inl] at hks hkt
-              rw [←Matrix.transpose_transpose P.A, ←@Matrix.transpose_zero I, ←@Matrix.transpose_zero J,
-                  ←Matrix.transpose_neg, ←Matrix.fromBlocks_transpose, Matrix.transpose_transpose, Matrix.transpose_apply
-              ] at hks
-              sorry
+              apply P.hAi
+              use i
+              constructor
+              · cases s with
+                | inl jₛ =>
+                  use jₛ
+                  simpa using hks
+                | inr iₛ =>
+                  exfalso
+                  simp at hks
+              · cases t with
+                | inl jₜ =>
+                  use jₜ
+                  simpa using hkt
+                | inr iₜ =>
+                  exfalso
+                  simp at hkt
             | inr j =>
               rw [Matrix.fromRows_apply_inl] at hks hkt
-              sorry
+              apply P.hAj
+              use j
+              constructor
+              · cases t with
+                | inl jₜ =>
+                  exfalso
+                  simp at hkt
+                | inr iₜ =>
+                  use iₜ
+                  simpa using hkt
+              · cases s with
+                | inl jₛ =>
+                  exfalso
+                  simp at hks
+                | inr iₛ =>
+                  use iₛ
+                  simpa using hks
           | inr _ =>
             rw [Matrix.fromRows_apply_inr, Matrix.row_apply] at hks hkt
             cases t with
@@ -171,18 +199,8 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
               use jₜ
             | inr iₜ =>
               rw [Sum.elim_inr] at hkt
-              apply P.hAb
+              apply P.hbi
               use iₜ
-              constructor
-              · cases s with
-                | inl jₛ =>
-                  sorry -- Because this cannot be resolved.
-                | inr iₛ =>
-                  exfalso
-                  apply P.hbi
-                  use iₛ
-                  simpa using hks
-              · simpa using hkt
         )
         sorry sorry sorry) with
   | inl case_x =>
