@@ -173,7 +173,7 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
       (@extendedFarkas _ _ _ _
         (Matrix.fromRows
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
-          (Matrix.row (Sum.elim (-P.c) P.b)))
+          (Matrix.row Unit (Sum.elim (-P.c) P.b)))
         (Sum.elim (Sum.elim P.b (-P.c)) 0)
         (by
           intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
@@ -284,12 +284,6 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
       rfl
       rfl
   | inr case_y =>
-    obtain ⟨y, hy, hAy, hbcy⟩ := case_y
-    exfalso
-    simp [Matrix.transpose_fromRows, Matrix.fromBlocks_transpose] at hAy
-    have hcb : Matrix.col (Sum.elim (-P.c) P.b) ₘ* y ∘ Sum.inr = -(Sum.elim (y (Sum.inr ()) • P.c) (y (Sum.inr ()) • -P.b))
-    · ext k
-      sorry
     sorry
 
 theorem ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFeasible) :
