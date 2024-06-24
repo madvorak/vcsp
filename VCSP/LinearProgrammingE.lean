@@ -63,49 +63,33 @@ noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
     some ⊥ -- infeasible
 
 /-- `PolarOpposites p q` essentially says `p = -q` where `none` is forbidden. -/
-def PolarOpposites : Option ℚ∞ → Option ℚ∞ → Prop
-| (p : ℚ), (q : ℚ) => p + q = 0
-| some ⊥ , some ⊤  => True
-| some ⊤ , some ⊥  => True
-| _      , _       => False -- namely `none ≠ -none`
+def Opposites : Option ℚ∞ → Option ℚ∞ → Prop
+| (p : ℚ∞), (q : ℚ∞) => p = -q
+| _       , _        => False -- namely `none ≠ -none`
 
-lemma opposites_of_neg {r s : ℚ∞} (hrs : -r = s) : PolarOpposites (some r) (some s) := by
-  match r with
-  | ⊥ =>
-    have hs : s = ⊤
-    · symm
-      simpa using hrs
-    rw [hs]
-    trivial
-  | ⊤ =>
-    have hs : s = ⊥
-    · symm
-      simpa using hrs
-    rw [hs]
-    trivial
-  | (p : ℚ) =>
-    match s with
-    | ⊥ =>
-      exfalso
-      simp at hrs
-    | ⊤ =>
-      exfalso
-      simp at hrs
-    | (q : ℚ) =>
-      have hpq : p + q = 0
-      · cases hrs
-        apply add_right_neg
-      trivial
+lemma opposites_of_neg {r s : ℚ∞} (hrs : -r = s) : Opposites (some r) (some s) := by
+  rwa [neg_eq_iff_eq_neg] at hrs
 
-lemma opposites_comm (p q : Option ℚ∞) : PolarOpposites p q ↔ PolarOpposites q p := by
-  match p with
-  | none | some ⊥ | some ⊤ =>
-    match q with
-    | none | some ⊥ | some ⊤ | some (_ : ℚ) => rfl
-  | some (p' : ℚ) =>
-    match q with
-    | none | some ⊥ | some ⊤ => rfl
-    | some (q' : ℚ) => exact (add_comm p' q').congr_left
+lemma opposites_comm (p q : Option ℚ∞) : Opposites p q ↔ Opposites q p := by
+  cases p with
+  | none =>
+    convert_to False ↔ False
+    · simp [Opposites]
+    rfl
+  | some r =>
+    cases q with
+    | none => trivial
+    | some s =>
+      if hrs : r = -s then
+        convert_to True ↔ True
+        · simpa [Opposites]
+        · simp [Opposites, neg_eq_iff_eq_neg.mpr hrs]
+        rfl
+      else
+        convert_to False ↔ False
+        · simpa [Opposites]
+        · simp [Opposites, show s ≠ -r from fun hsr => hrs (neg_eq_iff_eq_neg.mp hsr.symm)]
+        rfl
 
 /-- Note that `ExtendedLP.dualize` is significantly different from `StandardLP.dualize`;
     here we keep maximizing in the dual problem but the sign is flipped;
@@ -167,7 +151,7 @@ lemma ExtendedLP.dualize_dualize (P : ExtendedLP I J) : P.dualize.dualize = P :=
   simp [ExtendedLP.dualize, ←Matrix.ext_iff]
 
 lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
-    PolarOpposites P.optimum P.dualize.optimum := by
+    Opposites P.optimum P.dualize.optimum := by
   cases
     or_of_neq
       (@extendedFarkas _ _ _ _
@@ -233,14 +217,13 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
         sorry sorry sorry) with
   | inl case_x =>
     obtain ⟨x, hx, hAx⟩ := case_x
-    --rw [Matrix.fromRows_mulWei, Matrix.fromBlocks_mulWei, Sum.elim_le_elim_iff, Sum.elim_le_elim_iff] at hAx
     have hPx : P.Reaches (P.c ᵥ⬝ x ∘ Sum.inl)
     · sorry
-    have hQx : P.dualize.Reaches (- (P.b ᵥ⬝ x ∘ Sum.inr))
+    have hQx : P.dualize.Reaches (-(P.b ᵥ⬝ x ∘ Sum.inr))
     · sorry
     have hPopt : P.optimum = some (P.c ᵥ⬝ x ∘ Sum.inl)
     · sorry
-    have hQopt : P.dualize.optimum = some (- (P.b ᵥ⬝ x ∘ Sum.inr))
+    have hQopt : P.dualize.optimum = some (-(P.b ᵥ⬝ x ∘ Sum.inr))
     · sorry
     rw [hPopt, hQopt]
     apply opposites_of_neg
@@ -259,16 +242,16 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     sorry
 
 theorem ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFeasible) :
-    PolarOpposites P.optimum P.dualize.optimum := by
+    Opposites P.optimum P.dualize.optimum := by
   sorry
 
 theorem ExtendedLP.strongDuality_of_dual_feas {P : ExtendedLP I J} (hP : P.dualize.IsFeasible) :
-    PolarOpposites P.optimum P.dualize.optimum := by
+    Opposites P.optimum P.dualize.optimum := by
   have result := P.dualize_dualize ▸ P.dualize.strongDuality_of_prim_feas hP
   rwa [opposites_comm]
 
 theorem ExtendedLP.strongDuality {P : ExtendedLP I J} (hP : P.IsFeasible ∨ P.dualize.IsFeasible) :
-    PolarOpposites P.optimum P.dualize.optimum :=
+    Opposites P.optimum P.dualize.optimum :=
   hP.casesOn
     (fun primFeas => P.strongDuality_of_prim_feas primFeas)
     (fun dualFeas => P.strongDuality_of_dual_feas dualFeas)
