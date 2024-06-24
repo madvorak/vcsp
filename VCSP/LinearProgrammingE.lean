@@ -233,7 +233,6 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
         sorry sorry sorry) with
   | inl case_x =>
     obtain ⟨x, hx, hAx⟩ := case_x
-    --rw [Matrix.fromRows_mulWei, Matrix.fromBlocks_mulWei, Sum.elim_le_elim_iff, Sum.elim_le_elim_iff] at hAx
     have hPx : P.Reaches (P.c ᵥ⬝ x ∘ Sum.inl)
     · sorry
     have hQx : P.dualize.Reaches (- (P.b ᵥ⬝ x ∘ Sum.inr))
@@ -248,7 +247,42 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     apply eq_of_le_of_le
     · sorry -- weak duality
     · rw [←add_zero (P.c ᵥ⬝ x ∘ Sum.inl)]
-      sorry -- from `hAy`
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
+      rfl
   | inr case_y =>
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
     exfalso
