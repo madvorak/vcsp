@@ -65,7 +65,7 @@ noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
 /-- `PolarOpposites p q` essentially says `p = -q` where `none` is forbidden. -/
 def Opposites : Option ℚ∞ → Option ℚ∞ → Prop
 | (p : ℚ∞), (q : ℚ∞) => p = -q
-| _       , _        => False -- namely `none ≠ -none`
+| _       , _        => False
 
 lemma opposites_of_neg {r s : ℚ∞} (hrs : -r = s) : Opposites (some r) (some s) := by
   rwa [neg_eq_iff_eq_neg] at hrs
@@ -157,7 +157,7 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
       (@extendedFarkas _ _ _ _
         (Matrix.fromRows
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
-          (Matrix.row (Sum.elim (-P.c) P.b)))
+          (Matrix.ro1 (Sum.elim (-P.c) P.b)))
         (Sum.elim (Sum.elim P.b (-P.c)) 0)
         (by
           intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
@@ -203,7 +203,8 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
                   use iₛ
                   simpa using hks
           | inr _ =>
-            rw [Matrix.fromRows_apply_inr, Matrix.row_apply] at hks hkt
+            rw [Matrix.fromRows_apply_inr] at hks hkt
+            simp only [Matrix.row_apply] at hks hkt
             cases t with
             | inl jₜ =>
               rw [Sum.elim_inl, Pi.neg_apply, ERat.neg_eq_top_iff] at hkt
@@ -236,7 +237,7 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
     exfalso
     simp [Matrix.transpose_fromRows, Matrix.fromBlocks_transpose] at hAy
-    have hcb : Matrix.col (Sum.elim (-P.c) P.b) ₘ* y ∘ Sum.inr = -(Sum.elim (y (Sum.inr ()) • P.c) (y (Sum.inr ()) • -P.b))
+    have hcb : Matrix.co1 (Sum.elim (-P.c) P.b) ₘ* y ∘ Sum.inr = -(Sum.elim (y (Sum.inr 0) • P.c) (y (Sum.inr 0) • -P.b))
     · ext k
       sorry
     sorry

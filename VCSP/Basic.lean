@@ -79,6 +79,9 @@ lemma FractionalOperation.IsValid.tt_nonempty {D ι : Type*} {m : ℕ} {ω : Fra
     ω.tt x ≠ ∅ := by
   simpa [FractionalOperation.tt] using valid
 
+abbrev Matrix.ro1 {ι α : Type*} (v : ι → α) := Matrix.row (Fin 1) v
+abbrev Matrix.co1 {ι α : Type*} (v : ι → α) := Matrix.col (Fin 1) v
+
 macro "change " h:ident " to " t:term : tactic => `(tactic| change $t at $h:ident)
 
 /-- Nonterminal `aesop` (strongly discouraged to use) -/

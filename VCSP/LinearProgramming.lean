@@ -138,7 +138,7 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
       (inequalityFarkas
         (Matrix.fromRows
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
-          (Matrix.row (Sum.elim (-P.c) P.b)))
+          (Matrix.ro1 (Sum.elim (-P.c) P.b)))
         (Sum.elim (Sum.elim P.b (-P.c)) 0)) with
   | inl case_x =>
     obtain ⟨x, hx, hAx⟩ := case_x
@@ -150,7 +150,7 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
     have objectives_eq : P.b ⬝ᵥ (x ∘ Sum.inr) = P.c ⬝ᵥ (x ∘ Sum.inl)
     · apply eq_of_le_of_le
       · rw [←add_zero (P.c ⬝ᵥ x ∘ Sum.inl), ←neg_add_le_iff_le_add, ←Matrix.neg_dotProduct, ←Matrix.sum_elim_dotProduct_sum_elim]
-        simpa using hAx.right ()
+        simpa using hAx.right 0
       · exact P.weakDuality hPx hQx
     rw [objectives_eq] at hQx
     exact ⟨P.c ⬝ᵥ (x ∘ Sum.inl), hPx, hQx⟩
@@ -158,9 +158,9 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
     exfalso
     simp [Matrix.transpose_fromRows, Matrix.fromBlocks_transpose] at hAy
-    have hcb : Matrix.col (Sum.elim (-P.c) P.b) *ᵥ y ∘ Sum.inr = -(Sum.elim (y (Sum.inr ()) • P.c) (y (Sum.inr ()) • -P.b))
+    have hcb : Matrix.co1 (Sum.elim (-P.c) P.b) *ᵥ y ∘ Sum.inr = -(Sum.elim (y (Sum.inr 0) • P.c) (y (Sum.inr 0) • -P.b))
     · ext k
-      cases k <;> simp [Matrix.mulVec, mul_comm]
+      cases k <;> simp [Matrix.mulVec, Matrix.dotProduct, mul_comm]
     rw [
       ←Sum.elim_comp_inl_inr y, Matrix.fromColumns_mulVec_sum_elim, Matrix.fromBlocks_mulVec,
       Matrix.zero_mulVec, add_zero, Matrix.zero_mulVec, zero_add,
@@ -172,10 +172,10 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
       Matrix.sum_elim_dotProduct_sum_elim, Matrix.zero_dotProduct, add_zero, Matrix.sum_elim_dotProduct_sum_elim,
       Matrix.neg_dotProduct, add_neg_lt_iff_lt_add, zero_add
     ] at hbcy
-    have y_last_pos : 0 < y (Sum.inr ())
+    have y_last_pos : 0 < y (Sum.inr 0)
     · by_contra contr
-      have last_zero : y (Sum.inr ()) = 0
-      · exact (eq_of_le_of_not_lt (hy (Sum.inr ())) contr).symm
+      have last_zero : y (Sum.inr 0) = 0
+      · exact (eq_of_le_of_not_lt (hy (Sum.inr 0)) contr).symm
       rw [last_zero, zero_smul] at hAyb hAyc
       clear contr last_zero
       rw [Matrix.neg_mulVec, Right.nonneg_neg_iff] at hAyc
@@ -232,13 +232,13 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
             apply nneg_comp hy
         else
           exact hs (P.b ⬝ᵥ q) (le_of_not_ge s_low) q ⟨hAq, hq⟩ rfl
-    have hbcy' : (y (Sum.inr ()) • P.b) ⬝ᵥ ((y ∘ Sum.inl)) ∘ Sum.inl < (y (Sum.inr ()) • P.c) ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
+    have hbcy' : (y (Sum.inr 0) • P.b) ⬝ᵥ ((y ∘ Sum.inl)) ∘ Sum.inl < (y (Sum.inr 0) • P.c) ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
     · rw [←mul_lt_mul_left y_last_pos] at hbcy
       convert hbcy <;> simp
-    have hAyb' : y (Sum.inr ()) • P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr ≤ P.Aᵀ *ᵥ (y ∘ Sum.inl) ∘ Sum.inl ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
+    have hAyb' : y (Sum.inr 0) • P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr ≤ P.Aᵀ *ᵥ (y ∘ Sum.inl) ∘ Sum.inl ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
     · apply Matrix.dotProduct_le_dotProduct_of_nonneg_right hAyb
       apply nneg_comp hy
-    have hAyc' : P.A *ᵥ (y ∘ Sum.inl) ∘ Sum.inr ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl ≤ y (Sum.inr ()) • P.b ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl
+    have hAyc' : P.A *ᵥ (y ∘ Sum.inl) ∘ Sum.inr ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl ≤ y (Sum.inr 0) • P.b ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl
     · rw [smul_neg, Matrix.neg_mulVec, neg_le_neg_iff] at hAyc
       apply Matrix.dotProduct_le_dotProduct_of_nonneg_right hAyc
       apply nneg_comp hy
