@@ -206,20 +206,19 @@ theorem ExtendedLP.weakDuality {P : ExtendedLP I J} {p : ℚ∞} (hP : P.Reaches
   convert neg_neg (P.b ᵥ⬝ y)
   exact Matrix.neg_dotProd P.b y
 
--- like `tsub_nonpos` backwards
-lemma ll {B C : ℚ∞} : B ≤ C ↔ B - C ≤ 0 := by
-  match B with
-  | ⊥ => simp_all
+lemma ERat.sub_nonpos_iff {p q : ℚ∞} : p - q ≤ 0 ↔ p ≤ q := by
+  match p with
+  | ⊥ => convert_to True ↔ True <;> simp
   | ⊤ =>
-    match C with
+    match q with
     | ⊥ => decide
     | ⊤ => decide
-    | (p : ℚ) => exact le_iff_le_of_cmp_eq_cmp rfl
-  | (q : ℚ) =>
-    match C with
-    | ⊥ => exact le_iff_le_of_cmp_eq_cmp rfl
-    | ⊤ => exact le_iff_le_of_cmp_eq_cmp rfl
-    | (p : ℚ) => simp [ERat.coe_nonneg, sub_eq_add_neg, ←ERat.coe_neg, ←ERat.coe_add]
+    | (_ : ℚ) => convert_to False ↔ False <;> simp
+  | (_ : ℚ) =>
+    match q with
+    | ⊥ => convert_to False ↔ False <;> simp
+    | ⊤ => convert_to True ↔ True <;> simp
+    | (_ : ℚ) => simp [ERat.coe_nonneg, sub_eq_add_neg, ←ERat.coe_neg, ←ERat.coe_add]
 
 lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (A₁ : Matrix I₁ J ℚ∞) (A₂ : Matrix I₂ J ℚ∞) (v : J → ℚ) :
     Matrix.fromRows A₁ A₂ ₘ* v = Sum.elim (A₁ ₘ* v) (A₂ ₘ* v) := by
@@ -317,27 +316,27 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     · exact ⟨x ∘ Sum.inl, ⟨hAx.left.left, nneg_comp hx Sum.inl⟩, rfl⟩
     have hQx : P.dualize.Reaches (-(P.b ᵥ⬝ x ∘ Sum.inr))
     · exact ⟨x ∘ Sum.inr, ⟨hAx.left.right, nneg_comp hx Sum.inr⟩, Matrix.neg_dotProd P.b (x ∘ Sum.inr)⟩
-    have equal : P.c ᵥ⬝ x ∘ Sum.inl = - -(P.b ᵥ⬝ x ∘ Sum.inr)
+    have equal_neg : P.c ᵥ⬝ x ∘ Sum.inl = -(-(P.b ᵥ⬝ x ∘ Sum.inr))
     · apply eq_of_le_of_le
       · exact ExtendedLP.weakDuality hPx hQx
       · have main_ineq : Sum.elim (-P.c) P.b ᵥ⬝ x ≤ 0
         · simpa using hAx.right 0
         rw [neg_neg]
-        rwa [Matrix.sumElim_dotProd, Matrix.neg_dotProd, add_comm, ←sub_eq_add_neg, ←ll] at main_ineq
+        rwa [Matrix.sumElim_dotProd, Matrix.neg_dotProd, add_comm, ←sub_eq_add_neg, ERat.sub_nonpos_iff] at main_ineq
     have hPopt : P.optimum = some (P.c ᵥ⬝ x ∘ Sum.inl)
     · apply ExtendedLP.optimum_eq_of_reaches_bounded hPx
       intro r hr
-      rw [equal]
+      rw [equal_neg]
       exact P.weakDuality hr hQx
     have hQopt : P.dualize.optimum = some (-(P.b ᵥ⬝ x ∘ Sum.inr))
     · apply ExtendedLP.optimum_eq_of_reaches_bounded hQx
       intro r hr
       apply ExtendedLP.weakDuality hr
-      rw [neg_neg] at equal
-      rw [ExtendedLP.dualize_dualize, ←equal]
+      rw [neg_neg] at equal_neg
+      rw [ExtendedLP.dualize_dualize, ←equal_neg]
       exact hPx
     rw [hPopt, hQopt]
-    exact equal
+    exact equal_neg
   | inr case_y =>
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
     exfalso
