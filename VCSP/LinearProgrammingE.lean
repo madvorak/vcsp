@@ -86,9 +86,6 @@ def Opposites : Option ℚ∞ → Option ℚ∞ → Prop
 | (p : ℚ∞), (q : ℚ∞) => p = -q  -- includes `⊥ = -⊤` and `⊤ = -⊥`
 | _       , _        => False   -- namely `none ≠ -none`
 
-lemma opposites_of_eq_neg {r s : ℚ∞} (hrs : r = -s) : Opposites (some r) (some s) :=
-  hrs
-
 lemma opposites_of_neg_eq {r s : ℚ∞} (hrs : -r = s) : Opposites (some r) (some s) := by
   rwa [neg_eq_iff_eq_neg] at hrs
 
@@ -320,28 +317,26 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     · exact ⟨x ∘ Sum.inl, ⟨hAx.left.left, nneg_comp hx Sum.inl⟩, rfl⟩
     have hQx : P.dualize.Reaches (-(P.b ᵥ⬝ x ∘ Sum.inr))
     · exact ⟨x ∘ Sum.inr, ⟨hAx.left.right, nneg_comp hx Sum.inr⟩, Matrix.neg_dotProd P.b (x ∘ Sum.inr)⟩
-    have equal : P.c ᵥ⬝ x ∘ Sum.inl = P.b ᵥ⬝ x ∘ Sum.inr
+    have equal : P.c ᵥ⬝ x ∘ Sum.inl = - -(P.b ᵥ⬝ x ∘ Sum.inr)
     · apply eq_of_le_of_le
-      · convert ExtendedLP.weakDuality hPx hQx
-        rw [neg_neg]
+      · exact ExtendedLP.weakDuality hPx hQx
       · have main_ineq : Sum.elim (-P.c) P.b ᵥ⬝ x ≤ 0
         · simpa using hAx.right 0
+        rw [neg_neg]
         rwa [Matrix.sumElim_dotProd, Matrix.neg_dotProd, add_comm, ←sub_eq_add_neg, ←ll] at main_ineq
     have hPopt : P.optimum = some (P.c ᵥ⬝ x ∘ Sum.inl)
     · apply ExtendedLP.optimum_eq_of_reaches_bounded hPx
       intro r hr
-      rw [←neg_neg (P.c ᵥ⬝ x ∘ Sum.inl)]
-      apply P.weakDuality hr
-      exact equal ▸ hQx
+      rw [equal]
+      exact P.weakDuality hr hQx
     have hQopt : P.dualize.optimum = some (-(P.b ᵥ⬝ x ∘ Sum.inr))
     · apply ExtendedLP.optimum_eq_of_reaches_bounded hQx
       intro r hr
       apply ExtendedLP.weakDuality hr
-      rw [ExtendedLP.dualize_dualize]
-      exact equal ▸ hPx
+      rw [neg_neg] at equal
+      rw [ExtendedLP.dualize_dualize, ←equal]
+      exact hPx
     rw [hPopt, hQopt]
-    apply opposites_of_eq_neg
-    rw [neg_neg]
     exact equal
   | inr case_y =>
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
