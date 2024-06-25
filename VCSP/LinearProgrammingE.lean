@@ -44,17 +44,18 @@ def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
 def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
   ∃ x : J → ℚ, P.IsSolution x ∧ P.c ᵥ⬝ x = r
 
-/-- Linear program `P` is bounded by `r` iff all values reached by `P` are less or equal to `r`. -/
-def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ) : Prop :=
-  ∀ p : ℚ∞, P.Reaches p → p ≤ r.toERat
+/-- Linear program `P` is bounded by `r` iff all values reached by `P` are less or equal to `r`.
+    Linear program `P` is always bounded by `⊤` which is allowed by this definition. -/
+def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
+  ∀ p : ℚ∞, P.Reaches p → p ≤ r
 
 open scoped Classical in
 /-- Extended notion of "maximum" of LP. -/
 noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
   if P.IsFeasible then
-    if ∃ u : ℚ, P.IsBoundedBy u then
-      if hr : ∃ r : ℚ, P.Reaches r.toERat ∧ P.IsBoundedBy r then
-        hr.choose -- the "maximum"
+    if ∃ u : ℚ, P.IsBoundedBy u.toERat then
+      if hr : ∃ r : ℚ, P.Reaches r.toERat ∧ P.IsBoundedBy r.toERat then
+        some $ some $ some $ hr.choose -- the "maximum"
       else
         none -- invalid finite value (supremum is not attained; later, we prove it cannot happen)
     else
@@ -62,12 +63,33 @@ noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
   else
     some ⊥ -- infeasible
 
+lemma ExtendedLP.optimum_eq_of_reaches_bounded {P : ExtendedLP I J} {r : ℚ∞}
+    (reaches : P.Reaches r) (bounded : P.IsBoundedBy r) :
+    P.optimum = r := by
+  match r with
+  | ⊥ =>
+    exfalso
+    sorry
+  | ⊤ =>
+    sorry
+  | (p : ℚ) =>
+    have hP : P.IsFeasible := sorry
+    have hPu : ∃ u : ℚ, P.IsBoundedBy u.toERat
+    · use p
+    simp only [optimum, hP, ite_true, hPu, dite_some_none_eq_some]
+    use ⟨p, reaches, bounded⟩
+    congr
+    sorry -- TODO optimum is unique (the maximum, not the argmax)
+
 /-- `Opposites p q` essentially says `p ≠ none ∧ q ≠ none ∧ p = -q`. -/
 def Opposites : Option ℚ∞ → Option ℚ∞ → Prop
 | (p : ℚ∞), (q : ℚ∞) => p = -q  -- includes `⊥ = -⊤` and `⊤ = -⊥`
 | _       , _        => False   -- namely `none ≠ -none`
 
-lemma opposites_of_neg {r s : ℚ∞} (hrs : -r = s) : Opposites (some r) (some s) := by
+lemma opposites_of_eq_neg {r s : ℚ∞} (hrs : r = -s) : Opposites (some r) (some s) :=
+  hrs
+
+lemma opposites_of_neg_eq {r s : ℚ∞} (hrs : -r = s) : Opposites (some r) (some s) := by
   rwa [neg_eq_iff_eq_neg] at hrs
 
 lemma opposites_comm (p q : Option ℚ∞) : Opposites p q ↔ Opposites q p := by
@@ -159,7 +181,6 @@ lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → �
   have huvi := huv i
   have hwi := hw i
   rw [Pi.zero_apply, ←ERat.coe_nonneg] at hwi
-  -- #check PosSMulMono
   show (w i).toERat * u i ≤ (w i).toERat * v i
   sorry
 
@@ -187,6 +208,21 @@ theorem ExtendedLP.weakDuality {P : ExtendedLP I J} {p : ℚ∞} (hP : P.Reaches
   convert hyxx.trans (Matrix.dotProd_le_dotProd_of_nneg_right hxb h0y)
   convert neg_neg (P.b ᵥ⬝ y)
   exact Matrix.neg_dotProd P.b y
+
+-- like `tsub_nonpos` backwards
+lemma ll {B C : ℚ∞} : B ≤ C ↔ B - C ≤ 0 := by
+  match B with
+  | ⊥ => simp_all
+  | ⊤ =>
+    match C with
+    | ⊥ => decide
+    | ⊤ => decide
+    | (p : ℚ) => exact le_iff_le_of_cmp_eq_cmp rfl
+  | (q : ℚ) =>
+    match C with
+    | ⊥ => exact le_iff_le_of_cmp_eq_cmp rfl
+    | ⊤ => exact le_iff_le_of_cmp_eq_cmp rfl
+    | (p : ℚ) => simp [ERat.coe_nonneg, sub_eq_add_neg, ←ERat.coe_neg, ←ERat.coe_add]
 
 lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (A₁ : Matrix I₁ J ℚ∞) (A₂ : Matrix I₂ J ℚ∞) (v : J → ℚ) :
     Matrix.fromRows A₁ A₂ ₘ* v = Sum.elim (A₁ ₘ* v) (A₂ ₘ* v) := by
@@ -283,25 +319,30 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     have hPx : P.Reaches (P.c ᵥ⬝ x ∘ Sum.inl)
     · exact ⟨x ∘ Sum.inl, ⟨hAx.left.left, nneg_comp hx Sum.inl⟩, rfl⟩
     have hQx : P.dualize.Reaches (-(P.b ᵥ⬝ x ∘ Sum.inr))
-    · refine ⟨x ∘ Sum.inr, ⟨hAx.left.right, nneg_comp hx Sum.inr⟩, ?_⟩
-      simp [ExtendedLP.dualize]
-      sorry
+    · exact ⟨x ∘ Sum.inr, ⟨hAx.left.right, nneg_comp hx Sum.inr⟩, Matrix.neg_dotProd P.b (x ∘ Sum.inr)⟩
+    have equal : P.c ᵥ⬝ x ∘ Sum.inl = P.b ᵥ⬝ x ∘ Sum.inr
+    · apply eq_of_le_of_le
+      · convert ExtendedLP.weakDuality hPx hQx
+        rw [neg_neg]
+      · have main_ineq : Sum.elim (-P.c) P.b ᵥ⬝ x ≤ 0
+        · simpa using hAx.right 0
+        rwa [Matrix.sumElim_dotProd, Matrix.neg_dotProd, add_comm, ←sub_eq_add_neg, ←ll] at main_ineq
     have hPopt : P.optimum = some (P.c ᵥ⬝ x ∘ Sum.inl)
-    · sorry
+    · apply ExtendedLP.optimum_eq_of_reaches_bounded hPx
+      intro r hr
+      rw [←neg_neg (P.c ᵥ⬝ x ∘ Sum.inl)]
+      apply P.weakDuality hr
+      exact equal ▸ hQx
     have hQopt : P.dualize.optimum = some (-(P.b ᵥ⬝ x ∘ Sum.inr))
-    · sorry
+    · apply ExtendedLP.optimum_eq_of_reaches_bounded hQx
+      intro r hr
+      apply ExtendedLP.weakDuality hr
+      rw [ExtendedLP.dualize_dualize]
+      exact equal ▸ hPx
     rw [hPopt, hQopt]
-    apply opposites_of_neg
-    apply congr_arg
-    apply eq_of_le_of_le
-    · convert ExtendedLP.weakDuality hPx hQx
-      rw [neg_neg]
-    · rw [←add_zero (P.c ᵥ⬝ x ∘ Sum.inl)]
-      have main_ineq := hAx.right 0
-      simp [Matrix.ro1, Matrix.row, Matrix.mulWeig] at main_ineq
-      change main_ineq to Sum.elim (-P.c) P.b ᵥ⬝ x ≤ 0
-      rw [Matrix.sumElim_dotProd] at main_ineq
-      sorry -- from `main_ineq`
+    apply opposites_of_eq_neg
+    rw [neg_neg]
+    exact equal
   | inr case_y =>
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
     exfalso
