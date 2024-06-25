@@ -164,6 +164,10 @@ lemma Matrix.zero_mulWeig (v : J → ℚ) : (0 : Matrix I J ℚ∞) ₘ* v = 0 :
   ext
   simp [Matrix.mulWeig, Matrix.dotProd]
 
+lemma Matrix.sumElim_dotProd (u : I → ℚ∞) (v : J → ℚ∞) (x : (I ⊕ J) → ℚ) :
+    Sum.elim u v ᵥ⬝ x = u ᵥ⬝ (x ∘ Sum.inl) + v ᵥ⬝ (x ∘ Sum.inr) := by
+  simp [Matrix.dotProd]
+
 lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     Opposites P.optimum P.dualize.optimum := by
   cases
@@ -257,6 +261,7 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
       have main_ineq := hAx.right 0
       simp [Matrix.ro1, Matrix.row, Matrix.mulWeig] at main_ineq
       change main_ineq to Sum.elim (-P.c) P.b ᵥ⬝ x ≤ 0
+      rw [Matrix.sumElim_dotProd] at main_ineq
       sorry -- from `main_ineq`
   | inr case_y =>
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
