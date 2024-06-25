@@ -154,16 +154,28 @@ lemma ExtendedLP.dualize_dualize (P : ExtendedLP I J) : P.dualize.dualize = P :=
 
 lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → ℚ} (huv : u ≤ v) (hw : 0 ≤ w) :
     u ᵥ⬝ w ≤ v ᵥ⬝ w := by
+  apply Finset.sum_le_sum
+  intro i _
+  have huvi := huv i
+  have hwi := hw i
+  rw [Pi.zero_apply, ←ERat.coe_nonneg] at hwi
+  -- #check PosSMulMono
+  show (w i).toERat * u i ≤ (w i).toERat * v i
   sorry
 
-lemma Matrix.neg_dotProd (u : J → ℚ∞) (v : J → ℚ) : -u ᵥ⬝ v = -(u ᵥ⬝ v) := by
+lemma Matrix.neg_dotProd (v : J → ℚ∞) (w : J → ℚ) : -v ᵥ⬝ w = -(v ᵥ⬝ w) := by
   sorry
 
-lemma Matrix.neg_mulWeig (A : Matrix I J ℚ∞) (v : J → ℚ) : -A ₘ* v = -(A ₘ* v) := by
+lemma Matrix.neg_mulWeig (A : Matrix I J ℚ∞) (w : J → ℚ) : -A ₘ* w = -(A ₘ* w) := by
   sorry
 
 lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ) (w : J → ℚ) :
     Mᵀ ₘ* v ᵥ⬝ w = M ₘ* w ᵥ⬝ v := by
+  show
+    ∑ j : J, w j • ∑ i : I, v i • M i j = ∑ i : I, v i • ∑ j : J, w j • M i j
+  show
+    ∑ j : J, (w j).toERat * ∑ i : I, (v i).toERat * M i j =
+    ∑ i : I, (v i).toERat * ∑ j : J, (w j).toERat * M i j
   sorry
 
 theorem ExtendedLP.weakDuality {P : ExtendedLP I J} {p : ℚ∞} (hP : P.Reaches p) {q : ℚ∞} (hQ : P.dualize.Reaches q) :
@@ -172,10 +184,9 @@ theorem ExtendedLP.weakDuality {P : ExtendedLP I J} {p : ℚ∞} (hP : P.Reaches
   obtain ⟨y, ⟨hyc, h0y⟩, rfl⟩ := hQ
   have hyxx : -P.Aᵀ ₘ* y ᵥ⬝ x ≤ -P.c ᵥ⬝ x := Matrix.dotProd_le_dotProd_of_nneg_right hyc h0x
   rw [Matrix.neg_mulWeig, Matrix.neg_dotProd, Matrix.neg_dotProd, ERat.neg_le_neg_iff, Matrix.transpose_mulWeig_dotProd] at hyxx
-  apply hyxx.trans
-  dsimp only [ExtendedLP.dualize]
-  rw [Matrix.neg_dotProd, neg_neg]
-  exact Matrix.dotProd_le_dotProd_of_nneg_right hxb h0y
+  convert hyxx.trans (Matrix.dotProd_le_dotProd_of_nneg_right hxb h0y)
+  convert neg_neg (P.b ᵥ⬝ y)
+  exact Matrix.neg_dotProd P.b y
 
 lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (A₁ : Matrix I₁ J ℚ∞) (A₂ : Matrix I₂ J ℚ∞) (v : J → ℚ) :
     Matrix.fromRows A₁ A₂ ₘ* v = Sum.elim (A₁ ₘ* v) (A₂ ₘ* v) := by
