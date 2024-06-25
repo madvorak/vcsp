@@ -150,6 +150,20 @@ lemma ExtendedLP.dualize_dualize (P : ExtendedLP I J) : P.dualize.dualize = P :=
   obtain ⟨A, b, c⟩ := P
   simp [ExtendedLP.dualize, ←Matrix.ext_iff]
 
+lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (A₁ : Matrix I₁ J ℚ∞) (A₂ : Matrix I₂ J ℚ∞) (v : J → ℚ) :
+    Matrix.fromRows A₁ A₂ ₘ* v = Sum.elim (A₁ ₘ* v) (A₂ ₘ* v) := by
+  ext (_ | _) <;> rfl
+
+lemma Matrix.fromColumns_mulWeig_sum_elim {J₁ J₂ : Type*} [Fintype J₁] [Fintype J₂]
+    (A₁ : Matrix I J₁ ℚ∞) (A₂ : Matrix I J₂ ℚ∞) (v₁ : J₁ → ℚ) (v₂ : J₂ → ℚ) :
+    Matrix.fromColumns A₁ A₂ ₘ* Sum.elim v₁ v₂ = A₁ ₘ* v₁ + A₂ ₘ* v₂ := by
+  ext
+  simp [Matrix.fromColumns, Matrix.mulWeig, Matrix.dotProd]
+
+lemma Matrix.zero_mulWeig (v : J → ℚ) : (0 : Matrix I J ℚ∞) ₘ* v = 0 := by
+  ext
+  simp [Matrix.mulWeig, Matrix.dotProd]
+
 lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     Opposites P.optimum P.dualize.optimum := by
   cases
@@ -202,7 +216,7 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
                 | inr iₛ =>
                   use iₛ
                   simpa using hks
-          | inr _ =>
+          | inr =>
             rw [Matrix.fromRows_apply_inr] at hks hkt
             simp only [Matrix.row_apply] at hks hkt
             cases t with
@@ -218,10 +232,18 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
         sorry sorry sorry) with
   | inl case_x =>
     obtain ⟨x, hx, hAx⟩ := case_x
+    rw [
+      Matrix.fromRows_mulWeig, Sum.elim_le_elim_iff,
+      ←Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulWeig, Sum.elim_le_elim_iff,
+      ←Sum.elim_comp_inl_inr x, Matrix.fromColumns_mulWeig_sum_elim, Matrix.fromColumns_mulWeig_sum_elim,
+      Matrix.zero_mulWeig, add_zero, Matrix.zero_mulWeig, zero_add
+    ] at hAx
     have hPx : P.Reaches (P.c ᵥ⬝ x ∘ Sum.inl)
-    · sorry
+    · exact ⟨x ∘ Sum.inl, ⟨hAx.left.left, nneg_comp hx Sum.inl⟩, rfl⟩
     have hQx : P.dualize.Reaches (-(P.b ᵥ⬝ x ∘ Sum.inr))
-    · sorry
+    · refine ⟨x ∘ Sum.inr, ⟨hAx.left.right, nneg_comp hx Sum.inr⟩, ?_⟩
+      simp [ExtendedLP.dualize]
+      sorry
     have hPopt : P.optimum = some (P.c ᵥ⬝ x ∘ Sum.inl)
     · sorry
     have hQopt : P.dualize.optimum = some (-(P.b ᵥ⬝ x ∘ Sum.inr))
@@ -232,7 +254,10 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     apply eq_of_le_of_le
     · sorry -- weak duality
     · rw [←add_zero (P.c ᵥ⬝ x ∘ Sum.inl)]
-      sorry -- from `hAy`
+      have main_ineq := hAx.right 0
+      simp [Matrix.ro1, Matrix.row, Matrix.mulWeig] at main_ineq
+      change main_ineq to Sum.elim (-P.c) P.b ᵥ⬝ x ≤ 0
+      sorry -- from `main_ineq`
   | inr case_y =>
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
     exfalso
