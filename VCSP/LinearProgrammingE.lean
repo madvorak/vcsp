@@ -150,6 +150,33 @@ lemma ExtendedLP.dualize_dualize (P : ExtendedLP I J) : P.dualize.dualize = P :=
   obtain ⟨A, b, c⟩ := P
   simp [ExtendedLP.dualize, ←Matrix.ext_iff]
 
+-- TODO what assumptions do the following four lemmas need?
+
+lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → ℚ} (huv : u ≤ v) (hw : 0 ≤ w) :
+    u ᵥ⬝ w ≤ v ᵥ⬝ w := by
+  sorry
+
+lemma Matrix.neg_dotProd (u : J → ℚ∞) (v : J → ℚ) : -u ᵥ⬝ v = -(u ᵥ⬝ v) := by
+  sorry
+
+lemma Matrix.neg_mulWeig (A : Matrix I J ℚ∞) (v : J → ℚ) : -A ₘ* v = -(A ₘ* v) := by
+  sorry
+
+lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ) (w : J → ℚ) :
+    Mᵀ ₘ* v ᵥ⬝ w = M ₘ* w ᵥ⬝ v := by
+  sorry
+
+theorem ExtendedLP.weakDuality {P : ExtendedLP I J} {p : ℚ∞} (hP : P.Reaches p) {q : ℚ∞} (hQ : P.dualize.Reaches q) :
+    p ≤ -q := by
+  obtain ⟨x, ⟨hxb, h0x⟩, rfl⟩ := hP
+  obtain ⟨y, ⟨hyc, h0y⟩, rfl⟩ := hQ
+  have hyxx : -P.Aᵀ ₘ* y ᵥ⬝ x ≤ -P.c ᵥ⬝ x := Matrix.dotProd_le_dotProd_of_nneg_right hyc h0x
+  rw [Matrix.neg_mulWeig, Matrix.neg_dotProd, Matrix.neg_dotProd, ERat.neg_le_neg_iff, Matrix.transpose_mulWeig_dotProd] at hyxx
+  apply hyxx.trans
+  dsimp only [ExtendedLP.dualize]
+  rw [Matrix.neg_dotProd, neg_neg]
+  exact Matrix.dotProd_le_dotProd_of_nneg_right hxb h0y
+
 lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (A₁ : Matrix I₁ J ℚ∞) (A₂ : Matrix I₂ J ℚ∞) (v : J → ℚ) :
     Matrix.fromRows A₁ A₂ ₘ* v = Sum.elim (A₁ ₘ* v) (A₂ ₘ* v) := by
   ext (_ | _) <;> rfl
@@ -256,7 +283,8 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     apply opposites_of_neg
     apply congr_arg
     apply eq_of_le_of_le
-    · sorry -- weak duality
+    · convert ExtendedLP.weakDuality hPx hQx
+      rw [neg_neg]
     · rw [←add_zero (P.c ᵥ⬝ x ∘ Sum.inl)]
       have main_ineq := hAx.right 0
       simp [Matrix.ro1, Matrix.row, Matrix.mulWeig] at main_ineq
