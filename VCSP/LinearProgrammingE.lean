@@ -62,10 +62,10 @@ noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
   else
     some ⊥ -- infeasible
 
-/-- `PolarOpposites p q` essentially says `p = -q` where `none` is forbidden. -/
+/-- `Opposites p q` essentially says `p ≠ none ∧ q ≠ none ∧ p = -q`. -/
 def Opposites : Option ℚ∞ → Option ℚ∞ → Prop
-| (p : ℚ∞), (q : ℚ∞) => p = -q
-| _       , _        => False
+| (p : ℚ∞), (q : ℚ∞) => p = -q  -- includes `⊥ = -⊤` and `⊤ = -⊥`
+| _       , _        => False   -- namely `none ≠ -none`
 
 lemma opposites_of_neg {r s : ℚ∞} (hrs : -r = s) : Opposites (some r) (some s) := by
   rwa [neg_eq_iff_eq_neg] at hrs
