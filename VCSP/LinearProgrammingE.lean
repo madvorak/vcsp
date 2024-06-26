@@ -72,16 +72,18 @@ lemma ExtendedLP.optimum_unique {P : ExtendedLP I J} {r s : ℚ}
   · apply hPr.right
     exact hPs.left
 
-lemma Matrix.dotProd_eq_bot {v : J → ℚ∞} {w : J → ℚ} (hvw : v ᵥ⬝ w = ⊥) : ∃ j : J, v j = ⊥ := by
-  sorry
+lemma Matrix.dotProd_eq_bot {v : J → ℚ∞} {w : J → ℚ} (hw : 0 ≤ w) (hvw : v ᵥ⬝ w = ⊥) :
+    ∃ j : J, v j = ⊥ := by
+  by_contra! contr
+  exact Matrix.no_bot_dotProd_nneg contr hw hvw
 
 lemma ExtendedLP.cannot_reach_bot {P : ExtendedLP I J} (hP : P.Reaches ⊥) : False := by
-  obtain ⟨p, -, hp⟩ := hP
-  exact P.hcj (Matrix.dotProd_eq_bot hp)
+  obtain ⟨p, ⟨-, hp⟩, contr⟩ := hP
+  exact P.hcj (Matrix.dotProd_eq_bot hp contr)
 
 lemma ExtendedLP.optimum_eq_of_reaches_bounded {P : ExtendedLP I J} {r : ℚ∞}
     (reaches : P.Reaches r) (bounded : P.IsBoundedBy r) :
-    P.optimum = r := by
+    P.optimum = some r := by
   have hP : P.IsFeasible
   · obtain ⟨x, hx, -⟩ := reaches
     exact ⟨x, hx⟩
@@ -198,10 +200,21 @@ lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → �
   apply Finset.sum_le_sum
   intro i _
   have huvi := huv i
-  have hwi := hw i
-  rw [Pi.zero_apply, ←ERat.coe_nonneg] at hwi
   show (w i).toERat * u i ≤ (w i).toERat * v i
-  sorry
+  match hui : u i with
+  | ⊥ => sorry
+  | ⊤ => sorry
+  | (p : ℚ) =>
+    match hvi : v i with
+    | ⊥ => sorry
+    | ⊤ => sorry
+    | (q : ℚ) =>
+      rw [←ERat.coe_mul, ←ERat.coe_mul, ERat.coe_le_coe_iff]
+      have hpq : p ≤ q
+      · rw [←ERat.coe_le_coe_iff]
+        rw [hui, hvi] at huvi
+        exact huvi
+      exact mul_le_mul_of_nonneg_left hpq (hw i)
 
 lemma Matrix.neg_dotProd (v : J → ℚ∞) (w : J → ℚ) : -v ᵥ⬝ w = -(v ᵥ⬝ w) := by
   sorry
