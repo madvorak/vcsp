@@ -206,6 +206,10 @@ theorem ExtendedLP.weakDuality {P : ExtendedLP I J} {p : ℚ∞} (hP : P.Reaches
   convert neg_neg (P.b ᵥ⬝ y)
   exact Matrix.neg_dotProd P.b y
 
+lemma unbounded_of_todo {P : ExtendedLP I J} (hP : P.IsFeasible) (hQ : ¬P.dualize.IsFeasible)
+    (p : ℚ) (hp : P.IsBoundedBy p.toERat) : False := by
+  sorry
+
 lemma ERat.sub_nonpos_iff {p q : ℚ∞} : p - q ≤ 0 ↔ p ≤ q := by
   match p with
   | ⊥ => convert_to True ↔ True <;> simp
@@ -348,11 +352,22 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
 
 theorem ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFeasible) :
     Opposites P.optimum P.dualize.optimum := by
-  sorry
+  if hQ : P.dualize.IsFeasible then
+    exact P.strongDuality_of_both_feas hP hQ
+  else
+    have hPopt : P.optimum = some ⊤
+    · simp [ExtendedLP.optimum, hP]
+      intro p hp
+      exfalso
+      exact unbounded_of_todo hP hQ p hp
+    have hQopt : P.dualize.optimum = some ⊥
+    · simp [ExtendedLP.optimum, hQ]
+    rw [hPopt, hQopt]
+    exact ERat.neg_bot.symm
 
-theorem ExtendedLP.strongDuality_of_dual_feas {P : ExtendedLP I J} (hP : P.dualize.IsFeasible) :
+theorem ExtendedLP.strongDuality_of_dual_feas {P : ExtendedLP I J} (hQ : P.dualize.IsFeasible) :
     Opposites P.optimum P.dualize.optimum := by
-  have result := P.dualize_dualize ▸ P.dualize.strongDuality_of_prim_feas hP
+  have result := P.dualize_dualize ▸ P.dualize.strongDuality_of_prim_feas hQ
   rwa [opposites_comm]
 
 theorem ExtendedLP.strongDuality {P : ExtendedLP I J} (hP : P.IsFeasible ∨ P.dualize.IsFeasible) :
