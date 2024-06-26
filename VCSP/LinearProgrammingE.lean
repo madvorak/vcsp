@@ -63,23 +63,45 @@ noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
   else
     some ⊥ -- infeasible
 
+lemma ExtendedLP.optimum_unique {P : ExtendedLP I J} {r s : ℚ}
+    (hPr : P.Reaches r.toERat ∧ P.IsBoundedBy r.toERat) (hPs : P.Reaches s.toERat ∧ P.IsBoundedBy s.toERat) :
+    r = s := by
+  apply eq_of_le_of_le <;> rw [←ERat.coe_le_coe_iff]
+  · apply hPs.right
+    exact hPr.left
+  · apply hPr.right
+    exact hPs.left
+
+lemma Matrix.dotProd_eq_bot {v : J → ℚ∞} {w : J → ℚ} (hvw : v ᵥ⬝ w = ⊥) : ∃ j : J, v j = ⊥ := by
+  sorry
+
+lemma ExtendedLP.cannot_reach_bot {P : ExtendedLP I J} (hP : P.Reaches ⊥) : False := by
+  obtain ⟨p, -, hp⟩ := hP
+  exact P.hcj (Matrix.dotProd_eq_bot hp)
+
 lemma ExtendedLP.optimum_eq_of_reaches_bounded {P : ExtendedLP I J} {r : ℚ∞}
     (reaches : P.Reaches r) (bounded : P.IsBoundedBy r) :
     P.optimum = r := by
+  have hP : P.IsFeasible
+  · obtain ⟨x, hx, -⟩ := reaches
+    exact ⟨x, hx⟩
   match r with
   | ⊥ =>
     exfalso
-    sorry
+    exact P.cannot_reach_bot reaches
   | ⊤ =>
-    sorry
+    simp [ExtendedLP.optimum, hP]
+    intro p hp
+    exfalso
+    simpa using hp ⊤ reaches
   | (p : ℚ) =>
-    have hP : P.IsFeasible := sorry
     have hPu : ∃ u : ℚ, P.IsBoundedBy u.toERat
     · use p
-    simp only [optimum, hP, ite_true, hPu, dite_some_none_eq_some]
-    use ⟨p, reaches, bounded⟩
+    have hPP : ∃ r : ℚ, P.Reaches r.toERat ∧ P.IsBoundedBy r.toERat
+    · use p
+    simp [ExtendedLP.optimum, hP, hPu, hPP]
     congr
-    sorry -- TODO optimum is unique (the maximum, not the argmax)
+    exact ExtendedLP.optimum_unique hPP.choose_spec ⟨reaches, bounded⟩
 
 /-- `Opposites p q` essentially says `p ≠ none ∧ q ≠ none ∧ p = -q`. -/
 def Opposites : Option ℚ∞ → Option ℚ∞ → Prop
@@ -208,7 +230,16 @@ theorem ExtendedLP.weakDuality {P : ExtendedLP I J} {p : ℚ∞} (hP : P.Reaches
 
 lemma unbounded_of_todo {P : ExtendedLP I J} (hP : P.IsFeasible) (hQ : ¬P.dualize.IsFeasible)
     (p : ℚ) (hp : P.IsBoundedBy p.toERat) : False := by
-  sorry
+  obtain ⟨x, hx⟩ := hP
+  have hP' : P.Reaches (P.c ᵥ⬝ x)
+  · use x
+  match hp' : P.c ᵥ⬝ x with
+  | ⊥ => sorry
+  | ⊤ => sorry
+  | (p' : ℚ) =>
+    rw [hp'] at hP'
+    specialize hp p' hP'
+    sorry
 
 lemma ERat.sub_nonpos_iff {p q : ℚ∞} : p - q ≤ 0 ↔ p ≤ q := by
   match p with
