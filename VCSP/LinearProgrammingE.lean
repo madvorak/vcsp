@@ -126,12 +126,12 @@ lemma opposites_comm (p q : Option ℚ∞) : Opposites p q ↔ Opposites q p := 
       if hrs : r = -s then
         convert_to True ↔ True
         · simpa [Opposites]
-        · simp [Opposites, neg_eq_iff_eq_neg.mpr hrs]
+        · simpa [Opposites, neg_eq_iff_eq_neg] using hrs.symm
         rfl
       else
         convert_to False ↔ False
         · simpa [Opposites]
-        · simp [Opposites, show s ≠ -r from fun hsr => hrs (neg_eq_iff_eq_neg.mp hsr.symm)]
+        · simpa [Opposites, neg_eq_iff_eq_neg] using Ne.symm hrs
         rfl
 
 /-- Note that `ExtendedLP.dualize` is significantly different from `StandardLP.dualize`;
@@ -391,7 +391,9 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     simp [Matrix.transpose_fromRows, Matrix.fromBlocks_transpose] at hAy
     have hcb : Matrix.co1 (Sum.elim (-P.c) P.b) ₘ* y ∘ Sum.inr = -(Sum.elim (y (Sum.inr 0) • P.c) (y (Sum.inr 0) • -P.b))
     · ext k
-      sorry
+      cases k <;> simp [Matrix.mulWeig, Matrix.dotProd, mul_comm]
+      · sorry
+      · sorry
     sorry
 
 theorem ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFeasible) :
