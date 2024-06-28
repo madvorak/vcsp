@@ -3,6 +3,7 @@ import VCSP.FarkasSpecial
 
 open scoped Matrix
 
+
 /-- Linear program over `ℚ∞` in the standard form (system of linear inequalities with nonnegative `ℚ` variables).
     Variables are of type `J`. Conditions are indexed by type `I`. -/
 structure ExtendedLP (I J : Type*) where
@@ -211,15 +212,6 @@ lemma Matrix.zero_dotProd {w : J → ℚ} : (0 : J → ℚ∞) ᵥ⬝ w = 0 := b
   rw [Pi.zero_apply]
   exact smul_zero (w j)
 
--- TODO what assumptions do the following five lemmas need?
-
-lemma Matrix.dotProd_zero {v : J → ℚ∞} : v ᵥ⬝ (0 : J → ℚ) = 0 := by
-  apply Finset.sum_eq_zero
-  intro j _
-  rw [Pi.zero_apply]
-  apply ERat.zero_mul
-  sorry
-
 lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → ℚ} (huv : u ≤ v) (hw : 0 ≤ w) :
     u ᵥ⬝ w ≤ v ᵥ⬝ w := by
   apply Finset.sum_le_sum
@@ -227,12 +219,33 @@ lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → �
   have huvi := huv i
   show (w i).toERat * u i ≤ (w i).toERat * v i
   match hui : u i with
-  | ⊥ => sorry
-  | ⊤ => sorry
+  | ⊥ =>
+    rw [ERat.coe_mul_bot_of_nneg (hw i)]
+    apply bot_le
+  | ⊤ =>
+    match hvi : v i with
+    | ⊥ =>
+      exfalso
+      rw [hui, hvi] at huvi
+      exact (bot_lt_top.trans_le huvi).false
+    | ⊤ =>
+      rfl
+    | (q : ℚ) =>
+      exfalso
+      rw [hui, hvi] at huvi
+      exact ((ERat.coe_lt_top q).trans_le huvi).false
   | (p : ℚ) =>
     match hvi : v i with
-    | ⊥ => sorry
-    | ⊤ => sorry
+    | ⊥ =>
+      exfalso
+      rw [hui, hvi] at huvi
+      exact ((ERat.bot_lt_coe p).trans_le huvi).false
+    | ⊤ =>
+      if hwi0 : w i = 0 then
+        rw [hwi0, ERat.coe_zero, ERat.zero_mul (ERat.coe_ne_bot p), ERat.zero_mul bot_lt_top.ne.symm]
+      else
+        rw [ERat.coe_mul_top_of_pos (lt_of_le_of_ne (hw i) (Ne.symm hwi0))]
+        apply le_top
     | (q : ℚ) =>
       rw [←ERat.coe_mul, ←ERat.coe_mul, ERat.coe_le_coe_iff]
       have hpq : p ≤ q
@@ -240,6 +253,8 @@ lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → �
         rw [hui, hvi] at huvi
         exact huvi
       exact mul_le_mul_of_nonneg_left hpq (hw i)
+
+-- TODO what assumptions do the following three lemmas need?
 
 lemma Matrix.neg_dotProd (v : J → ℚ∞) (w : J → ℚ) : -v ᵥ⬝ w = -(v ᵥ⬝ w) := by
   sorry
@@ -310,9 +325,36 @@ lemma ERat.mul_lt_mul_left {x : ℚ} (hx : 0 < x) (y z : ℚ∞) : -- TODO ass?
     x • y < x • z ↔ y < z := by
   sorry
 
-lemma ERat.smul_neg (x : ℚ) (y : ℚ∞) : -- TODO ass?
+lemma ERat.smul_neg (x : ℚ) (y : ℚ∞) :
     x • (-y) = -(x • y) := by
-  sorry
+  show x.toERat * (-y) = -(x.toERat * y)
+  match y with
+  | ⊥ =>
+    rw [neg_bot]
+    if hx : 0 < x then
+      rw [ERat.coe_mul_top_of_pos hx, ERat.coe_mul_bot_of_nneg hx.le, neg_bot]
+    else
+      if hx' : x < 0 then
+        rw [ERat.coe_mul_bot_of_neg hx', ERat.coe_mul_top_of_neg hx', neg_top]
+      else
+        push_neg at hx hx'
+        rw [show x = 0 from eq_of_le_of_le hx hx']
+        show 0 = ⊤
+        sorry -- TODO exclude !!!!!
+  | ⊤ =>
+    rw [neg_top]
+    if hx : 0 < x then
+      rw [ERat.coe_mul_top_of_pos hx, ERat.coe_mul_bot_of_nneg hx.le, neg_top]
+    else
+      if hx' : x < 0 then
+        rw [ERat.coe_mul_bot_of_neg hx', ERat.coe_mul_top_of_neg hx', neg_bot]
+      else
+        push_neg at hx hx'
+        rw [show x = 0 from eq_of_le_of_le hx hx']
+        show ⊥ = 0
+        sorry -- TODO exclude !!!!!
+  | (q : ℚ) =>
+    rw [←ERat.coe_mul, ←ERat.coe_neg, ←ERat.coe_mul, mul_neg, ERat.coe_neg]
 
 lemma ERat.vec_smul_neg (x : ℚ) (y : I → ℚ∞) : -- TODO ass?
     x • (-y) = -(x • y) := by
@@ -417,7 +459,90 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
               apply P.hbi
               use iₜ
         )
-        sorry sorry sorry) with
+        (by
+          intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
+          cases k with
+          | inl j =>
+            cases s with
+            | inl s' =>
+              cases s' with
+              | inl iₛ =>
+                rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₁] at hks
+                cases t with
+                | inl t' =>
+                  cases t' with
+                  | inl iₜ =>
+                    rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₁] at hkt
+                    exact P.hAj ⟨j, ⟨⟨iₛ, hks⟩, ⟨iₜ, hkt⟩⟩⟩
+                  | inr jₜ =>
+                    rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₁] at hkt
+                    simp at hkt
+                | inr =>
+                  apply P.hcj
+                  use j
+                  simpa using hkt
+              | inr jₛ =>
+                rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₁] at hks
+                simp at hks
+            | inr =>
+              cases t with
+              | inl t' =>
+                cases t' with
+                | inl iₜ =>
+                  rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₁] at hkt
+                  exact P.hAc ⟨j, ⟨⟨iₜ, hkt⟩, by simpa using hks⟩⟩
+                | inr jₜ =>
+                  rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₁] at hkt
+                  simp at hkt
+              | inr =>
+                apply P.hcj
+                use j
+                simpa using hkt
+          | inr i =>
+            cases s with
+            | inl s' =>
+              cases s' with
+              | inl iₛ =>
+                rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₂] at hks
+                simp at hks
+              | inr jₛ =>
+                rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₂] at hks
+                cases t with
+                | inl t' =>
+                  cases t' with
+                  | inl iₜ =>
+                    rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₂] at hkt
+                    simp at hkt
+                  | inr jₜ =>
+                    rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₂] at hkt
+                    apply P.hAi
+                    use i
+                    constructor
+                    · use jₜ
+                      simpa using hkt
+                    · use jₛ
+                      simpa using hks
+                | inr =>
+                  apply P.hbi
+                  use i
+                  simpa using hkt
+            | inr =>
+              rw [Matrix.fromRows_apply_inr] at hks
+              cases t with
+              | inl t' =>
+                cases t' with
+                | inl iₜ =>
+                  rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₂] at hkt
+                  simp at hkt
+                | inr jₜ =>
+                  rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₂] at hkt
+                  exact P.hAb ⟨i, ⟨jₜ, by simpa using hkt⟩, hks⟩
+              | inr =>
+                apply P.hbi
+                use i
+                simpa using hkt
+        )
+        sorry sorry) with
   | inl case_x =>
     obtain ⟨x, hx, hAx⟩ := case_x
     rw [
@@ -509,7 +634,7 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasi
           exact hbcy.trans_le hcylr
         clear hcylr
         sorry
-    have hbcy' : (y (Sum.inr 0) • P.b) ᵥ⬝ ((y ∘ Sum.inl)) ∘ Sum.inl < (y (Sum.inr 0) • P.c) ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inr
+    have hbcy' : (y (Sum.inr 0) • P.b) ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inl < (y (Sum.inr 0) • P.c) ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inr
     · rw [←ERat.mul_lt_mul_left y_last_pos] at hbcy
       convert hbcy <;> simp [Matrix.ERat_smul_dotProd]
     have hAyb' : y (Sum.inr 0) • P.c ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inr ≤ P.Aᵀ ₘ* (y ∘ Sum.inl) ∘ Sum.inl ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inr

@@ -232,7 +232,7 @@ theorem StandardLP.strongDuality [DecidableEq I] [DecidableEq J] [LinearOrderedF
             apply nneg_comp hy
         else
           exact hs (P.b ⬝ᵥ q) (le_of_not_ge s_low) q ⟨hAq, hq⟩ rfl
-    have hbcy' : (y (Sum.inr 0) • P.b) ⬝ᵥ ((y ∘ Sum.inl)) ∘ Sum.inl < (y (Sum.inr 0) • P.c) ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
+    have hbcy' : (y (Sum.inr 0) • P.b) ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inl < (y (Sum.inr 0) • P.c) ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
     · rw [←mul_lt_mul_left y_last_pos] at hbcy
       convert hbcy <;> simp
     have hAyb' : y (Sum.inr 0) • P.c ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr ≤ P.Aᵀ *ᵥ (y ∘ Sum.inl) ∘ Sum.inl ⬝ᵥ (y ∘ Sum.inl) ∘ Sum.inr
