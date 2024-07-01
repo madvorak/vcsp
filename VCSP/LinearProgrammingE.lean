@@ -463,11 +463,14 @@ lemma Matrix.no_top_dotProd_nneg {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊤) {w
   | ⊤ => exact false_of_ne (hvi ▸ hv i)
   | (q : ℚ) => exact ERat.coe_ne_top _ (hvi ▸ hi)
 
-lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J} (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
+variable [DecidableEq I] [DecidableEq J]
+
+lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J}
+    (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     Opposites P.optimum P.dualize.optimum := by
   cases
     or_of_neq
-      (@extendedFarkas _ _ _ _
+      (@extendedFarkas _ _ _ _ _
         (Matrix.fromRows
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
           (Matrix.ro1 (Sum.elim (-P.c) P.b)))
