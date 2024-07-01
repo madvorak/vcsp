@@ -52,7 +52,7 @@ lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞
       exfalso
       rw [Multiset.sum_zero] at hs
       exact ERat.zero_ne_bot hs
-    | @cons a m ih =>
+    | cons a m ih =>
       rw [Multiset.mem_cons]
       rw [Multiset.sum_cons] at hs
       match a with
@@ -95,7 +95,7 @@ lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞
     | empty =>
       exfalso
       exact Multiset.not_mem_zero ⊥ hs
-    | @cons a m ih =>
+    | cons a m ih =>
       rw [Multiset.sum_cons]
       rw [Multiset.mem_cons] at hs
       cases hs with
@@ -108,7 +108,7 @@ lemma Multiset.sum_eq_ERat_top {s : Multiset ℚ∞} (htop : ⊤ ∈ s) (hbot : 
   | empty =>
     exfalso
     exact Multiset.not_mem_zero ⊤ htop
-  | @cons a m ih =>
+  | cons a m ih =>
     rw [Multiset.sum_cons]
     rw [Multiset.mem_cons] at htop
     cases htop with
