@@ -266,7 +266,11 @@ section specialFarkas
 set_option maxHeartbeats 666666 in
 /-- Just like `inequalityFarkas_neg` but for `A` and `b` over extended rationals;
     neither is a generalization of the other. -/
-theorem extendedFarkas [DecidableEq I] {A : Matrix I J ℚ∞} {b : I → ℚ∞}
+theorem extendedFarkas [DecidableEq I]
+    -- The matrix (LHS)
+    (A : Matrix I J ℚ∞)
+    -- The upper-bounding vector (RHS)
+    (b : I → ℚ∞)
     -- `A` must not have both `⊥` and `⊤` in the same row
     (hA : ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤))
     -- `A` must not have both `⊥` and `⊤` in the same column

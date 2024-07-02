@@ -2,7 +2,7 @@ import Lake
 open Lake DSL
 
 package vcsp {
-  moreServerOptions := #[⟨`autoImplicit, false⟩, ⟨`pp.structureInstances, false⟩] -- , ⟨`linter.oldObtain, false⟩
+  moreServerOptions := #[⟨`autoImplicit, false⟩, ⟨`pp.structureInstances, false⟩, ⟨`linter.oldObtain, false⟩]
 }
 
 require mathlib from git

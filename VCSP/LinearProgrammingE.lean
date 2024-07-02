@@ -51,7 +51,7 @@ def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
   ∀ p : ℚ∞, P.Reaches p → p ≤ r
 
 open scoped Classical in
-/-- Extended notion of "maximum" of LP. -/
+/-- Extended notion of "optimum" of "maximization" LP. -/
 noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
   if P.IsFeasible then
     if ∃ u : ℚ, P.IsBoundedBy u.toERat then
@@ -206,10 +206,9 @@ lemma Matrix.sumElim_dotProd_sumElim (u : I → ℚ∞) (v : J → ℚ∞) (x : 
     Sum.elim u v ᵥ⬝ Sum.elim x y = u ᵥ⬝ x + v ᵥ⬝ y := by
   simp [Matrix.dotProd]
 
-lemma Matrix.zero_dotProd {w : J → ℚ} : (0 : J → ℚ∞) ᵥ⬝ w = 0 := by
+lemma Matrix.zero_dotProd (w : J → ℚ) : (0 : J → ℚ∞) ᵥ⬝ w = 0 := by
   apply Finset.sum_eq_zero
   intro j _
-  rw [Pi.zero_apply]
   exact smul_zero (w j)
 
 lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → ℚ} (huv : u ≤ v) (hw : 0 ≤ w) :
@@ -256,10 +255,13 @@ lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → �
 -- TODO what assumptions do the following three lemmas need?
 
 lemma Matrix.neg_dotProd (v : J → ℚ∞) (w : J → ℚ) : -v ᵥ⬝ w = -(v ᵥ⬝ w) := by
+  --rw [eq_neg_iff_add_eq_zero]
+  --rw [←Finset.sum_neg_distrib]
   sorry
 
 lemma Matrix.neg_mulWeig (A : Matrix I J ℚ∞) (w : J → ℚ) : -A ₘ* w = -(A ₘ* w) := by
-  sorry
+  ext
+  apply Matrix.neg_dotProd
 
 lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ) (w : J → ℚ) :
     Mᵀ ₘ* v ᵥ⬝ w = M ₘ* w ᵥ⬝ v := by
@@ -280,8 +282,8 @@ theorem ExtendedLP.weakDuality {P : ExtendedLP I J} {p : ℚ∞} (hP : P.Reaches
   convert neg_neg (P.b ᵥ⬝ y)
   exact Matrix.neg_dotProd P.b y
 
-lemma unbounded_of_todo {P : ExtendedLP I J} (hP : P.IsFeasible) (hQ : ¬P.dualize.IsFeasible) -- ????????????????????
-    (p : ℚ) (hp : P.IsBoundedBy p.toERat) : False := by
+lemma unbounded_of_todo {P : ExtendedLP I J} (hP : P.IsFeasible) (hQ : ¬P.dualize.IsFeasible) {p : ℚ} -- WTF ???
+    (hp : P.IsBoundedBy p.toERat) : False := by
   obtain ⟨x, hx⟩ := hP
   have hP' : P.Reaches (P.c ᵥ⬝ x)
   · use x
@@ -330,7 +332,7 @@ lemma ERat.add_neg_lt_zero_iff {r s : ℚ∞} (neq_bot : r ≠ ⊥ ∨ s ≠ ⊥
     | ⊤ => convert_to False ↔ False <;> simp [←sub_eq_add_neg]
     | (p : ℚ) => simp [←ERat.coe_neg, ←ERat.coe_add]
 
-lemma ERat.mul_lt_mul_left {x : ℚ} (hx : 0 < x) (y z : ℚ∞) :
+lemma ERat.smul_lt_smul_left {x : ℚ} (hx : 0 < x) (y z : ℚ∞) :
     x • y < x • z ↔ y < z := by
   show x.toERat * y < x.toERat * z ↔ y < z
   match z with
@@ -375,9 +377,9 @@ lemma ERat.mul_lt_mul_left {x : ℚ} (hx : 0 < x) (y z : ℚ∞) :
       rfl
     | (p : ℚ) =>
       rw [←ERat.coe_mul, ←ERat.coe_mul, ERat.coe_lt_coe_iff, ERat.coe_lt_coe_iff]
-      exact _root_.mul_lt_mul_left hx
+      exact mul_lt_mul_left hx
 
-lemma ERat.smul_neg (x : ℚ) (y : ℚ∞) :
+lemma ERat.smul_neg {x : ℚ} {y : ℚ∞} (hxy : x = 0 → y ≠ ⊥ ∧ y ≠ ⊤) :
     x • (-y) = -(x • y) := by
   show x.toERat * (-y) = -(x.toERat * y)
   match y with
@@ -389,10 +391,8 @@ lemma ERat.smul_neg (x : ℚ) (y : ℚ∞) :
       if hx' : x < 0 then
         rw [ERat.coe_mul_bot_of_neg hx', ERat.coe_mul_top_of_neg hx', neg_top]
       else
-        push_neg at hx hx'
-        rw [show x = 0 from eq_of_le_of_le hx hx']
-        show 0 = ⊤
-        sorry -- TODO exclude `x = 0` when `y = ⊥` !
+        exfalso
+        simp [show x = 0 by linarith] at hxy
   | ⊤ =>
     rw [neg_top]
     if hx : 0 < x then
@@ -401,17 +401,22 @@ lemma ERat.smul_neg (x : ℚ) (y : ℚ∞) :
       if hx' : x < 0 then
         rw [ERat.coe_mul_bot_of_neg hx', ERat.coe_mul_top_of_neg hx', neg_bot]
       else
-        push_neg at hx hx'
-        rw [show x = 0 from eq_of_le_of_le hx hx']
-        show ⊥ = 0
-        sorry -- TODO exclude `x = 0` when `y = ⊤` !
+        exfalso
+        simp [show x = 0 by linarith] at hxy
   | (q : ℚ) =>
     rw [←ERat.coe_mul, ←ERat.coe_neg, ←ERat.coe_mul, mul_neg, ERat.coe_neg]
 
-lemma ERat.vec_smul_neg (x : ℚ) (y : I → ℚ∞) : -- TODO assumptions from above!
+lemma ERat.pos_smul_neg {x : ℚ} (hx : 0 < x) (y : ℚ∞) :
     x • (-y) = -(x • y) := by
-  ext
   apply ERat.smul_neg
+  intro h0
+  exfalso
+  exact (h0 ▸ hx).false
+
+lemma ERat.pos_smul_neg_vec {x : ℚ} (hx : 0 < x) (y : I → ℚ∞) :
+    x • (-y) = -(x • y) := by
+  ext i
+  exact ERat.pos_smul_neg hx (y i)
 
 lemma ERat.vec_zero_smul {a : I → ℚ∞} (ha : ∀ i, a i ≠ ⊥) : (0 : ℚ) • a = 0 := by
   ext i
@@ -470,7 +475,7 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J}
     Opposites P.optimum P.dualize.optimum := by
   cases
     or_of_neq
-      (@extendedFarkas _ _ _ _ _
+      (extendedFarkas
         (Matrix.fromRows
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
           (Matrix.ro1 (Sum.elim (-P.c) P.b)))
@@ -674,10 +679,15 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J}
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
     exfalso
     simp [Matrix.transpose_fromRows, Matrix.fromBlocks_transpose] at hAy
-    -- TODO `have y_last_pos : 0 < y (Sum.inr 0)` before using `ERat.smul_neg`
+    have y_last_pos : 0 < y (Sum.inr 0)
+    · by_contra contr
+      have last_zero : y (Sum.inr 0) = 0
+      · exact (eq_of_le_of_not_lt (hy (Sum.inr 0)) contr).symm
+      clear contr
+      sorry
     have hcb : Matrix.col (Fin 1) (Sum.elim (-P.c) P.b) ₘ* y ∘ Sum.inr = -(Sum.elim (y (Sum.inr 0) • P.c) (y (Sum.inr 0) • -P.b))
     · ext k
-      cases k <;> simp [Matrix.mulWeig, Matrix.dotProd, mul_comm, ERat.smul_neg]
+      cases k <;> simp [Matrix.mulWeig, Matrix.dotProd, mul_comm, ERat.pos_smul_neg y_last_pos]
     rw [
       ←Sum.elim_comp_inl_inr y, Matrix.fromColumns_mulWeig_sumElim,
       Matrix.fromBlocks_neg, Matrix.ERat_neg_neg, Matrix.ERat_neg_zero, Matrix.ERat_neg_zero, Matrix.neg_mulWeig,
@@ -705,40 +715,14 @@ lemma ExtendedLP.strongDuality_of_both_feas {P : ExtendedLP I J}
       · intro i contr
         exact P.hbi ⟨i, contr⟩
       · apply nneg_comp hy
-    have y_last_pos : 0 < y (Sum.inr 0)
-    · by_contra contr
-      have last_zero : y (Sum.inr 0) = 0
-      · exact (eq_of_le_of_not_lt (hy (Sum.inr 0)) contr).symm
-      rw [last_zero, ERat.vec_zero_smul] at hAyb hAyc
-      swap
-      · intro i contr
-        apply P.hbi
-        use i
-        simpa using contr
-      swap
-      · intro j contr
-        apply P.hcj
-        use j
-      clear contr last_zero
-      rw [add_zero] at hAyc
-      if hcylr : 0 < P.c ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inr then
-        sorry
-      else
-        have hbyll : P.b ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inl < 0
-        · rw [not_lt] at hcylr
-          exact hbcy.trans_le hcylr
-        clear hcylr
-        sorry
     have hbcy' : (y (Sum.inr 0) • P.b) ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inl < (y (Sum.inr 0) • P.c) ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inr
-    · rw [←ERat.mul_lt_mul_left y_last_pos] at hbcy
+    · rw [←ERat.smul_lt_smul_left y_last_pos] at hbcy
       convert hbcy <;> simp [Matrix.ERat_smul_dotProd]
     have hAyb' : y (Sum.inr 0) • P.c ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inr ≤ P.Aᵀ ₘ* (y ∘ Sum.inl) ∘ Sum.inl ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inr
-    · apply Matrix.dotProd_le_dotProd_of_nneg_right hAyb
-      apply nneg_comp hy
+    · exact Matrix.dotProd_le_dotProd_of_nneg_right hAyb (nneg_comp hy _)
     have hAyc' : P.A ₘ* (y ∘ Sum.inl) ∘ Sum.inr ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inl ≤ y (Sum.inr 0) • P.b ᵥ⬝ (y ∘ Sum.inl) ∘ Sum.inl
-    · rw [ERat.vec_smul_neg, ERat.vec_sub_nonpos_iff'] at hAyc
-      apply Matrix.dotProd_le_dotProd_of_nneg_right hAyc
-      apply nneg_comp hy
+    · rw [ERat.pos_smul_neg_vec y_last_pos, ERat.vec_sub_nonpos_iff'] at hAyc
+      exact Matrix.dotProd_le_dotProd_of_nneg_right hAyc (nneg_comp hy _)
     rw [Matrix.transpose_mulWeig_dotProd] at hAyb'
     exact ((hbcy'.trans_le hAyb').trans_le hAyc').false
 
@@ -751,7 +735,7 @@ theorem ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFea
     · simp [ExtendedLP.optimum, hP]
       intro p hp
       exfalso
-      exact unbounded_of_todo hP hQ p hp
+      exact unbounded_of_todo hP hQ hp
     have hQopt : P.dualize.optimum = some ⊥
     · simp [ExtendedLP.optimum, hQ]
     rw [hPopt, hQopt]

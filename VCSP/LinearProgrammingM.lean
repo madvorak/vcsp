@@ -1,22 +1,6 @@
 import VCSP.FarkasBartl
-
-
+import Mathlib.Analysis.Convex.Cone.Pointed
 import Mathlib.Analysis.InnerProductSpace.Adjoint
-noncomputable section experimental
-
-example {V W R : Type*} [RCLike R]
-    [NormedAddCommGroup V] [InnerProductSpace R V] [CompleteSpace V]
-    [NormedAddCommGroup W] [InnerProductSpace R W] [CompleteSpace W]
-    (f : V →L[R] W) : W →L[R] V :=
-  ContinuousLinearMap.adjoint f
-
-example {V W R : Type*} [RCLike R]
-    [NormedAddCommGroup V] [InnerProductSpace R V] [FiniteDimensional R V]
-    [NormedAddCommGroup W] [InnerProductSpace R W] [FiniteDimensional R W]
-    (f : V →ₗ[R] W) : W →ₗ[R] V :=
-  LinearMap.adjoint f
-
-end experimental
 
 
 /-!
@@ -35,27 +19,31 @@ We define linear programs in the coordinate-free form.
 
 -/
 
-structure CoordinateFreeLP (V W R : Type*) [OrderedSemiring R]
-    [OrderedAddCommGroup V] [Module R V] [PosSMulMono R V]
-    [OrderedAddCommGroup W] [Module R W] where
+structure CoordinateFreeLP (V W : Type*)
+    [AddCommGroup V] [Module ℝ V] [TopologicalSpace V]
+    [AddCommGroup W] [Module ℝ W] [TopologicalSpace W]
+    where
   /-- The left-hand-side linear map -/
-  A : V →ₗ[R] W
+  A : V →L[ℝ] W
   /-- The right-hand-side vector -/
   b : W
   /-- The linear function to optimize -/
-  c : V →ₗ[R] R
+  c : V →L[ℝ] ℝ
+  /-- Positive directions -/
+  p : PointedCone ℝ V
 
-open scoped Matrix
-variable {V W R : Type*} [OrderedSemiring R]
-    [OrderedAddCommGroup V] [Module R V] [PosSMulMono R V]
-    [OrderedAddCommGroup W] [Module R W]
+variable {V W : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [NormedOrderedAddGroup W] [InnerProductSpace ℝ W]
 
-def CoordinateFreeLP.IsSolution (P : CoordinateFreeLP V W R) (x : V) : Prop :=
-  P.A x ≤ P.b ∧ 0 ≤ x
+def CoordinateFreeLP.IsSolution (P : CoordinateFreeLP V W) (x : V) : Prop :=
+  P.A x ≤ P.b ∧ x ∈ P.p
 
 /-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`. -/
-def CoordinateFreeLP.IsFeasible (P : CoordinateFreeLP V W R) : Prop :=
+def CoordinateFreeLP.IsFeasible (P : CoordinateFreeLP V W) : Prop :=
   ∃ x : V, P.IsSolution x
 
-def CoordinateFreeLP.Reaches (P : CoordinateFreeLP V W R) (r : R) : Prop :=
+def CoordinateFreeLP.Reaches (P : CoordinateFreeLP V W) (r : ℝ) : Prop :=
   ∃ x : V, P.IsSolution x ∧ P.c x = r
+
+noncomputable def CoordinateFreeLP.adjoint_map [CompleteSpace V] [CompleteSpace W] (P : CoordinateFreeLP V W) :
+    W →L[ℝ] V :=
+  ContinuousLinearMap.adjoint P.A
