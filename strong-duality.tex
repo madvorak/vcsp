@@ -1,0 +1,231 @@
+\documentclass[]{article}
+\usepackage[portrait, margin=5mm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{listings}
+\pagenumbering{gobble}
+
+\begin{document}
+	
+\lstset{
+	basicstyle=\ttfamily\small,
+	literate=
+	{→}{{$\rightarrow$}}1
+	{∀}{{$\forall$}}1
+	{∃}{{$\exists$}}1
+	{×}{{$\times$}}1
+	{σ}{{$\sigma$}}1
+	{τ}{{$\tau$}}1
+	{≠}{{$\neq$}}1
+	{≤}{{$\leq$}}1
+	{≥}{{$\geq$}}1
+	{↔}{{$\iff$}}1
+	{¬}{{$\neg$}}1
+	{∧}{{$\wedge$}}1
+	{•}{$\bullet$}1
+	{·}{$\cdot$}1
+	{⬝}{$\cdot$}1
+	{ℕ}{{$\mathbb{N}$}}1
+	{ₗ}{{$_l$}}1
+	{₀}{{$_0$}}1
+	{∑}{{$\sum$}}1
+	{ᵀ}{{$^\texttt{T}$}}1
+	{ᵥ}{{$_v$}}1
+}
+
+All variables called $x$ or $y$ are always non-negative (column) vectors.
+
+PRIM:
+maximize $c \cdot x$ subject to $A \cdot x \le b$
+
+DUAL:
+maximize $(-b) \cdot y$ subject to $(-A^T) \cdot y \le -c$
+
+Theorem (weak duality of linear programming):
+If PRIM reaches value $p$ and DUAL reaches value $q$, then
+$p \le -q$.
+
+Corollary:
+If PRIM is unbounded, DUAL is infeasible.
+
+Corollary:
+If DUAL is unbounded, PRIM is infeasible.
+\bigskip
+
+Lemma:
+If both PRIM and DUAL are feasible, there exists a value $r$ such that
+PRIM reaches $-r$ and DUAL reaches $r$.
+
+We are searching for a pair of solutions $x, y$ such that
+$-(c \cdot x) = (-b) \cdot y$.
+
+If we are in a ring, it can be simplified to $c \cdot x = b \cdot y$.
+
+Exactly one of the following systems has a solution:
+$$
+\begin{pmatrix}
+	A & 0 \\
+	0 & -A^T \\
+	-c & b
+\end{pmatrix}
+\cdot x
+\;\le\;
+\begin{pmatrix}
+	b \\
+	-c \\
+	0
+\end{pmatrix}
+$$
+
+Or:
+$$
+\begin{pmatrix}
+	-A^T & 0 & c \\
+	0 & A & -b
+\end{pmatrix}
+\cdot y
+\;\le\;
+0
+$$
+$$
+\begin{pmatrix}
+	b & -c & 0
+\end{pmatrix}
+\cdot y
+\;<\;
+0
+$$
+
+First we prove that a solution of the first system provides the desired conclusion.
+
+Then we prove that the second system cannot have a solution,
+hence the solution provided by the first system always exists.
+
+Let's name parts of the vector $x$ so that the first system of inequalities becomes:
+$$
+\begin{pmatrix}
+	A & 0 \\
+	0 & -A^T \\
+	-c & b
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+	x \\
+	y
+\end{pmatrix}
+\;\le\;
+\begin{pmatrix}
+	b \\
+	-c \\
+	0
+\end{pmatrix}
+$$
+
+We obtain $A \cdot x \le b$, $(-A^T) \cdot y \le -c$, and
+$(-c) \cdot x + b \cdot y \le 0$.
+Therefore, $x$ solves PRIM, $y$ solves DUAL, and
+$(-c) \cdot x \le -(b \cdot y)$.
+
+If we are in a ring, it means $c \cdot x \ge b \cdot y$ and
+with the help of the weak duality, $c \cdot x \le b \cdot y$,
+we obtain $c \cdot x = b \cdot y$.
+\bigskip
+
+Let's name parts of the vector $y$ so that the second system of inequalities becomes
+(the last inequality is sharp):
+$$
+\begin{pmatrix}
+	-A^T & 0 & c \\
+	0 & A & -b \\
+	b & -c & 0
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+	y \\
+	x \\
+	z
+\end{pmatrix}
+\;\le\;
+0
+$$
+
+We obtain $(-A^T) \cdot y + c \cdot z \le 0$,
+$A \cdot x + (-b) \cdot z \le 0$, and
+$b \cdot y + (-c) \cdot x < 0$, where
+$z$ is a single non-negative number.
+
+If we are in a field and $z$ happens to be strictly positive, we obtain
+$(-A^T) \cdot (z^{-1} \bullet y) \le -c$,
+hence $(z^{-1} \bullet y)$ solves solves DUAL.
+
+If we are in a field and $z$ happens to be strictly positive, we obtain
+$A \cdot (z^{-1} \bullet x) \le b$,
+hence $(z^{-1} \bullet x)$ solves solves PRIM.
+
+Using the last inequality, we obtain a contradiction with the weak duality.
+
+Assume now $z = 0$.
+We have $(-A^T) \cdot y \le 0$, $A \cdot x \le 0$, and
+at least one of $b \cdot y$ or $(-c) \cdot x$ is strictly negative.
+
+In the latter case, $(-c) \cdot x < 0$, that is, $c \cdot x > 0$,
+we show that PRIM is unbounded.
+
+For contradiction, let $s$ be a number such that
+$c \cdot x < s$ whenever $A \cdot x \le b$.
+
+Since PRIM is feasible, we can take an $x_p$ such that $A \cdot x_p \le b$.
+
+In case $c \cdot x_p > s$, we are done. Assume now $c \cdot x_p \le s$.
+Observe that $\frac{s - c \cdot x_p}{c \cdot x}$ is non-negative.
+
+Use $x_p + \frac{s - c \cdot x_p}{c \cdot x} \bullet x$ as
+a new solution for PRIM:
+$$ A \cdot \left(x_p + \frac{s - c \cdot x_p}{c \cdot x} \bullet x\right)
+ = A \cdot x_p + A \cdot \left(\frac{s - c \cdot x_p}{c \cdot x} \bullet x\right)
+ = A \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x} \cdot A \cdot x
+ \le b + \frac{s - c \cdot x_p}{c \cdot x} \cdot 0
+ = b $$
+$$ c \cdot \left(x_p + \frac{s - c \cdot x_p}{c \cdot x} \bullet x\right)
+ = c \cdot x_p + c \cdot \left(\frac{s - c \cdot x_p}{c \cdot x} \bullet x\right)
+ = c \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x} \cdot c \cdot x
+ = c \cdot x_p + (s - c \cdot x_p)
+ = s $$
+ 
+This contradicts the property of $s$.
+Indeed, PRIM is unbounded, so DUAL must be infeasible,
+which contradicts our assumption.
+
+In the former case, $b \cdot y < 0$, we show that DUAL is unbounded.
+
+For contradiction, let $s$ be a number such that
+$(-b) \cdot y < s$ whenever $(-A^T) \cdot y \le -c$.
+
+Since DUAL is feasible, we can take an $y_q$ such that $(-A^T) \cdot y_q \le -c$.
+
+In case $(-b) \cdot y_q > s$, we are done. Assume now $(-b) \cdot y_q \le s$.
+Observe that $\frac{s - ((-b) \cdot y_q)}{b \cdot y}$ is non-positive
+and that $A^T \!\cdot y$ is non-negative.
+
+Use $y_q - \frac{s - ((-b) \cdot y_q)}{b \cdot y} \bullet y$ as
+a new solution for DUAL:
+$$ (-A^T) \cdot \left( y_q - \frac{s - ((-b) \cdot y_q)}{b \cdot y} \bullet y \right)
+ = (-A^T) \cdot y_q
+ + A^T \cdot \left(\frac{s - ((-b) \cdot y_q)}{b \cdot y} \bullet y \right)
+ = (-A^T) \cdot y_q
+ + \frac{s - ((-b) \cdot y_q)}{b \cdot y} \cdot A^T \cdot y
+ \le -c $$
+$$ (-b) \cdot \left( y_q - \frac{s - ((-b) \cdot y_q)}{b \cdot y} \bullet y \right)
+ = (-b) \cdot y_q
+ + \frac{s - ((-b) \cdot y_q)}{b \cdot y} \cdot b \cdot y
+ = (-b) \cdot y_q + (s - ((-b) \cdot y_q))
+ = ((-b) \cdot y_q) - ((-b) \cdot y_q) + s
+ = s \!\!\!\!\!\!\!\!\!$$
+ 
+This contradicts the property of $s$.
+Indeed, DUAL is unbounded, so PRIM must be infeasible,
+which contradicts our assumption.
+
+
+\end{document}
