@@ -48,8 +48,6 @@ $p \le -q$.
 
 Corollary:
 If PRIM is unbounded, DUAL is infeasible.
-
-Corollary:
 If DUAL is unbounded, PRIM is infeasible.
 \bigskip
 
@@ -173,7 +171,7 @@ In the latter case, $(-c) \cdot x < 0$, that is, $c \cdot x > 0$,
 we show that PRIM is unbounded.
 
 For contradiction, let $s$ be a number such that
-$c \cdot x < s$ whenever $A \cdot x \le b$.
+$c \cdot x < s$ for all $x$ such that $A \cdot x \le b$.
 
 Since PRIM is feasible, we can take an $x_p$ such that $A \cdot x_p \le b$.
 
@@ -200,28 +198,27 @@ which contradicts our assumption.
 In the former case, $b \cdot y < 0$, we show that DUAL is unbounded.
 
 For contradiction, let $s$ be a number such that
-$(-b) \cdot y < s$ whenever $(-A^T) \cdot y \le -c$.
+$(-b) \cdot y < s$ for all $y$ such that $(-A^T) \cdot y \le -c$.
 
 Since DUAL is feasible, we can take an $y_q$ such that $(-A^T) \cdot y_q \le -c$.
 
 In case $(-b) \cdot y_q > s$, we are done. Assume now $(-b) \cdot y_q \le s$.
-Observe that $\frac{s - ((-b) \cdot y_q)}{b \cdot y}$ is non-positive
+Observe that $\frac{s - (-b) \cdot y_q}{b \cdot y}$ is non-positive
 and that $A^T \!\cdot y$ is non-negative.
 
-Use $y_q - \frac{s - ((-b) \cdot y_q)}{b \cdot y} \bullet y$ as
+Use $y_q - \frac{s - (-b) \cdot y_q}{b \cdot y} \bullet y$ as
 a new solution for DUAL:
-$$ (-A^T) \cdot \left( y_q - \frac{s - ((-b) \cdot y_q)}{b \cdot y} \bullet y \right)
+$$ (-A^T) \cdot \left( y_q - \frac{s - (-b) \cdot y_q}{b \cdot y} \bullet y \right)
  = (-A^T) \cdot y_q
- + A^T \cdot \left(\frac{s - ((-b) \cdot y_q)}{b \cdot y} \bullet y \right)
+ + A^T \cdot \left(\frac{s - (-b) \cdot y_q}{b \cdot y} \bullet y \right)
  = (-A^T) \cdot y_q
- + \frac{s - ((-b) \cdot y_q)}{b \cdot y} \cdot A^T \cdot y
+ + \frac{s - (-b) \cdot y_q}{b \cdot y} \cdot A^T \cdot y
  \le -c $$
-$$ (-b) \cdot \left( y_q - \frac{s - ((-b) \cdot y_q)}{b \cdot y} \bullet y \right)
+$$ (-b) \cdot \left( y_q - \frac{s - (-b) \cdot y_q}{b \cdot y} \bullet y \right)
  = (-b) \cdot y_q
- + \frac{s - ((-b) \cdot y_q)}{b \cdot y} \cdot b \cdot y
- = (-b) \cdot y_q + (s - ((-b) \cdot y_q))
- = ((-b) \cdot y_q) - ((-b) \cdot y_q) + s
- = s \!\!\!\!\!\!\!\!\!$$
+ + \frac{s - (-b) \cdot y_q}{b \cdot y} \cdot b \cdot y
+ = (-b) \cdot y_q + (s - (-b) \cdot y_q)
+ = s $$
  
 This contradicts the property of $s$.
 Indeed, DUAL is unbounded, so PRIM must be infeasible,
