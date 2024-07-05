@@ -52,7 +52,7 @@ def StandardLP.IsFeasible [OrderedSemiring R] (P : StandardLP I J R) : Prop :=
 def StandardLP.Reaches [OrderedSemiring R] (P : StandardLP I J R) (r : R) : Prop :=
   ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = r
 
-/-- Dualizes a linear program in the standard form.
+/-- Dualize a linear program in the standard form.
     The matrix gets transposed and its values flip signs.
     The original cost function gets flipped signs as well and becomes the new right-hand-side vector.
     The original right-hand-side vector becomes the new vector of objective function coefficients. -/

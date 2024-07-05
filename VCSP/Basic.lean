@@ -62,6 +62,9 @@ section uncategorized_stuff
 lemma or_of_neq {P Q : Prop} (hPQ : P ≠ Q) : P ∨ Q := by
   tauto
 
+lemma not_and_of_neq {P Q : Prop} (hPQ : P ≠ Q) : ¬(P ∧ Q) := by
+  tauto
+
 lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by
   tauto
 

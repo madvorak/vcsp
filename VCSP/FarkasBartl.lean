@@ -190,9 +190,8 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
       simp_rw [sub_smul]
       rw [Finset.sum_sub_distrib]
       simp_rw [←smul_smul, ←Finset.smul_sum]
-      rw [smul_sub]
       symm
-      rw [finishing_piece]
+      rw [smul_sub, finishing_piece]
       apply add_comm_sub
 
 theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
