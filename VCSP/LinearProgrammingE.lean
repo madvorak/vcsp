@@ -10,13 +10,21 @@ structure ExtendedLP (I J : Type*) where
   /-- The left-hand-side matrix. -/
   A : Matrix I J ℚ∞
   /-- The right-hand-side vector. -/
-  b : I → ℚ
+  b : I → ℚ∞
   /-- The objective function coefficients. -/
-  c : J → ℚ
+  c : J → ℚ∞
   /-- No `⊥` and `⊤` in the same row. -/
   hAi : ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤)
   /-- No `⊥` and `⊤` in the same column. -/
   hAj : ¬∃ j : J, (∃ i : I, A i j = ⊥) ∧ (∃ i : I, A i j = ⊤)
+  /-- No `⊤` in the right-hand-side vector. -/
+  hbi : ¬∃ i : I, b i = ⊤
+  /-- No `⊥` in the objective function coefficients. -/
+  hcj : ¬∃ j : J, c j = ⊥
+  /-- No `⊥` in the row where the right-hand-side vector has `⊥`. -/
+  hAb : ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ b i = ⊥
+  /-- No `⊤` in the column where the objective function has `⊤`. -/
+  hAc : ¬∃ j : J, (∃ i : I, A i j = ⊤) ∧ c j = ⊤
 
 variable {I J : Type*} [Fintype I] [Fintype J]
 
@@ -24,7 +32,7 @@ variable {I J : Type*} [Fintype I] [Fintype J]
     multiplication by matrix `A` from the left yields a vector whose all entries are less or equal
     to corresponding entries of the vector `b`. -/
 def ExtendedLP.IsSolution (P : ExtendedLP I J) (x : J → ℚ) : Prop :=
-  P.A ₘ* x ≤ Rat.toERat ∘ P.b ∧ 0 ≤ x
+  P.A ₘ* x ≤ P.b ∧ 0 ≤ x
 
 /-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`.
     Linear program `P` is considered feasible even if all solutions yield `⊥` as the objective. -/
@@ -34,13 +42,13 @@ def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
 /-- Linear program `P` reaches objective value `r` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the the coefficients `c` and summed up,
     the result is the value `r`. Note that `⊤` can be reached but `⊥` cannot. -/
-def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ) : Prop :=
-  ∃ x : J → ℚ, P.IsSolution x ∧ P.c ⬝ᵥ x = r
+def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
+  ∃ x : J → ℚ, P.IsSolution x ∧ P.c ᵥ⬝ x = r
 
 /-- Linear program `P` is bounded by `r` iff all values reached by `P` are less or equal to `r`.
     Linear program `P` is always bounded by `⊤` which is allowed by this definition. -/
-def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ) : Prop :=
-  ∀ p : ℚ, P.Reaches p → p ≤ r
+def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
+  ∀ p : ℚ∞, P.Reaches p → p ≤ r
 
 lemma Matrix.dotProd_eq_bot {v : J → ℚ∞} {w : J → ℚ} (hw : 0 ≤ w) (hvw : v ᵥ⬝ w = ⊥) :
     ∃ j : J, v j = ⊥ := by
@@ -52,7 +60,7 @@ lemma Matrix.dotProd_eq_bot {v : J → ℚ∞} {w : J → ℚ} (hw : 0 ≤ w) (h
     The original cost function gets flipped signs as well and becomes the new right-hand-side vector.
     The original right-hand-side vector becomes the new vector of objective function coefficients. -/
 def ExtendedLP.dualize (P : ExtendedLP I J) : ExtendedLP J I :=
-  ⟨-P.Aᵀ, -P.c, P.b, by {intro; apply P.hAj; aesop}, by {intro; apply P.hAi; aesop}⟩
+  ⟨-P.Aᵀ, -P.c, P.b, by {intro; apply P.hAj; aesop}, by {intro; apply P.hAi; aesop}, sorry, sorry, sorry, sorry⟩
 
 lemma Matrix.ERat_neg_neg (A : Matrix I J ℚ∞) : -(-A) = A := by
   ext
@@ -112,6 +120,11 @@ lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → �
         rwa [hui, hvi] at huvi
       exact mul_le_mul_of_nonneg_left hpq (hw i)
 
+lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (A₁ : Matrix I₁ J ℚ∞) (A₂ : Matrix I₂ J ℚ∞) (v : J → ℚ) :
+    Matrix.fromRows A₁ A₂ ₘ* v = Sum.elim (A₁ ₘ* v) (A₂ ₘ* v) := by
+  ext i
+  cases i <;> rfl
+
 -- TODO what assumptions do the following three lemmas need?
 
 lemma Matrix.neg_dotProd (v : J → ℚ∞) (w : J → ℚ) : -v ᵥ⬝ w = -(v ᵥ⬝ w) := by
@@ -130,7 +143,8 @@ lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ) (
     ∑ i : I, (v i).toERat * ∑ j : J, (w j).toERat * M i j
   sorry
 
-theorem ExtendedLP.weakDuality {P : ExtendedLP I J} {p : ℚ} (hP : P.Reaches p) {q : ℚ} (hQ : P.dualize.Reaches q) :
+theorem ExtendedLP.weakDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
+    {p : ℚ∞} (hP : P.Reaches p) {q : ℚ∞} (hQ : P.dualize.Reaches q) :
     p ≤ q := by
   obtain ⟨x, ⟨hxb, h0x⟩, rfl⟩ := hP
   obtain ⟨y, ⟨hyc, h0y⟩, rfl⟩ := hQ
@@ -260,11 +274,6 @@ lemma ERat.vec_zero_smul {a : I → ℚ∞} (ha : ∀ i, a i ≠ ⊥) : (0 : ℚ
   ext i
   exact ERat.zero_mul (ha i)
 
-lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (A₁ : Matrix I₁ J ℚ∞) (A₂ : Matrix I₂ J ℚ∞) (v : J → ℚ) :
-    Matrix.fromRows A₁ A₂ ₘ* v = Sum.elim (A₁ ₘ* v) (A₂ ₘ* v) := by
-  ext i
-  cases i <;> rfl
-
 lemma Matrix.fromColumns_mulWeig_sumElim {J₁ J₂ : Type*} [Fintype J₁] [Fintype J₂]
     (A₁ : Matrix I J₁ ℚ∞) (A₂ : Matrix I J₂ ℚ∞) (v₁ : J₁ → ℚ) (v₂ : J₂ → ℚ) :
     Matrix.fromColumns A₁ A₂ ₘ* Sum.elim v₁ v₂ = A₁ ₘ* v₁ + A₂ ₘ* v₂ := by
@@ -306,9 +315,7 @@ lemma Matrix.no_top_dotProd_nneg {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊤) {w
   | ⊤ => exact false_of_ne (hvi ▸ hv i)
   | (q : ℚ) => exact ERat.coe_ne_top _ (hvi ▸ hi)
 
-variable [DecidableEq I] [DecidableEq J]
-
-theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
+theorem ExtendedLP.strongDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     ∃ r : ℚ, P.Reaches r ∧ P.dualize.Reaches r := by
   cases
@@ -316,14 +323,15 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
       (extendedFarkas
         (Matrix.fromRows
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
-          ((Matrix.ro1 (Sum.elim (-P.c) P.b)).map Rat.toERat))
-        (Rat.toERat ∘ Sum.elim (Sum.elim P.b (-P.c)) 0)
+          (Matrix.ro1 (Sum.elim (-P.c) P.b)))
+        (Sum.elim (Sum.elim P.b (-P.c)) 0)
         (by
           intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
           cases k with
           | inl k' =>
             cases k' with
             | inl i =>
+              rw [Matrix.fromRows_apply_inl] at hks hkt
               apply P.hAi
               use i
               constructor
@@ -342,6 +350,7 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
                   exfalso
                   simp at hkt
             | inr j =>
+              rw [Matrix.fromRows_apply_inl] at hks hkt
               apply P.hAj
               use j
               constructor
@@ -359,7 +368,18 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
                 | inr iₛ =>
                   use iₛ
                   simpa using hks
-          | inr => simp at hks
+          | inr =>
+            rw [Matrix.fromRows_apply_inr] at hks hkt
+            simp only [Matrix.row_apply] at hks hkt
+            cases t with
+            | inl jₜ =>
+              rw [Sum.elim_inl, Pi.neg_apply, ERat.neg_eq_top_iff] at hkt
+              apply P.hcj
+              use jₜ
+            | inr iₜ =>
+              rw [Sum.elim_inr] at hkt
+              apply P.hbi
+              use iₜ
         )
         (by
           intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
@@ -369,25 +389,52 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
             | inl s' =>
               cases s' with
               | inl iₛ =>
+                rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₁] at hks
                 cases t with
                 | inl t' =>
                   cases t' with
-                  | inl iₜ => exact P.hAj ⟨j, ⟨⟨iₛ, hks⟩, ⟨iₜ, hkt⟩⟩⟩
-                  | inr jₜ => simp at hkt
-                | inr => simp at hkt
-              | inr jₛ => simp at hks
-            | inr => simp at hks
+                  | inl iₜ =>
+                    rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₁] at hkt
+                    exact P.hAj ⟨j, ⟨⟨iₛ, hks⟩, ⟨iₜ, hkt⟩⟩⟩
+                  | inr jₜ =>
+                    simp at hkt
+                | inr =>
+                  apply P.hcj
+                  use j
+                  simpa using hkt
+              | inr jₛ =>
+                rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₁] at hks
+                simp at hks
+            | inr =>
+              cases t with
+              | inl t' =>
+                cases t' with
+                | inl iₜ =>
+                  rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₁] at hkt
+                  exact P.hAc ⟨j, ⟨⟨iₜ, hkt⟩, by simpa using hks⟩⟩
+                | inr jₜ =>
+                  simp at hkt
+              | inr =>
+                apply P.hcj
+                use j
+                simpa using hkt
           | inr i =>
             cases s with
             | inl s' =>
               cases s' with
-              | inl iₛ => simp at hks
+              | inl iₛ =>
+                rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₂] at hks
+                simp at hks
               | inr jₛ =>
+                rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₂] at hks
                 cases t with
                 | inl t' =>
                   cases t' with
-                  | inl iₜ => simp at hkt
+                  | inl iₜ =>
+                    rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₂] at hkt
+                    simp at hkt
                   | inr jₜ =>
+                    rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₂] at hkt
                     apply P.hAi
                     use i
                     constructor
@@ -395,20 +442,72 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
                       simpa using hkt
                     · use jₛ
                       simpa using hks
-                | inr => simp at hkt
-            | inr => simp at hks
+                | inr =>
+                  apply P.hbi
+                  use i
+                  simpa using hkt
+            | inr =>
+              rw [Matrix.fromRows_apply_inr] at hks
+              cases t with
+              | inl t' =>
+                cases t' with
+                | inl iₜ =>
+                  rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₁₂] at hkt
+                  simp at hkt
+                | inr jₜ =>
+                  rw [Matrix.fromRows_apply_inl, Matrix.fromBlocks_apply₂₂] at hkt
+                  exact P.hAb ⟨i, ⟨jₜ, by simpa using hkt⟩, hks⟩
+              | inr =>
+                apply P.hbi
+                use i
+                simpa using hkt
         )
-        (by simp)
-        (by simp)
+        (by
+          intro ⟨k, ⟨t, hkt⟩, hk⟩
+          cases k with
+          | inl k' =>
+            cases k' with
+            | inl i => exact P.hbi ⟨i, hk⟩
+            | inr j => exact P.hcj ⟨j, by simpa using hk⟩
+          | inr => simp at hk
+        )
+        (by
+          intro ⟨k, ⟨s, hks⟩, hk⟩
+          cases k with
+          | inl k' =>
+            cases k' with
+            | inl i =>
+              cases s with
+              | inl jₛ => exact P.hAb ⟨i, ⟨⟨jₛ, by simpa using hks⟩, hk⟩⟩
+              | inr iₛ => simp at hks
+            | inr j =>
+              cases s with
+              | inl jₛ => simp at hks
+              | inr iₛ => exact P.hAc ⟨j, ⟨⟨iₛ, by simpa using hks⟩, by simpa using hk⟩⟩
+          | inr => simp at hk
+        )
       ) with
   | inl case_x =>
     obtain ⟨x, hx, hAx⟩ := case_x
-    rw [Matrix.fromRows_mulWeig] at hAx
+    rw [
+      Matrix.fromRows_mulWeig, Sum.elim_le_elim_iff,
+      ←Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulWeig, Sum.elim_le_elim_iff,
+      ←Sum.elim_comp_inl_inr x, Matrix.fromColumns_mulWeig_sumElim, Matrix.fromColumns_mulWeig_sumElim,
+      Matrix.zero_mulWeig, add_zero, Matrix.zero_mulWeig, zero_add
+    ] at hAx
     sorry
   | inr case_y =>
     obtain ⟨y, hy, hAy, hbcy⟩ := case_y
     exfalso
-    simp [Matrix.transpose_fromRows, Matrix.fromBlocks_transpose] at hAy
+    rw [
+      Matrix.transpose_fromRows, Matrix.fromBlocks_transpose, Matrix.transpose_zero, Matrix.transpose_zero,
+      Matrix.transpose_neg, Matrix.transpose_transpose, Matrix.transpose_row, Matrix.fromColumns_neg,
+      ←Sum.elim_comp_inl_inr y, Matrix.fromColumns_mulWeig_sumElim,
+      Matrix.fromBlocks_neg, Matrix.ERat_neg_neg, Matrix.ERat_neg_zero, Matrix.ERat_neg_zero, Matrix.neg_mulWeig,
+      ←Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulWeig,
+      ←Sum.elim_comp_inl_inr (y ∘ Sum.inl), Matrix.fromColumns_mulWeig_sumElim, Matrix.fromColumns_mulWeig_sumElim,
+      Matrix.zero_mulWeig, add_zero, Matrix.zero_mulWeig, zero_add,
+    ] at hAy
     have y_last_pos : 0 < y (Sum.inr 0)
     · by_contra contr
       have last_zero : y (Sum.inr 0) = 0

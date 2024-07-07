@@ -73,13 +73,14 @@ protected def rec {C : ERat → Sort*} (h_bot : C ⊥) (h_Rat : ∀ a : ℚ, C a
 protected def mul : ERat → ERat → ERat
   | ⊥, ⊥ => ⊤
   | ⊥, ⊤ => ⊥
-  | ⊥, (y : ℚ) => if 0 ≤ y then ⊥ else ⊤
   | ⊤, ⊥ => ⊥
   | ⊤, ⊤ => ⊤
+  | ⊥, (y : ℚ) => if 0 ≤ y then ⊥ else ⊤
+  | (x : ℚ), ⊥ => if 0 ≤ x then ⊥ else ⊤
   | ⊤, (y : ℚ) => if 0 < y then ⊤ else if y = 0 then 0 else ⊥
   | (x : ℚ), ⊤ => if 0 < x then ⊤ else if x = 0 then 0 else ⊥
-  | (x : ℚ), ⊥ => if 0 ≤ x then ⊥ else ⊤
   | (x : ℚ), (y : ℚ) => (x * y : ℚ)
+-- Note that multiplication is not associative, nor is it distributive wrt addition.
 
 instance : Mul ERat := ⟨ERat.mul⟩
 
