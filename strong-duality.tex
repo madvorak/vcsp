@@ -34,44 +34,44 @@
 	{ᵥ}{{$_v$}}1
 }
 
-All variables called $x$ or $y$ are always non-negative (column) vectors.
+All variables called $x$ or $y$ are always non-negative finite vectors.
+
+Vectors $b$ and $c$ may have positive infinities but no negative infinities.
+
+The matrix $A$ may have any infinities as long as our four conditions (hAi, hAj, hAb, hAc) are satisfied.
 
 PRIM:
-maximize $c \cdot x$ subject to $A \cdot x \le b$
+minimize $c \cdot x$ subject to $A \cdot x \le b$
 
 DUAL:
-maximize $(-b) \cdot y$ subject to $(-A^T) \cdot y \le -c$
+minimize $b \cdot y$ subject to $(-A^T) \cdot y \le c$
 
 Theorem (weak duality of linear programming):
-If PRIM reaches value $p$ and DUAL reaches value $q$, then
-$p \le -q$.
+If $x$ solves PRIM and $y$ solves DUAL, then
+$c \cdot x + b \cdot y \ge 0$.
 
 Corollary:
 If PRIM is unbounded, DUAL is infeasible.
 If DUAL is unbounded, PRIM is infeasible.
 \bigskip
 
-Lemma:
-If both PRIM and DUAL are feasible, there exists a value $r$ such that
-PRIM reaches $-r$ and DUAL reaches $r$.
+Theorem (strong duality of linear programming):
 
-We are searching for a pair of solutions $x, y$ such that
-$-(c \cdot x) = (-b) \cdot y$.
-
-If we are in a ring, it can be simplified to $c \cdot x = b \cdot y$.
+If both PRIM and DUAL are feasible, there exists a pair of solutions $x, y$ such that
+$c \cdot x + b \cdot y = 0$.
 
 Exactly one of the following systems has a solution:
 $$
 \begin{pmatrix}
 	A & 0 \\
 	0 & -A^T \\
-	-c & b
+	c & b
 \end{pmatrix}
 \cdot x
 \;\le\;
 \begin{pmatrix}
 	b \\
-	-c \\
+	c \\
 	0
 \end{pmatrix}
 $$
@@ -79,7 +79,7 @@ $$
 Or:
 $$
 \begin{pmatrix}
-	-A^T & 0 & c \\
+	-A^T & 0 & -c \\
 	0 & A & -b
 \end{pmatrix}
 \cdot y
@@ -88,7 +88,7 @@ $$
 $$
 $$
 \begin{pmatrix}
-	b & -c & 0
+	b & c & 0
 \end{pmatrix}
 \cdot y
 \;<\;
@@ -105,124 +105,170 @@ $$
 \begin{pmatrix}
 	A & 0 \\
 	0 & -A^T \\
-	-c & b
+	c & b
 \end{pmatrix}
 \cdot
 \begin{pmatrix}
-	x \\
-	y
+	x_1 \\
+	y_1
 \end{pmatrix}
 \;\le\;
 \begin{pmatrix}
 	b \\
-	-c \\
+	c \\
 	0
 \end{pmatrix}
 $$
 
-We obtain $A \cdot x \le b$, $(-A^T) \cdot y \le -c$, and
-$(-c) \cdot x + b \cdot y \le 0$.
-Therefore, $x$ solves PRIM, $y$ solves DUAL, and
-$(-c) \cdot x \le -(b \cdot y)$.
+We obtain $A \cdot x_1 \le b$, $(-A^T) \cdot y_1 \le c$, and
+$c \cdot x_1 + b \cdot y_1 \le 0$.
 
-If we are in a ring, it means $c \cdot x \ge b \cdot y$ and
-with the help of the weak duality, $c \cdot x \le b \cdot y$,
-we obtain $c \cdot x = b \cdot y$.
+Therefore, $x_1$ solves PRIM, $y_1$ solves DUAL, and we get
+$c \cdot x_1 + b \cdot y_1 = 0$ with the help of the weak duality.
 \bigskip
 
 Let's name parts of the vector $y$ so that the second system of inequalities becomes
 (the last inequality is sharp):
 $$
 \begin{pmatrix}
-	-A^T & 0 & c \\
+	-A^T & 0 & -c \\
 	0 & A & -b \\
-	b & -c & 0
+	b & c & 0
 \end{pmatrix}
 \cdot
 \begin{pmatrix}
-	y \\
-	x \\
-	z
+	y_0 \\
+	x_0 \\
+	z_0
 \end{pmatrix}
 \;\le\;
 0
 $$
 
-We obtain $(-A^T) \cdot y + c \cdot z \le 0$,
-$A \cdot x + (-b) \cdot z \le 0$, and
-$b \cdot y + (-c) \cdot x < 0$, where
-$z$ is a single non-negative number.
+We obtain
+$(-A^T) \cdot y_0 + (-c) \cdot z_0 \le 0$,
+$A \cdot x_0 + (-b) \cdot z_0 \le 0$, and
+$b \cdot y_0 + c \cdot x_0 < 0$, where
+$z_0$ is a single non-negative number.
 
-If we are in a field and $z$ happens to be strictly positive, we obtain
-$(-A^T) \cdot (z^{-1} \bullet y) \le -c$,
-hence $(z^{-1} \bullet y)$ solves solves DUAL.
+%For simplification, let's assume $z=1$.
 
-If we are in a field and $z$ happens to be strictly positive, we obtain
-$A \cdot (z^{-1} \bullet x) \le b$,
-hence $(z^{-1} \bullet x)$ solves solves PRIM.
+%How do we get from $A \cdot x + (-b) \le 0$ to $A \cdot x \le b$ which we need here?
 
-Using the last inequality, we obtain a contradiction with the weak duality.
+We have $z_0^{-1} \bullet ((-A^T) \cdot y_0 + (-c) \cdot z_0) \le 0$,
+$z_0^{-1} \bullet (A \cdot x_0 + (-b) \cdot z_0) \le 0$, and
+$z_0^{-1} \bullet (b \cdot y_0 + c \cdot x_0) < 0$.
 
-Assume now $z = 0$.
-We have $(-A^T) \cdot y \le 0$, $A \cdot x \le 0$, and
-at least one of $b \cdot y$ or $(-c) \cdot x$ is strictly negative.
+In case $z_0 > 0$, we get
+$z_0^{-1} \bullet (-A^T) \cdot y_0 + z_0^{-1} \bullet (-c) \cdot z_0 \le 0$,
+$z_0^{-1} \bullet A \cdot x_0 + z_0^{-1} \bullet (-b) \cdot z_0 \le 0$, and
+$z_0^{-1} \bullet b \cdot y_0 + z_0^{-1} \bullet c \cdot x_0 < 0$.
 
-In the latter case, $(-c) \cdot x < 0$, that is, $c \cdot x > 0$,
-we show that PRIM is unbounded.
+%Note that we needed $z > 0$ both for associativity of multiplication
+%and for distributivity of $\bullet$ over $+$.
 
-For contradiction, let $s$ be a number such that
-$c \cdot x < s$ for all $x$ such that $A \cdot x \le b$.
+It follows that
+$(-A^T) \cdot (z_0^{-1} \bullet y_0) + (-c) \le 0$,
+$A \cdot (z_0^{-1} \bullet x_0) + (-b) \le 0$, and
+$z_0^{-1} \bullet b \cdot y_0 + z_0^{-1} \bullet c \cdot x_0 < 0$.
 
-Since PRIM is feasible, we can take an $x_p$ such that $A \cdot x_p \le b$.
+Using hAb we get $A \cdot (z^{-1} \bullet x_0) \le b$,
+hence $(z_0^{-1} \bullet x_0)$ solves PRIM.
 
-In case $c \cdot x_p > s$, we are done. Assume now $c \cdot x_p \le s$.
-Observe that $\frac{s - c \cdot x_p}{c \cdot x}$ is non-negative.
+Using hAc we get $(-A^T) \cdot (z^{-1} \bullet y_0) \le c$,
+hence $(z_0^{-1} \bullet y_0)$ solves DUAL.
 
-Use $x_p + \frac{s - c \cdot x_p}{c \cdot x} \bullet x$ as
-a new solution for PRIM:
-$$ A \cdot \left(x_p + \frac{s - c \cdot x_p}{c \cdot x} \bullet x\right)
- = A \cdot x_p + A \cdot \left(\frac{s - c \cdot x_p}{c \cdot x} \bullet x\right)
- = A \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x} \cdot A \cdot x
- \le b + \frac{s - c \cdot x_p}{c \cdot x} \cdot 0
- = b $$
-$$ c \cdot \left(x_p + \frac{s - c \cdot x_p}{c \cdot x} \bullet x\right)
- = c \cdot x_p + c \cdot \left(\frac{s - c \cdot x_p}{c \cdot x} \bullet x\right)
- = c \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x} \cdot c \cdot x
+Weak duality gives
+$c \cdot (z_0^{-1} \bullet x_0) + b \cdot (z_0^{-1} \bullet y_0) \ge 0$.
+That contradicts
+$z_0^{-1} \bullet b \cdot y_0 + z^{-1} \bullet c \cdot x_0 < 0$.
+
+It remains to examine the case $z = 0$.
+
+Lemma:
+
+Assume $x_0$ such that
+$A \cdot x_0 + (-b) \cdot 0 \le 0$ and
+$c \cdot x_0 < 0$.
+If PRIM is feasible, then PRIM is unbounded.
+
+Proof:
+
+For contradiction, let $s$ be a finite number (``strict lower bound'')
+such that $s < c \cdot x$ whenever $A \cdot x \le b$.
+
+PRIM is feasible implies existence of $x_p$ such that
+$A \cdot x_p \le b$ and $c \cdot x_p$ is finite.
+
+In case $s \ge c \cdot x_p$, we are done. Assume now $s < c \cdot x_p$.
+Observe that $c \cdot x_0$ is finite negative 
+and that $\frac{s - c \cdot x_p}{c \cdot x_0}$ is finite positive.
+
+Take $x := x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0$ and see:
+%$$ c \cdot x
+% = c \cdot x_p + c \cdot \left( \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0 \right) 
+% = c \cdot x_p + c \cdot \left( \frac{s}{c \cdot x_0} \bullet x_0 - \frac{c \cdot x_p}{c \cdot x_0} \bullet x_0 \right)
+% = c \cdot x_p + \frac{s}{c \cdot x_0} \bullet (c \cdot x_0) - \frac{c \cdot x_p}{c \cdot x_0} \bullet (c \cdot x_0)
+%$$
+$$ c \cdot x
+ = c \cdot x_p + c \cdot \left( \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0 \right)
+ \stackrel{?}{=} c \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \cdot (c \cdot x_0)
  = c \cdot x_p + (s - c \cdot x_p)
  = s $$
- 
-This contradicts the property of $s$.
-Indeed, PRIM is unbounded, so DUAL must be infeasible,
-which contradicts our assumption.
 
-In the former case, $b \cdot y < 0$, we show that DUAL is unbounded.
+It remains to check $A \cdot x \le b$.
+By definition, we must show that $(A \cdot x)~i \le b~i$ for all $i \in I$.
 
-For contradiction, let $s$ be a number such that
-$(-b) \cdot y < s$ for all $y$ such that $(-A^T) \cdot y \le -c$.
+When $b~i$ is infinite, the inequality holds trivially.
+Assume that $b~i$ is finite and calculate:
+$$ (A \cdot x)~i
+ = (A~i) \cdot \left( x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0 \right)
+ = (A~i) \cdot x_p + (A~i) \cdot \left( \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0 \right)
+ \stackrel{?}{=} (A~i) \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \cdot ((A~i) \cdot x_0)
+$$
 
-Since DUAL is feasible, we can take an $y_q$ such that $(-A^T) \cdot y_q \le -c$.
+Since we have $(A~i) \cdot x_0 + (-(b~i)) \cdot 0 \le 0$ where $b~i$ is finite,
+we obtain $(A~i) \cdot x_0 \le 0$.
 
-In case $(-b) \cdot y_q > s$, we are done. Assume now $(-b) \cdot y_q \le s$.
-Observe that $\frac{s - (-b) \cdot y_q}{b \cdot y}$ is non-positive
-and that $A^T \!\cdot y$ is non-negative.
+$$  (A~i) \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \cdot ((A~i) \cdot x_0)
+\le (A~i) \cdot x_p
+\le b~i $$
 
-Use $y_q - \frac{s - (-b) \cdot y_q}{b \cdot y} \bullet y$ as
-a new solution for DUAL:
-$$ (-A^T) \cdot \left( y_q - \frac{s - (-b) \cdot y_q}{b \cdot y} \bullet y \right)
- = (-A^T) \cdot y_q
- + A^T \cdot \left(\frac{s - (-b) \cdot y_q}{b \cdot y} \bullet y \right)
- = (-A^T) \cdot y_q
- + \frac{s - (-b) \cdot y_q}{b \cdot y} \cdot A^T \cdot y
- \le -c $$
-$$ (-b) \cdot \left( y_q - \frac{s - (-b) \cdot y_q}{b \cdot y} \bullet y \right)
- = (-b) \cdot y_q
- + \frac{s - (-b) \cdot y_q}{b \cdot y} \cdot b \cdot y
- = (-b) \cdot y_q + (s - (-b) \cdot y_q)
- = s $$
- 
-This contradicts the property of $s$.
-Indeed, DUAL is unbounded, so PRIM must be infeasible,
-which contradicts our assumption.
+By transitivity, we conclude $ (A \cdot x)~i \le b~i $.
+
+%
+%If both $b$ and $c$ are finite, we get
+%$(-A^T) \cdot y \le 0$ and $A \cdot x \le 0$.
+%
+%As a result, the usual trick to show that PRIM or DUAL is unbounded works.
+%
+%Let us examine infinite values in $b \dots$
+%
+%Consider $A \cdot x + (-b) \cdot 0 \le 0$, and
+%$c \cdot x < 0$.
+%
+%Negative infinities in $b$ do not bother us.
+%
+%Positive infinities in $b$ leave certain entries in $A \cdot x$ unconstrained.
+%
+%For the same values, however, $A \cdot x \le b$ should be tautological.
+%
+%Let us examine infinite values in $c \dots$
+%
+%Consider $(-A^T) \cdot y + (-c) \cdot 0 \le 0$, and
+%$b \cdot y < 0$.
+%
+%Negative infinities in $c$ do not bother us.
+%
+%Positive infinities in $c$ leave certain entries in $(-A^T) \cdot y$ unconstrained.
+%
+%For the same values, however, $(-A^T) \cdot y \le c$ should be tautological.
+%
+%Success?
+\bigskip
+
+We miss knowing $v \cdot (q \bullet w) \stackrel{?}{=} q \cdot (v \cdot w)$ where
+$v$ is any vector, $w$ is nonnegative finite vector, $q$ is positive finite number.
 
 
 \end{document}
