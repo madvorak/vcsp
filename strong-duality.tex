@@ -151,10 +151,6 @@ $A \cdot x_0 + (-b) \cdot z_0 \le 0$, and
 $b \cdot y_0 + c \cdot x_0 < 0$, where
 $z_0$ is a single non-negative number.
 
-%For simplification, let's assume $z=1$.
-
-%How do we get from $A \cdot x + (-b) \le 0$ to $A \cdot x \le b$ which we need here?
-
 We have $z_0^{-1} \bullet ((-A^T) \cdot y_0 + (-c) \cdot z_0) \le 0$,
 $z_0^{-1} \bullet (A \cdot x_0 + (-b) \cdot z_0) \le 0$, and
 $z_0^{-1} \bullet (b \cdot y_0 + c \cdot x_0) < 0$.
@@ -163,9 +159,6 @@ In case $z_0 > 0$, we get
 $z_0^{-1} \bullet (-A^T) \cdot y_0 + z_0^{-1} \bullet (-c) \cdot z_0 \le 0$,
 $z_0^{-1} \bullet A \cdot x_0 + z_0^{-1} \bullet (-b) \cdot z_0 \le 0$, and
 $z_0^{-1} \bullet b \cdot y_0 + z_0^{-1} \bullet c \cdot x_0 < 0$.
-
-%Note that we needed $z > 0$ both for associativity of multiplication
-%and for distributivity of $\bullet$ over $+$.
 
 It follows that
 $(-A^T) \cdot (z_0^{-1} \bullet y_0) + (-c) \le 0$,
@@ -205,14 +198,9 @@ Observe that $c \cdot x_0$ is finite negative
 and that $\frac{s - c \cdot x_p}{c \cdot x_0}$ is finite positive.
 
 Take $x := x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0$ and see:
-%$$ c \cdot x
-% = c \cdot x_p + c \cdot \left( \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0 \right) 
-% = c \cdot x_p + c \cdot \left( \frac{s}{c \cdot x_0} \bullet x_0 - \frac{c \cdot x_p}{c \cdot x_0} \bullet x_0 \right)
-% = c \cdot x_p + \frac{s}{c \cdot x_0} \bullet (c \cdot x_0) - \frac{c \cdot x_p}{c \cdot x_0} \bullet (c \cdot x_0)
-%$$
 $$ c \cdot x
  = c \cdot x_p + c \cdot \left( \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0 \right)
- \stackrel{?}{=} c \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \cdot (c \cdot x_0)
+ = c \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \cdot (c \cdot x_0)
  = c \cdot x_p + (s - c \cdot x_p)
  = s $$
 
@@ -224,7 +212,7 @@ Assume that $b~i$ is finite and calculate:
 $$ (A \cdot x)~i
  = (A~i) \cdot \left( x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0 \right)
  = (A~i) \cdot x_p + (A~i) \cdot \left( \frac{s - c \cdot x_p}{c \cdot x_0} \bullet x_0 \right)
- \stackrel{?}{=} (A~i) \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \cdot ((A~i) \cdot x_0)
+ = (A~i) \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \cdot ((A~i) \cdot x_0)
 $$
 
 Since we have $(A~i) \cdot x_0 + (-(b~i)) \cdot 0 \le 0$ where $b~i$ is finite,
@@ -236,39 +224,13 @@ $$  (A~i) \cdot x_p + \frac{s - c \cdot x_p}{c \cdot x_0} \cdot ((A~i) \cdot x_0
 
 By transitivity, we conclude $ (A \cdot x)~i \le b~i $.
 
-%
-%If both $b$ and $c$ are finite, we get
-%$(-A^T) \cdot y \le 0$ and $A \cdot x \le 0$.
-%
-%As a result, the usual trick to show that PRIM or DUAL is unbounded works.
-%
-%Let us examine infinite values in $b \dots$
-%
-%Consider $A \cdot x + (-b) \cdot 0 \le 0$, and
-%$c \cdot x < 0$.
-%
-%Negative infinities in $b$ do not bother us.
-%
-%Positive infinities in $b$ leave certain entries in $A \cdot x$ unconstrained.
-%
-%For the same values, however, $A \cdot x \le b$ should be tautological.
-%
-%Let us examine infinite values in $c \dots$
-%
-%Consider $(-A^T) \cdot y + (-c) \cdot 0 \le 0$, and
-%$b \cdot y < 0$.
-%
-%Negative infinities in $c$ do not bother us.
-%
-%Positive infinities in $c$ leave certain entries in $(-A^T) \cdot y$ unconstrained.
-%
-%For the same values, however, $(-A^T) \cdot y \le c$ should be tautological.
-%
-%Success?
 \bigskip
 
-We miss knowing $v \cdot (q \bullet w) \stackrel{?}{=} q \cdot (v \cdot w)$ where
-$v$ is any vector, $w$ is nonnegative finite vector, $q$ is positive finite number.
+Observe that $b \cdot y_0 < 0$ or $c \cdot x_0 < 0$.
+In the former case, apply Lemma to DUAL.
+In the latter case, apply Lemma to PRIM.
 
+Corollary gives us a contradiction with our assumption
+that both PRIM and DUAL are feasible.
 
 \end{document}
