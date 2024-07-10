@@ -453,9 +453,9 @@ lemma Matrix.no_top_dotProd_nneg {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊤) {w
   | ⊤ => exact false_of_ne (hvi ▸ hv i)
   | (q : ℚ) => exact ERat.coe_ne_top _ (hvi ▸ hi)
 
-theorem ExtendedLP.strongDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
+lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
-    ∃ r : ℚ, P.Reaches (-r) ∧ P.dualize.Reaches r := by
+    ∃ p q : ℚ, P.Reaches p ∧ P.dualize.Reaches q ∧ p + q ≤ 0 := by
   obtain ⟨A, b, c, hai, haj, hbi, hcj, hAb, hAc⟩ := P
   dsimp only [dualize, Reaches, IsSolution, IsFeasible] at hP hQ ⊢
   cases
@@ -503,3 +503,15 @@ theorem ExtendedLP.strongDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP
       clear contr
       sorry
     sorry
+
+theorem ExtendedLP.strongDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
+    (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
+    ∃ r : ℚ, P.Reaches (-r).toERat ∧ P.dualize.Reaches r.toERat := by
+  obtain ⟨p, q, hp, hq, hpq⟩ := P.strongDuality_aux hP hQ
+  have := P.weakDuality hp hq
+  rw [←ERat.coe_add, ←ERat.coe_zero, ERat.coe_le_coe_iff] at this
+  use q
+  have hqp : -q = p
+  · linarith
+  rw [hqp]
+  exact ⟨hp, hq⟩
