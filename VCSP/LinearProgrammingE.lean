@@ -1,8 +1,6 @@
 import Mathlib.Algebra.Order.Pi
 import VCSP.FarkasSpecial
 
-open scoped Matrix
-
 
 /-- Linear program over `ℚ∞` in the standard form (system of linear inequalities with `ℚ≥0` variables).
     Variables are of type `J`. Conditions are indexed by type `I`. -/
@@ -26,6 +24,7 @@ structure ExtendedLP (I J : Type*) where
   /-- No `⊥` in the column where the objective function has `⊤`. -/
   hAc : ¬∃ j : J, (∃ i : I, A i j = ⊥) ∧ c j = ⊤
 
+open scoped Matrix
 variable {I J : Type*} [Fintype I] [Fintype J]
 
 /-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and its
@@ -57,6 +56,7 @@ def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
 def ExtendedLP.dualize (P : ExtendedLP I J) : ExtendedLP J I :=
   ⟨-P.Aᵀ, P.c, P.b, by aeply P.hAj, by aeply P.hAi, P.hcj, P.hbi, by aeply P.hAc, by aeply P.hAb⟩
 
+
 lemma Matrix.dotProd_eq_bot {v : J → ℚ∞} {w : J → ℚ≥0} (hvw : v ᵥ⬝ w = ⊥) :
     ∃ j : J, v j = ⊥ := by
   by_contra! contr
@@ -84,15 +84,13 @@ lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (A₁ : Matrix I₁ J ℚ∞) 
   ext i
   cases i <;> rfl
 
-/-
-lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → ℚ≥0} (huv : u ≤ v) (hw : 0 ≤ w) :
+lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} (w : J → ℚ≥0) (huv : u ≤ v) :
     u ᵥ⬝ w ≤ v ᵥ⬝ w := by
   apply Finset.sum_le_sum
   intro i _
   have huvi := huv i
   match hui : u i with
   | ⊥ =>
-    rw [ERat.coe_mul_bot_of_nneg (hw i)]
     apply bot_le
   | ⊤ =>
     match hvi : v i with
@@ -114,16 +112,15 @@ lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} {w : J → �
       exact ((ERat.bot_lt_coe p).trans_le huvi).false
     | ⊤ =>
       if hwi0 : w i = 0 then
-        rw [hwi0, ERat.coe_zero, ERat.zero_mul (ERat.coe_ne_bot p), ERat.zero_mul bot_lt_top.ne.symm]
+        rw [hwi0, zero_smul_ERat_nonbot top_ne_bot, zero_smul_ERat_nonbot (ERat.coe_neq_bot p)]
       else
-        rw [ERat.coe_mul_top_of_pos (lt_of_le_of_ne (hw i) (Ne.symm hwi0))]
+        rw [pos_smul_ERat_top (lt_of_le_of_ne (w i).property (Ne.symm hwi0))]
         apply le_top
     | (q : ℚ) =>
-      rw [←ERat.coe_mul, ←ERat.coe_mul, ERat.coe_le_coe_iff]
       have hpq : p ≤ q
       · rw [←ERat.coe_le_coe_iff]
         rwa [hui, hvi] at huvi
-      exact mul_le_mul_of_nonneg_left hpq (hw i)
+      exact ERat.coe_le_coe_iff.mpr (mul_le_mul_of_nonneg_left hpq (w i).property)
 
 -- TODO what assumptions do the following three lemmas need?
 
@@ -139,7 +136,6 @@ lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥
   show
     ∑ j : J, w j • ∑ i : I, v i • M i j = ∑ i : I, v i • ∑ j : J, w j • M i j
   sorry
--/
 
 lemma ERat.sub_nonpos_iff (p q : ℚ∞) : p + (-q) ≤ 0 ↔ p ≤ q := by
   match p with
@@ -156,13 +152,18 @@ lemma ERat.sub_nonpos_iff (p q : ℚ∞) : p + (-q) ≤ 0 ↔ p ≤ q := by
 lemma ERat.vec_sub_nonpos_iff (x y : I → ℚ∞) : x + (-y) ≤ 0 ↔ x ≤ y := by
   constructor <;> intro hxy i <;> simpa [ERat.sub_nonpos_iff] using hxy i
 
+lemma ERat.one_smul (a : ℚ∞) : (1 : ℚ≥0) • a = a :=
+  match a with
+  | ⊥ => rfl
+  | ⊤ => rfl
+  | (q : ℚ) => congr_arg Rat.toERat (one_mul q)
+
 lemma Matrix.fromColumns_mulWeig_sumElim {J₁ J₂ : Type*} [Fintype J₁] [Fintype J₂]
     (A₁ : Matrix I J₁ ℚ∞) (A₂ : Matrix I J₂ ℚ∞) (v₁ : J₁ → ℚ≥0) (v₂ : J₂ → ℚ≥0) :
     Matrix.fromColumns A₁ A₂ ₘ* Sum.elim v₁ v₂ = A₁ ₘ* v₁ + A₂ ₘ* v₂ := by
   ext
   simp [Matrix.fromColumns, Matrix.mulWeig, Matrix.dotProd]
 
-/-
 theorem ExtendedLP.weakDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     {p : ℚ∞} (hP : P.Reaches p) {q : ℚ∞} (hQ : P.dualize.Reaches q) :
     0 ≤ p + q := by
@@ -230,19 +231,17 @@ theorem ExtendedLP.weakDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I
         convert this -- TODO cleanup
         ext j
         simp [Matrix.mulWeig, Matrix.dotProd]
-        apply ERat.one_mul
-      rwa [ERat.vec_sub_nonpos_iff']
+        apply ERat.one_smul
+      rwa [ERat.vec_sub_nonpos_iff]
     · suffices : b ᵥ⬝ y + c ᵥ⬝ x < 0
       · rw [Matrix.sumElim_dotProd_sumElim]
         conv => lhs; right; simp [Matrix.dotProd]
-        show b ᵥ⬝ y + 1 * (c ᵥ⬝ x) < 0
-        rwa [ERat.one_mul]
+        rwa [ERat.one_smul]
       push_neg at contr
       rw [add_comm]
       exact contr
 
 #print axioms ExtendedLP.weakDuality
--/
 
 lemma ERat.add_neg_lt_zero_iff {r s : ℚ∞} (neq_bot : r ≠ ⊥ ∨ s ≠ ⊥) (neq_top : r ≠ ⊤ ∨ s ≠ ⊤) :
     r + (-s) < 0 ↔ r < s := by
@@ -260,13 +259,12 @@ lemma ERat.add_neg_lt_zero_iff {r s : ℚ∞} (neq_bot : r ≠ ⊥ ∨ s ≠ ⊥
     | ⊤ => convert_to False ↔ False <;> simp [←ERat.coe_neg]
     | (p : ℚ) => simp [←ERat.coe_neg, ←ERat.coe_add]
 
-/-
 lemma ERat.smul_lt_smul_left {x : ℚ≥0} (hx : 0 < x) (y z : ℚ∞) :
     x • y < x • z ↔ y < z := by
   match z with
   | ⊥ =>
     convert_to False ↔ False
-    · rw [ERat.coe_mul_bot_of_nneg hx.le, iff_false]
+    · rw [iff_false]
       apply not_lt_bot
     · simp
     rfl
@@ -274,7 +272,7 @@ lemma ERat.smul_lt_smul_left {x : ℚ≥0} (hx : 0 < x) (y z : ℚ∞) :
     match y with
     | ⊥ =>
       convert_to True ↔ True
-      · rw [ERat.coe_mul_top_of_pos hx, ERat.coe_mul_bot_of_nneg hx.le, iff_true]
+      · rw [pos_smul_ERat_top hx, iff_true]
         apply bot_lt_top
       · simp
       rfl
@@ -285,7 +283,7 @@ lemma ERat.smul_lt_smul_left {x : ℚ≥0} (hx : 0 < x) (y z : ℚ∞) :
       rfl
     | (p : ℚ) =>
       convert_to True ↔ True
-      · rw [ERat.coe_mul_top_of_pos hx, ←ERat.coe_mul, iff_true]
+      · rw [pos_smul_ERat_top hx, iff_true]
         apply coe_lt_top
       · simp
       rfl
@@ -293,18 +291,20 @@ lemma ERat.smul_lt_smul_left {x : ℚ≥0} (hx : 0 < x) (y z : ℚ∞) :
     match y with
     | ⊥ =>
       convert_to True ↔ True
-      · rw [ERat.coe_mul_bot_of_nneg hx.le, ←ERat.coe_mul, iff_true]
+      · rw [iff_true]
         apply bot_lt_coe
       · simp
       rfl
     | ⊤ =>
       convert_to False ↔ False
-      · rw [ERat.coe_mul_top_of_pos hx, iff_false]
+      · rw [pos_smul_ERat_top hx, iff_false]
         apply not_top_lt
       · simp
       rfl
     | (p : ℚ) =>
-      rw [←ERat.coe_mul, ←ERat.coe_mul, ERat.coe_lt_coe_iff, ERat.coe_lt_coe_iff]
+      rw [ERat.coe_lt_coe_iff]
+      show (x * p).toERat < (x * q).toERat ↔ p < q
+      rw [ERat.coe_lt_coe_iff]
       exact mul_lt_mul_left hx
 
 lemma ERat.smul_neg {x : ℚ≥0} {y : ℚ∞} (hxy : x = 0 → y ≠ ⊥ ∧ y ≠ ⊤) :
@@ -313,27 +313,25 @@ lemma ERat.smul_neg {x : ℚ≥0} {y : ℚ∞} (hxy : x = 0 → y ≠ ⊥ ∧ y 
   | ⊥ =>
     rw [neg_bot]
     if hx : 0 < x then
-      rw [ERat.coe_mul_top_of_pos hx, ERat.coe_mul_bot_of_nneg hx.le, neg_bot]
+      rewrite [pos_smul_ERat_top hx]
+      rfl
     else
-      if hx' : x < 0 then
-        rw [ERat.coe_mul_bot_of_neg hx', ERat.coe_mul_top_of_neg hx', neg_top]
-      else
-        exfalso
-        simp [show x = 0 by linarith] at hxy
+      exfalso
+      simp_all
   | ⊤ =>
     rw [neg_top]
     if hx : 0 < x then
-      rw [ERat.coe_mul_top_of_pos hx, ERat.coe_mul_bot_of_nneg hx.le, neg_top]
+      rewrite [pos_smul_ERat_top hx, neg_top]
+      rfl
     else
-      if hx' : x < 0 then
-        rw [ERat.coe_mul_bot_of_neg hx', ERat.coe_mul_top_of_neg hx', neg_bot]
-      else
-        exfalso
-        simp [show x = 0 by linarith] at hxy
+      exfalso
+      simp_all
   | (q : ℚ) =>
-    rw [←ERat.coe_mul, ←ERat.coe_neg, ←ERat.coe_mul, mul_neg, ERat.coe_neg]
+    rw [←ERat.coe_neg]
+    show (x * (-q)).toERat = (-(x * q)).toERat
+    rw [mul_neg]
 
-lemma ERat.pos_smul_neg {x : ℚ} (hx : 0 < x) (y : ℚ∞) :
+lemma ERat.pos_smul_neg {x : ℚ≥0} (hx : 0 < x) (y : ℚ∞) :
     x • (-y) = -(x • y) := by
   apply ERat.smul_neg
   intro h0
@@ -345,9 +343,9 @@ lemma ERat.pos_smul_neg_vec {x : ℚ≥0} (hx : 0 < x) (y : I → ℚ∞) :
   ext i
   exact ERat.pos_smul_neg hx (y i)
 
-lemma ERat.vec_zero_smul {a : I → ℚ∞} (ha : ∀ i, a i ≠ ⊥) : (0 : ℚ≥0) • a = 0 := by
+lemma ERat.vec_zero_smul {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) : (0 : ℚ≥0) • v = 0 := by
   ext i
-  exact ERat.zero_mul (ha i)
+  exact zero_smul_ERat_nonbot (hv i)
 
 lemma Matrix.zero_mulWeig (v : J → ℚ≥0) : (0 : Matrix I J ℚ∞) ₘ* v = 0 := by
   ext
@@ -357,47 +355,46 @@ lemma Matrix.sumElim_dotProd (u : I → ℚ∞) (v : J → ℚ∞) (x : (I ⊕ J
     Sum.elim u v ᵥ⬝ x = u ᵥ⬝ (x ∘ Sum.inl) + v ᵥ⬝ (x ∘ Sum.inr) := by
   simp [Matrix.dotProd]
 
-lemma ERat.smul_smul {k : ℚ≥0} (hk : 0 < k) (v : ℚ∞) (w : ℚ≥0) :
-    w • (k • v) = k • (w • v) := by
-  match v with
+lemma ERat.smul_smul {p : ℚ≥0} (hp : 0 < p) (r : ℚ≥0) (x : ℚ∞) :
+    r • (p • x) = p • (r • x) := by
+  match x with
   | ⊥ =>
-    rw [ERat.coe_mul_bot_of_nneg hk.le]
-    if hw : 0 ≤ w then
-      rw [ERat.coe_mul_bot_of_nneg hw, ERat.coe_mul_bot_of_nneg hk.le]
-    else
-      push_neg at hw
-      rw [ERat.coe_mul_bot_of_neg hw, ERat.coe_mul_top_of_pos hk]
+    rw [smul_ERat_bot, smul_ERat_bot, smul_ERat_bot]
   | ⊤ =>
-    rw [ERat.coe_mul_top_of_pos hk]
-    if hwp : 0 < w then
-      rw [ERat.coe_mul_top_of_pos hwp, ERat.coe_mul_top_of_pos hk]
-    else if hw0 : w = 0 then
-      rw [hw0, ERat.coe_zero, zero_mul top_ne_bot, ←ERat.coe_zero, ←ERat.coe_mul, mul_zero]
+    rw [pos_smul_ERat_top hp]
+    if hr : 0 < r then
+      rw [pos_smul_ERat_top hr, pos_smul_ERat_top hp]
+    else if hr0 : r = 0 then
+      rw [hr0]
+      symm
+      apply smul_zero
     else
-      push_neg at hwp
-      rw [ERat.coe_mul_top_of_neg (lt_of_le_of_ne hwp hw0), ERat.coe_mul_bot_of_nneg hk.le]
+      exfalso
+      simp_all only [not_lt, nonpos_iff_eq_zero]
   | (q : ℚ) =>
-    exact ERat.coe_eq_coe_iff.mpr (mul_left_comm w k q)
+    exact ERat.coe_eq_coe_iff.mpr (mul_left_comm r.val p.val q)
 
 lemma ERat.smul_add {k : ℚ≥0} (hk : 0 < k) (x y : ℚ∞) :
     k • (x + y) = k • x + k • y := by
   match x, y with
   | ⊥, _ =>
-    rw [ERat.bot_add, ERat.coe_mul_bot_of_nneg hk.le, ERat.bot_add]
+    rw [ERat.bot_add, smul_ERat_bot, ERat.bot_add]
   | _, ⊥ =>
-    rw [ERat.add_bot, ERat.coe_mul_bot_of_nneg hk.le, ERat.add_bot]
+    rw [ERat.add_bot, smul_ERat_bot, ERat.add_bot]
   | (p : ℚ), (q : ℚ) =>
-    rw [←ERat.coe_add, ←ERat.coe_mul, ←ERat.coe_mul, ←ERat.coe_mul, ←ERat.coe_add, mul_add]
+    show (k * (p + q)).toERat = (k * p).toERat + (k * q).toERat
+    rewrite [mul_add]
+    rfl
   | (p : ℚ), ⊤ =>
-    rw [ERat.coe_add_top, show k • ⊤ = (⊤ : ℚ∞) from ERat.coe_mul_top_of_pos hk]
+    rw [ERat.coe_add_top, pos_smul_ERat_top hk]
     show ⊤ = (k * p).toERat + ⊤
     rw [ERat.coe_add_top]
   | ⊤, (q : ℚ) =>
-    rw [ERat.top_add_coe, show k • ⊤ = (⊤ : ℚ∞) from ERat.coe_mul_top_of_pos hk]
+    rw [ERat.top_add_coe, pos_smul_ERat_top hk]
     show ⊤ = ⊤ + (k * q).toERat
     rw [ERat.top_add_coe]
   | ⊤, ⊤ =>
-    rw [ERat.top_add_top, show k • ⊤ = (⊤ : ℚ∞) from ERat.coe_mul_top_of_pos hk, ERat.top_add_top]
+    rw [ERat.top_add_top, pos_smul_ERat_top hk, ERat.top_add_top]
 
 lemma Multiset.smul_ERat_sum {k : ℚ≥0} (hk : 0 < k) (s : Multiset ℚ∞) :
     s.summap (k • ·) = k • s.sum := by
@@ -415,7 +412,6 @@ lemma Matrix.ERat_smul_dotProd {k : ℚ≥0} (hk : 0 < k) (v : J → ℚ∞) (w 
   show ∑ j : J, w j • k • v j = k • ∑ j : J, w j • v j
   conv => lhs; congr; rfl; ext i; rw [ERat.smul_smul hk]
   apply Finset.smul_ERat_sum hk
--/
 
 lemma Multiset.sum_neq_ERat_top {s : Multiset ℚ∞} (hs : ⊤ ∉ s) : s.sum ≠ ⊤ := by
   induction s using Multiset.induction with
@@ -430,22 +426,22 @@ lemma Multiset.sum_neq_ERat_top {s : Multiset ℚ∞} (hs : ⊤ ∉ s) : s.sum �
       | ⊤ => exact (ih (by simpa using hs) hm).elim
       | (p : ℚ) => simp [←ERat.coe_add]
 
-/-
 lemma Matrix.no_top_dotProd_nneg {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊤) (w : I → ℚ≥0) :
     v ᵥ⬝ w ≠ (⊤ : ℚ∞) := by
   apply Multiset.sum_neq_ERat_top
   rw [Multiset.mem_map]
   intro ⟨i, _, hi⟩
   match hvi : v i with
-  | ⊥ => exact bot_ne_top (ERat.coe_mul_bot_of_nneg (w i).property ▸ hvi ▸ show (w i).toERat * v i = ⊤ from hi)
+  | ⊥ => exact bot_ne_top (hvi ▸ hi)
   | ⊤ => exact false_of_ne (hvi ▸ hv i)
-  | (q : ℚ) => exact ERat.coe_ne_top _ (hvi ▸ hi)
+  | (q : ℚ) => exact ERat.coe_neq_top _ (hvi ▸ hi)
+
 
 lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     ∃ p q : ℚ, P.Reaches p ∧ P.dualize.Reaches q ∧ p + q ≤ 0 := by
   obtain ⟨A, b, c, hai, haj, hbi, hcj, hAb, hAc⟩ := P
-  dsimp only [dualize, Reaches, IsSolution, IsFeasible] at hP hQ ⊢
+  dsimp only [ExtendedLP.dualize, ExtendedLP.Reaches, ExtendedLP.IsSolution, ExtendedLP.IsFeasible] at *
   cases
     or_of_neq
       (extendedFarkas
@@ -485,9 +481,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     have y_last_pos : 0 < z
     · by_contra contr
       have last_zero : z = 0
-      · have aux := (eq_of_le_of_not_lt (y (Sum.inr 0)).property (by rw [Pi.zero_apply]; simp [z]; sorry)).symm
-        rw [Pi.zero_apply] at aux
-        sorry --exact aux
+      · sorry
       clear contr
       sorry
     sorry
@@ -503,4 +497,3 @@ theorem ExtendedLP.strongDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP
   · linarith
   rw [hqp]
   exact ⟨hp, hq⟩
--/

@@ -6,9 +6,6 @@ section extrasERat
 
 notation "ℚ∞" => ERat
 
--- Richard Copley pointed out that we need this homomorphism:
-def Rat.toERatAddHom : ℚ →+ ℚ∞ := ⟨⟨Rat.toERat, ERat.coe_zero⟩, ERat.coe_add⟩
-
 def NNRat_smul_ERat (c : ℚ≥0) : ℚ∞ → ℚ∞
 | ⊥ => ⊥
 | ⊤ => if c = 0 then 0 else ⊤
@@ -27,9 +24,11 @@ lemma smul_ERat_top_neq_bot (c : ℚ≥0) : c • (⊤ : ERat) ≠ ⊥ := by
   show NNRat_smul_ERat c ⊤ ≠ ⊥
   by_cases hc0 : c = 0 <;> simp [NNRat_smul_ERat, hc0]
 
-lemma smul_ERat_coe_neq_bot (c : ℚ≥0) (q : ℚ) : c • q.toERat ≠ ⊥ := by
-  show (c * q).toERat ≠ ⊥
-  simp [NNRat_smul_ERat]
+lemma smul_ERat_coe_neq_bot (c : ℚ≥0) (q : ℚ) : c • q.toERat ≠ ⊥ :=
+  ERat.coe_neq_bot (c * q)
+
+lemma smul_ERat_bot (c : ℚ≥0) : c • (⊥ : ℚ∞) = ⊥ :=
+  rfl
 
 lemma smul_ERat_nonbot_neq_bot (c : ℚ≥0) {a : ℚ∞} (ha : a ≠ ⊥) : c • a ≠ ⊥ := by
   match a with
@@ -37,7 +36,7 @@ lemma smul_ERat_nonbot_neq_bot (c : ℚ≥0) {a : ℚ∞} (ha : a ≠ ⊥) : c �
   | ⊤ => apply smul_ERat_top_neq_bot
   | (q : ℚ) => apply smul_ERat_coe_neq_bot
 
-lemma zero_smul_ERat_nonbot {a : ℚ∞} (ha : a ≠ ⊥) : (0 : ℚ≥0) • a = 0 := by -- TODO replace by the lemma above
+lemma zero_smul_ERat_nonbot {a : ℚ∞} (ha : a ≠ ⊥) : (0 : ℚ≥0) • a = 0 := by
   show NNRat_smul_ERat 0 a = 0
   simp [NNRat_smul_ERat]
   match a with
@@ -45,21 +44,9 @@ lemma zero_smul_ERat_nonbot {a : ℚ∞} (ha : a ≠ ⊥) : (0 : ℚ≥0) • a 
   | ⊤ => rfl
   | (q : ℚ) => rfl
 
--- lemma smul_eq_ERat_bot_iff_of_nneg (c : ℚ≥0) (a : ℚ∞) : c • a = ⊥ ↔ a = ⊥ := by
---   constructor
---   · intro hc
---     match a with
---     | ⊥ => rfl
---     | ⊤ =>
---       change hc to NNRat_smul_ERat c ⊤ = ⊥
---       exfalso
---       by_cases hc0 : c = 0 <;> simp [NNRat_smul_ERat, hc0] at hc
---     | (q : ℚ) =>
---       change hc to NNRat_smul_ERat c q = ⊥
---       sorry
---   · intro ha
---     rw [ha]
---     rfl
+
+-- Richard Copley pointed out that we need this homomorphism:
+def Rat.toERatAddHom : ℚ →+ ℚ∞ := ⟨⟨Rat.toERat, ERat.coe_zero⟩, ERat.coe_add⟩
 
 lemma Finset.sum_toERat {ι : Type*} [Fintype ι] (s : Finset ι) (f : ι → ℚ) :
     (s.sum f).toERat = s.sum (fun i : ι => (f i).toERat) :=
@@ -71,7 +58,7 @@ lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞
     | empty =>
       exfalso
       rw [Multiset.sum_zero] at hs
-      exact ERat.zero_ne_bot hs
+      exact ERat.zero_neq_bot hs
     | cons a m ih =>
       rw [Multiset.mem_cons]
       rw [Multiset.sum_cons] at hs
@@ -110,7 +97,7 @@ lemma Multiset.sum_eq_ERat_bot_iff (s : Multiset ℚ∞) : s.sum = (⊥ : ℚ∞
         | (_ : ℚ) =>
           exfalso
           rw [hm] at hs
-          exact ERat.coe_ne_bot _ hs
+          exact ERat.coe_neq_bot _ hs
   · induction s using Multiset.induction with
     | empty =>
       exfalso
@@ -186,13 +173,10 @@ lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
   apply Finset.sum_eq_zero
   intro i _
   rw [Pi.zero_apply]
-  match hvi : v i with
+  exact match hvi : v i with
   | ⊤ => rfl
-  | ⊥ => exact False.elim (hv i hvi)
-  | (q : ℚ) =>
-    show (0 * q).toERat = (0 : ℚ∞)
-    rewrite [zero_mul]
-    rfl
+  | ⊥ => False.elim (hv i hvi)
+  | (q : ℚ) => zero_smul_ERat_nonbot (ERat.coe_neq_bot q)
 
 lemma Matrix.has_bot_dotProd_nneg {v : I → ℚ∞} {i : I} (hvi : v i = ⊥) (w : I → ℚ≥0) :
     v ᵥ⬝ w = (⊥ : ℚ∞) := by
@@ -233,7 +217,7 @@ lemma Matrix.no_bot_has_top_dotProd_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ �
     w i ≤ 0 := by
   by_contra! contr
   rw [Matrix.no_bot_has_top_dotProd_pos hv hvi w contr, top_le_iff] at hq
-  exact ERat.coe_ne_top q hq
+  exact ERat.coe_neq_top q hq
 
 lemma Matrix.no_bot_has_top_dotProd_nneg_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     (w : I → ℚ≥0) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
@@ -342,9 +326,7 @@ theorem extendedFarkas [DecidableEq I]
             apply i'.property.left
             exact hbi
         simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.mulWeig, Matrix.dotProd]
-        rw [Finset.sum_toERat]
-        show ∑ j' : J', (A' i' j' * x j'.val).toERat = ∑ j : J, x j • A i'.val j
-        rw [Finset.univ_sum_of_zero_when_neg (fun j : J => ∀ i' : I', A i'.val j ≠ ⊤)]
+        rw [Finset.sum_toERat, Finset.univ_sum_of_zero_when_neg (fun j : J => ∀ i' : I', A i'.val j ≠ ⊤)]
         · congr
           ext j'
           rw [mul_comm]
@@ -456,7 +438,7 @@ theorem extendedFarkas [DecidableEq I]
               exact hAT ⟨j, ⟨i, Aij_eq_bot⟩, ⟨k, by simpa using hk⟩⟩
             have ineqality : ((-Aᵀ) j) ᵥ⬝ y ≤ 0 := ineqalities j
             rw [htop, top_le_iff] at ineqality
-            exact ERat.top_ne_zero ineqality.symm
+            exact ERat.zero_neq_top ineqality
         constructor
         · have hnb (i : I) (i_not_I' : ¬ (b i ≠ ⊤ ∧ ∀ j : J, A i j ≠ ⊥)) (j : J) : (-Aᵀ) j i ≠ ⊥
           · intro contr
@@ -578,6 +560,6 @@ theorem extendedFarkas [DecidableEq I]
               · exfalso
                 exact hi.left hbi
 
-end specialFarkas
-
 #print axioms extendedFarkas
+
+end specialFarkas
