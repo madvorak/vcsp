@@ -172,7 +172,6 @@ lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     v ᵥ⬝ (0 : I → ℚ≥0) = (0 : ℚ∞) := by
   apply Finset.sum_eq_zero
   intro i _
-  rw [Pi.zero_apply]
   exact match hvi : v i with
   | ⊤ => rfl
   | ⊥ => False.elim (hv i hvi)

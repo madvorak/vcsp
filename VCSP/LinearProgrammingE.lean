@@ -440,7 +440,7 @@ lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥
 lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     ∃ p q : ℚ, P.Reaches p ∧ P.dualize.Reaches q ∧ p + q ≤ 0 := by
-  obtain ⟨A, b, c, hai, haj, hbi, hcj, hAb, hAc⟩ := P
+  obtain ⟨A, b, c, hAi, hAj, hbi, hcj, hAb, hAc⟩ := P
   dsimp only [ExtendedLP.dualize, ExtendedLP.Reaches, ExtendedLP.IsSolution, ExtendedLP.IsFeasible] at *
   cases
     or_of_neq
@@ -461,8 +461,41 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     ] at hx
     set y := x ∘ Sum.inr
     set x := x ∘ Sum.inl
-    --refine ⟨_, _, ⟨_, hx.left.left, rfl⟩, ⟨_, hx.left.right, rfl⟩, ?_⟩
-    sorry
+    obtain ⟨⟨hx, hy⟩, hxy⟩ := hx
+    specialize hxy 0
+    change hxy to Sum.elim c b ᵥ⬝ Sum.elim x y ≤ 0
+    rw [Matrix.sumElim_dotProd_sumElim] at hxy
+    match hcx : c ᵥ⬝ x with
+    | ⊥ =>
+      exfalso
+      apply hcj
+      exact Matrix.dotProd_eq_bot hcx
+    | ⊤ =>
+      exfalso
+      match hby : b ᵥ⬝ y with
+      | ⊥ =>
+        apply hbi
+        exact Matrix.dotProd_eq_bot hby
+      | ⊤ =>
+        rw [hcx, hby] at hxy
+        exact (hxy.trans_lt ERat.zero_lt_top).false
+      | (q : ℚ) =>
+        rw [hcx, hby] at hxy
+        exact (hxy.trans_lt ERat.zero_lt_top).false
+    | (p : ℚ) =>
+      match hby : b ᵥ⬝ y with
+      | ⊥ =>
+        exfalso
+        apply hbi
+        exact Matrix.dotProd_eq_bot hby
+      | ⊤ =>
+        exfalso
+        rw [hcx, hby] at hxy
+        exact (hxy.trans_lt ERat.zero_lt_top).false
+      | (q : ℚ) =>
+        refine ⟨p, q, ⟨x, hx, hcx⟩, ⟨y, hy, hby⟩, ?_⟩
+        rw [←ERat.coe_le_coe_iff]
+        rwa [hcx, hby] at hxy
   | inr case_y =>
     obtain ⟨y, hAy, hbcy⟩ := case_y
     exfalso
