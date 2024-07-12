@@ -84,59 +84,6 @@ lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (A₁ : Matrix I₁ J ℚ∞) 
   ext i
   cases i <;> rfl
 
-lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} (w : J → ℚ≥0) (huv : u ≤ v) :
-    u ᵥ⬝ w ≤ v ᵥ⬝ w := by
-  apply Finset.sum_le_sum
-  intro i _
-  have huvi := huv i
-  match hui : u i with
-  | ⊥ =>
-    apply bot_le
-  | ⊤ =>
-    match hvi : v i with
-    | ⊥ =>
-      exfalso
-      rw [hui, hvi] at huvi
-      exact (bot_lt_top.trans_le huvi).false
-    | ⊤ =>
-      rfl
-    | (q : ℚ) =>
-      exfalso
-      rw [hui, hvi] at huvi
-      exact ((ERat.coe_lt_top q).trans_le huvi).false
-  | (p : ℚ) =>
-    match hvi : v i with
-    | ⊥ =>
-      exfalso
-      rw [hui, hvi] at huvi
-      exact ((ERat.bot_lt_coe p).trans_le huvi).false
-    | ⊤ =>
-      if hwi0 : w i = 0 then
-        rw [hwi0, zero_smul_ERat_nonbot top_ne_bot, zero_smul_ERat_nonbot (ERat.coe_neq_bot p)]
-      else
-        rw [pos_smul_ERat_top (lt_of_le_of_ne (w i).property (Ne.symm hwi0))]
-        apply le_top
-    | (q : ℚ) =>
-      have hpq : p ≤ q
-      · rw [←ERat.coe_le_coe_iff]
-        rwa [hui, hvi] at huvi
-      exact ERat.coe_le_coe_iff.mpr (mul_le_mul_of_nonneg_left hpq (w i).property)
-
--- TODO what assumptions do the following three lemmas need?
-
-lemma Matrix.neg_dotProd (v : J → ℚ∞) (w : J → ℚ≥0) : -v ᵥ⬝ w = -(v ᵥ⬝ w) := by
-  sorry
-
-lemma Matrix.neg_mulWeig (A : Matrix I J ℚ∞) (w : J → ℚ≥0) : -A ₘ* w = -(A ₘ* w) := by
-  ext
-  apply Matrix.neg_dotProd
-
-lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥0) (w : J → ℚ≥0) :
-    Mᵀ ₘ* v ᵥ⬝ w = M ₘ* w ᵥ⬝ v := by
-  show
-    ∑ j : J, w j • ∑ i : I, v i • M i j = ∑ i : I, v i • ∑ j : J, w j • M i j
-  sorry
-
 lemma ERat.sub_nonpos_iff (p q : ℚ∞) : p + (-q) ≤ 0 ↔ p ≤ q := by
   match p with
   | ⊥ => convert_to True ↔ True <;> simp
@@ -436,6 +383,59 @@ lemma Matrix.no_top_dotProd_nneg {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊤) (w
   | ⊤ => exact false_of_ne (hvi ▸ hv i)
   | (q : ℚ) => exact ERat.coe_neq_top _ (hvi ▸ hi)
 
+lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} (w : J → ℚ≥0) (huv : u ≤ v) :
+    u ᵥ⬝ w ≤ v ᵥ⬝ w := by
+  apply Finset.sum_le_sum
+  intro i _
+  have huvi := huv i
+  match hui : u i with
+  | ⊥ =>
+    apply bot_le
+  | ⊤ =>
+    match hvi : v i with
+    | ⊥ =>
+      exfalso
+      rw [hui, hvi] at huvi
+      exact (bot_lt_top.trans_le huvi).false
+    | ⊤ =>
+      rfl
+    | (q : ℚ) =>
+      exfalso
+      rw [hui, hvi] at huvi
+      exact ((ERat.coe_lt_top q).trans_le huvi).false
+  | (p : ℚ) =>
+    match hvi : v i with
+    | ⊥ =>
+      exfalso
+      rw [hui, hvi] at huvi
+      exact ((ERat.bot_lt_coe p).trans_le huvi).false
+    | ⊤ =>
+      if hwi0 : w i = 0 then
+        rw [hwi0, zero_smul_ERat_nonbot top_ne_bot, zero_smul_ERat_nonbot (ERat.coe_neq_bot p)]
+      else
+        rw [pos_smul_ERat_top (lt_of_le_of_ne (w i).property (Ne.symm hwi0))]
+        apply le_top
+    | (q : ℚ) =>
+      have hpq : p ≤ q
+      · rw [←ERat.coe_le_coe_iff]
+        rwa [hui, hvi] at huvi
+      exact ERat.coe_le_coe_iff.mpr (mul_le_mul_of_nonneg_left hpq (w i).property)
+
+-- TODO what assumptions do the following three lemmas need?
+
+lemma Matrix.neg_dotProd (v : J → ℚ∞) (w : J → ℚ≥0) : -v ᵥ⬝ w = -(v ᵥ⬝ w) := by
+  sorry
+
+lemma Matrix.neg_mulWeig (A : Matrix I J ℚ∞) (w : J → ℚ≥0) : -A ₘ* w = -(A ₘ* w) := by
+  ext
+  apply Matrix.neg_dotProd
+
+lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥0) (w : J → ℚ≥0) :
+    Mᵀ ₘ* v ᵥ⬝ w = M ₘ* w ᵥ⬝ v := by
+  show
+    ∑ j : J, w j • ∑ i : I, v i • M i j = ∑ i : I, v i • ∑ j : J, w j • M i j
+  sorry
+
 
 lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
@@ -461,6 +461,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     ] at hx
     set y := x ∘ Sum.inr
     set x := x ∘ Sum.inl
+    --refine ⟨_, _, ⟨_, hx.left.left, rfl⟩, ⟨_, hx.left.right, rfl⟩, ?_⟩
     sorry
   | inr case_y =>
     obtain ⟨y, hAy, hbcy⟩ := case_y
@@ -478,6 +479,12 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     set z := y ∘ Sum.inr
     set x := (y ∘ Sum.inl) ∘ Sum.inr
     set y := (y ∘ Sum.inl) ∘ Sum.inl
+    have hAy' : Sum.elim (-Aᵀ ₘ* y) (A ₘ* x) ≤ Matrix.col (Fin 1) (Sum.elim c b) ₘ* z
+    · intro i
+      specialize hAy i
+      rw [Pi.zero_apply, Pi.add_apply, Pi.neg_apply] at hAy
+      --rw [add_neg_le_iff_le_add] at hAy
+      sorry
     have y_last_pos : 0 < z
     · by_contra contr
       have last_zero : z = 0

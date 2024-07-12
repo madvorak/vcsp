@@ -182,7 +182,7 @@ lemma coe_add_top (x : ℚ) : (x : ERat) + ⊤ = ⊤ :=
 def neg : ERat → ERat
 | ⊥ => ⊤
 | ⊤ => ⊥
-| (x : ℚ) => (-x : ℚ)
+| (x : ℚ) => (-x).toERat
 
 instance : Neg ERat := ⟨ERat.neg⟩
 
