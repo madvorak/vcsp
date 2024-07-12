@@ -71,6 +71,9 @@ lemma not_neq_of_iff {P Q : Prop} (hpq : P ↔ Q) : (¬P) ≠ Q := by
 lemma neq_of_iff_neg {P Q : Prop} (hpq : P ↔ ¬Q) : P ≠ Q := by
   tauto
 
+lemma neg_iff_neg {P Q : Prop} (hPQ : P ↔ Q) : ¬P ↔ ¬Q := by
+  tauto
+
 end logic_with_neq
 
 

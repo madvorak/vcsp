@@ -56,6 +56,10 @@ def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
 def ExtendedLP.dualize (P : ExtendedLP I J) : ExtendedLP J I :=
   ⟨-P.Aᵀ, P.c, P.b, by aeply P.hAj, by aeply P.hAi, P.hcj, P.hbi, by aeply P.hAc, by aeply P.hAb⟩
 
+lemma ExtendedLP.dualize_dualize (P : ExtendedLP I J) : P.dualize.dualize = P := by
+  obtain ⟨_, _, _⟩ := P
+  simp [ExtendedLP.dualize, ←Matrix.ext_iff]
+
 
 lemma Matrix.dotProd_eq_bot {v : J → ℚ∞} {w : J → ℚ≥0} (hvw : v ᵥ⬝ w = ⊥) :
     ∃ j : J, v j = ⊥ := by
@@ -254,6 +258,16 @@ lemma ERat.smul_lt_smul_left {x : ℚ≥0} (hx : 0 < x) (y z : ℚ∞) :
       rw [ERat.coe_lt_coe_iff]
       exact mul_lt_mul_left hx
 
+lemma ERat.smul_le_smul_left {x : ℚ≥0} (hx : 0 < x) (y z : ℚ∞) :
+    x • y ≤ x • z ↔ y ≤ z := by
+  convert neg_iff_neg (ERat.smul_lt_smul_left hx z y) <;> exact Iff.symm not_lt
+
+lemma ERat.vec_smul_le_smul_left {k : ℚ≥0} (hk : 0 < k) (x y : I → ℚ∞) :
+    k • x ≤ k • y ↔ x ≤ y := by
+  constructor <;> intro hxy <;> intro i <;> specialize hxy i
+  · exact (ERat.smul_le_smul_left hk _ _).mp hxy
+  · exact (ERat.smul_le_smul_left hk _ _).mpr hxy
+
 lemma ERat.smul_neg {x : ℚ≥0} {y : ℚ∞} (hxy : x = 0 → y ≠ ⊥ ∧ y ≠ ⊤) :
     x • (-y) = -(x • y) := by
   match y with
@@ -433,18 +447,34 @@ lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥
   sorry
 
 
+lemma StandardLP.unbounded_prim_makes_dual_infeasible [DecidableEq I] {P : ExtendedLP I J}
+    (hP : ∀ r : ℚ, ∃ p : ℚ, r ≤ p ∧ P.Reaches p) :
+    ¬ P.dualize.IsFeasible := by
+  sorry
+
+lemma llllllll [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J} (hP : P.IsFeasible)
+    {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) :
+    ∀ r : ℚ, ∃ p : ℚ, r ≤ p ∧ P.Reaches p := by
+  obtain ⟨xₚ, hxₚ⟩ := hP
+  change hxₚ to P.A ₘ* xₚ ≤ P.b
+  intro s
+  if hs : P.c ᵥ⬝ xₚ ≤ s then
+    sorry
+  else
+    push_neg at hs
+    -- have : 0 < (s - P.c ᵥ⬝ xₚ) / (P.c ᵥ⬝ x₀)
+    sorry
+
 lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     ∃ p q : ℚ, P.Reaches p ∧ P.dualize.Reaches q ∧ p + q ≤ 0 := by
-  obtain ⟨A, b, c, hAi, hAj, hbi, hcj, hAb, hAc⟩ := P
-  dsimp only [ExtendedLP.dualize, ExtendedLP.Reaches, ExtendedLP.IsSolution, ExtendedLP.IsFeasible] at *
   cases
     or_of_neq
       (extendedFarkas
         (Matrix.fromRows
-          (Matrix.fromBlocks A 0 0 (-Aᵀ))
-          (Matrix.ro1 (Sum.elim c b)))
-        (Sum.elim (Sum.elim b c) 0)
+          (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
+          (Matrix.ro1 (Sum.elim P.c P.b)))
+        (Sum.elim (Sum.elim P.b P.c) 0)
         sorry sorry sorry sorry
       ) with
   | inl case_x =>
@@ -459,16 +489,16 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     set x := x ∘ Sum.inl
     obtain ⟨⟨hx, hy⟩, hxy⟩ := hx
     specialize hxy 0
-    change hxy to Sum.elim c b ᵥ⬝ Sum.elim x y ≤ 0
+    change hxy to Sum.elim P.c P.b ᵥ⬝ Sum.elim x y ≤ 0
     rw [Matrix.sumElim_dotProd_sumElim] at hxy
-    match hcx : c ᵥ⬝ x with
+    match hcx : P.c ᵥ⬝ x with
     | ⊥ =>
       exfalso
       apply hcj
       exact Matrix.dotProd_eq_bot hcx
     | ⊤ =>
       exfalso
-      match hby : b ᵥ⬝ y with
+      match hby : P.b ᵥ⬝ y with
       | ⊥ =>
         apply hbi
         exact Matrix.dotProd_eq_bot hby
@@ -479,7 +509,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
         rw [hcx, hby] at hxy
         exact (hxy.trans_lt ERat.zero_lt_top).false
     | (p : ℚ) =>
-      match hby : b ᵥ⬝ y with
+      match hby : P.b ᵥ⬝ y with
       | ⊥ =>
         exfalso
         apply hbi
@@ -507,17 +537,17 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     set z := y ∘ Sum.inr
     set x := (y ∘ Sum.inl) ∘ Sum.inr
     set y := (y ∘ Sum.inl) ∘ Sum.inl
-    have hAy' : Sum.elim (-Aᵀ ₘ* y) (A ₘ* x) ≤ Matrix.col (Fin 1) (Sum.elim c b) ₘ* z
+    have hAy' : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) ≤ Matrix.col (Fin 1) (Sum.elim P.c P.b) ₘ* z
     · intro i
       specialize hAy i
       rw [Pi.zero_apply, Pi.add_apply, Pi.neg_apply] at hAy
       sorry
-    have hAyx : Sum.elim (-Aᵀ ₘ* y) (A ₘ* x) ≤ z 0 • (Sum.elim c b)
+    have hAyx : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) ≤ z 0 • (Sum.elim P.c P.b)
     · convert hAy'
       ext
       simp [Matrix.col, Matrix.mulWeig, Matrix.dotProd]
     set z := z 0
-    have hAyx' : Sum.elim (-Aᵀ ₘ* y) (A ₘ* x) ≤ Sum.elim (z • c) (z • b)
+    have hAyx' : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) ≤ Sum.elim (z • P.c) (z • P.b)
     · convert hAyx
       sorry
     rw [Sum.elim_le_elim_iff] at hAyx'
@@ -533,18 +563,26 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
       clear contr z_eq_0 z
       rw [ERat.vec_zero_smul] at hx hy
       swap
-      · simpa using hcj
+      · simpa using P.hcj
       swap
-      · simpa using hbi
-      sorry
-    match hcx : c ᵥ⬝ x with
+      · simpa using P.hbi
+      if hxc : P.c ᵥ⬝ x < 0 then
+        exact StandardLP.unbounded_prim_makes_dual_infeasible (llllllll hP hxc) hQ
+      else
+        have hyb : P.b ᵥ⬝ y < 0
+        · push_neg at hxc
+          by_contra! contr
+          exact (hbc.trans_le (add_nonneg contr hxc)).false
+        apply StandardLP.unbounded_prim_makes_dual_infeasible (llllllll hQ hyb)
+        rwa [P.dualize_dualize]
+    match hcx : P.c ᵥ⬝ x with
     | ⊥ =>
       exfalso
       apply hcj
       exact Matrix.dotProd_eq_bot hcx
     | ⊤ =>
       exfalso
-      match hby : b ᵥ⬝ y with
+      match hby : P.b ᵥ⬝ y with
       | ⊥ =>
         apply hbi
         exact Matrix.dotProd_eq_bot hby
@@ -555,7 +593,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
         rw [hcx, hby] at hbc
         exact (hbc.trans ERat.zero_lt_top).false
     | (p : ℚ) =>
-      match hby : b ᵥ⬝ y with
+      match hby : P.b ᵥ⬝ y with
       | ⊥ =>
         exfalso
         apply hbi
@@ -566,7 +604,10 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
         exact (hbc.trans ERat.zero_lt_top).false
       | (q : ℚ) =>
         refine ⟨z⁻¹ • p, z⁻¹ • q, ⟨z⁻¹ • x, ?_, ?_⟩, ⟨z⁻¹ • y, ?_, ?_⟩, ?_⟩
-        · sorry -- from `hx`
+        · have hz : 0 < z⁻¹
+          · exact inv_pos_of_pos z_pos
+          rw [←ERat.vec_smul_le_smul_left hz] at hx -- TODO create `smul_mulWeig` and `←smul_mul`
+          sorry -- from `hx`
         · sorry -- from `hcx`
         · sorry -- from `hy`
         · sorry -- from `hby`
