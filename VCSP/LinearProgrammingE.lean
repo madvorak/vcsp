@@ -298,10 +298,6 @@ lemma Matrix.zero_mulWeig (v : J → ℚ≥0) : (0 : Matrix I J ℚ∞) ₘ* v =
   ext
   simp [Matrix.mulWeig, Matrix.dotProd]
 
-lemma Matrix.sumElim_dotProd (u : I → ℚ∞) (v : J → ℚ∞) (x : (I ⊕ J) → ℚ≥0) :
-    Sum.elim u v ᵥ⬝ x = u ᵥ⬝ (x ∘ Sum.inl) + v ᵥ⬝ (x ∘ Sum.inr) := by
-  simp [Matrix.dotProd]
-
 lemma ERat.smul_smul {p : ℚ≥0} (hp : 0 < p) (r : ℚ≥0) (x : ℚ∞) :
     r • (p • x) = p • (r • x) := by
   match x with
@@ -497,8 +493,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
         rw [←ERat.coe_le_coe_iff]
         rwa [hcx, hby] at hxy
   | inr case_y =>
-    obtain ⟨y, hAy, hbcy⟩ := case_y
-    exfalso
+    obtain ⟨y, hAy, hbc⟩ := case_y
     rw [
       Matrix.transpose_fromRows, Matrix.fromBlocks_transpose, Matrix.transpose_zero, Matrix.transpose_zero,
       Matrix.transpose_neg, Matrix.transpose_transpose, Matrix.transpose_row, Matrix.fromColumns_neg,
@@ -508,7 +503,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
       ←Sum.elim_comp_inl_inr (y ∘ Sum.inl), Matrix.fromColumns_mulWeig_sumElim, Matrix.fromColumns_mulWeig_sumElim,
       Matrix.zero_mulWeig, add_zero, Matrix.zero_mulWeig, zero_add,
     ] at hAy
-    rw [←Sum.elim_comp_inl_inr y, ←Sum.elim_comp_inl_inr (y ∘ Sum.inl)] at hbcy
+    rw [←Sum.elim_comp_inl_inr y, ←Sum.elim_comp_inl_inr (y ∘ Sum.inl)] at hbc
     set z := y ∘ Sum.inr
     set x := (y ∘ Sum.inl) ∘ Sum.inr
     set y := (y ∘ Sum.inl) ∘ Sum.inl
@@ -516,15 +511,67 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     · intro i
       specialize hAy i
       rw [Pi.zero_apply, Pi.add_apply, Pi.neg_apply] at hAy
-      --rw [add_neg_le_iff_le_add] at hAy
       sorry
-    have y_last_pos : 0 < z
+    have hAyx : Sum.elim (-Aᵀ ₘ* y) (A ₘ* x) ≤ z 0 • (Sum.elim c b)
+    · convert hAy'
+      ext
+      simp [Matrix.col, Matrix.mulWeig, Matrix.dotProd]
+    set z := z 0
+    have hAyx' : Sum.elim (-Aᵀ ₘ* y) (A ₘ* x) ≤ Sum.elim (z • c) (z • b)
+    · convert hAyx
+      sorry
+    rw [Sum.elim_le_elim_iff] at hAyx'
+    obtain ⟨hy, hx⟩ := hAyx'
+    clear hAy hAy' hAyx
+    rw [Matrix.sumElim_dotProd_sumElim, Matrix.zero_dotProd, add_zero, Matrix.sumElim_dotProd_sumElim] at hbc
+    have z_pos : 0 < z
     · by_contra contr
-      have last_zero : z = 0
-      · sorry
-      clear contr
+      have z_eq_0 : z = 0
+      · push_neg at contr
+        exact nonpos_iff_eq_zero.mp contr
+      rw [z_eq_0] at hx hy
+      clear contr z_eq_0 z
+      rw [ERat.vec_zero_smul] at hx hy
+      swap
+      · simpa using hcj
+      swap
+      · simpa using hbi
       sorry
-    sorry
+    match hcx : c ᵥ⬝ x with
+    | ⊥ =>
+      exfalso
+      apply hcj
+      exact Matrix.dotProd_eq_bot hcx
+    | ⊤ =>
+      exfalso
+      match hby : b ᵥ⬝ y with
+      | ⊥ =>
+        apply hbi
+        exact Matrix.dotProd_eq_bot hby
+      | ⊤ =>
+        rw [hcx, hby] at hbc
+        exact (hbc.trans ERat.zero_lt_top).false
+      | (q : ℚ) =>
+        rw [hcx, hby] at hbc
+        exact (hbc.trans ERat.zero_lt_top).false
+    | (p : ℚ) =>
+      match hby : b ᵥ⬝ y with
+      | ⊥ =>
+        exfalso
+        apply hbi
+        exact Matrix.dotProd_eq_bot hby
+      | ⊤ =>
+        exfalso
+        rw [hcx, hby] at hbc
+        exact (hbc.trans ERat.zero_lt_top).false
+      | (q : ℚ) =>
+        refine ⟨z⁻¹ • p, z⁻¹ • q, ⟨z⁻¹ • x, ?_, ?_⟩, ⟨z⁻¹ • y, ?_, ?_⟩, ?_⟩
+        · sorry -- from `hx`
+        · sorry -- from `hcx`
+        · sorry -- from `hy`
+        · sorry -- from `hby`
+        rw [hcx, hby] at hbc -- , ERat.smul_add z_pos
+        sorry -- from `hbc`
 
 theorem ExtendedLP.strongDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
