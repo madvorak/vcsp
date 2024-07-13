@@ -42,11 +42,11 @@ def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
 /-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`.
     Linear program `P` is not considered feasible if all solutions yield `⊤` as the objective. -/
 def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
-  ∃ x : J → ℚ≥0, P.IsSolution x ∧ P.c ᵥ⬝ x ≠ ⊤
+  ∃ p : ℚ, P.Reaches p.toERat
 
 /-- Linear program `P` is unbounded iff TODO. -/
 def ExtendedLP.IsUnbounded (P : ExtendedLP I J) : Prop :=
-  ∀ r : ℚ, ∃ p : ℚ, p ≤ r ∧ P.Reaches p
+  ∀ r : ℚ, ∃ p : ℚ, p ≤ r ∧ P.Reaches p.toERat
 
 /-- Dualize a linear program in the standard form.
     The matrix gets transposed and its values flip signs.
@@ -446,46 +446,36 @@ lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥
   sorry
 
 
-lemma StandardLP.unbounded_prim_makes_dual_infeasible [DecidableEq I] {P : ExtendedLP I J}
-    (hP : P.IsUnbounded) :
+lemma ExtendedLP.infeasible_of_unbounded [DecidableEq I] {P : ExtendedLP I J} (hP : P.IsUnbounded) :
     ¬ P.dualize.IsFeasible := by
   sorry
 
-lemma llllllll [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J} (hP : P.IsFeasible)
+lemma ExtendedLP.unbounded_of_feasible_of_neg [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J} (hP : P.IsFeasible)
     {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) :
     P.IsUnbounded := by
-  obtain ⟨xₚ, hxₚ, not_top⟩ := hP
-  change hxₚ to P.A ₘ* xₚ ≤ P.b
-  match hcxₚ : P.c ᵥ⬝ xₚ with
-  | ⊥ =>
-    exfalso
-    apply P.hcj
-    exact Matrix.dotProd_eq_bot hcxₚ
-  | ⊤ =>
-    exfalso
-    exact not_top hcxₚ
-  | (e : ℚ) =>
-    intro s
-    if hs : e ≤ s then
-      exact ⟨e, hs, ⟨xₚ, hxₚ, hcxₚ⟩⟩
-    else
-      push_neg at hs
-      match hcx₀ : P.c ᵥ⬝ x₀ with
-      | ⊥ =>
-        exfalso
-        apply P.hcj
-        exact Matrix.dotProd_eq_bot hcx₀
-      | ⊤ =>
-        exfalso
-        rw [hcx₀] at hx₀
-        exact (hx₀.trans_le le_top).false
-      | (d : ℚ) =>
-        rw [hcx₀] at hx₀
-        have : 0 < (s - e) / d
-        · sorry -- neg / neg = pos
-        -- TODO retype `(s - e) / d` to `ℚ≥0`
-        -- use xₚ + ((s - e) / d) • x₀
-        sorry
+  obtain ⟨e, xₚ, hxₚ, he⟩ := hP
+  --change hxₚ to P.A ₘ* xₚ ≤ P.b
+  intro s
+  if hs : e ≤ s then
+    exact ⟨e, hs, xₚ, hxₚ, he⟩
+  else
+    push_neg at hs
+    match hcx₀ : P.c ᵥ⬝ x₀ with
+    | ⊥ =>
+      exfalso
+      apply P.hcj
+      exact Matrix.dotProd_eq_bot hcx₀
+    | ⊤ =>
+      exfalso
+      rw [hcx₀] at hx₀
+      exact (hx₀.trans_le le_top).false
+    | (d : ℚ) =>
+      rw [hcx₀] at hx₀
+      have : 0 < (s - e) / d
+      · sorry -- neg / neg = pos
+      -- TODO retype `(s - e) / d` to `ℚ≥0`
+      -- `use xₚ + ((s - e) / d) • x₀`
+      sorry
 
 lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
@@ -589,14 +579,13 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
       swap
       · simpa using P.hbi
       if hxc : P.c ᵥ⬝ x < 0 then
-        exact StandardLP.unbounded_prim_makes_dual_infeasible (llllllll hP hxc) hQ
+        exact P.infeasible_of_unbounded (P.unbounded_of_feasible_of_neg hP hxc) hQ
       else
         have hyb : P.b ᵥ⬝ y < 0
         · push_neg at hxc
           by_contra! contr
           exact (hbc.trans_le (add_nonneg contr hxc)).false
-        apply StandardLP.unbounded_prim_makes_dual_infeasible (llllllll hQ hyb)
-        rwa [P.dualize_dualize]
+        exact P.dualize.infeasible_of_unbounded (P.dualize.unbounded_of_feasible_of_neg hQ hyb) (P.dualize_dualize.symm ▸ hP)
     match hcx : P.c ᵥ⬝ x with
     | ⊥ =>
       exfalso
