@@ -39,8 +39,7 @@ def ExtendedLP.IsSolution (P : ExtendedLP I J) (x : J → ℚ≥0) : Prop :=
 def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
   ∃ x : J → ℚ≥0, P.IsSolution x ∧ P.c ᵥ⬝ x = r
 
-/-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`.
-    Linear program `P` is not considered feasible if all solutions yield `⊤` as the objective. -/
+/-- Linear program `P` is feasible iff `P` reaches a finite objective value. -/
 def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
   ∃ p : ℚ, P.Reaches p.toERat
 
@@ -471,19 +470,14 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg [DecidableEq I] [DecidableEq J] {P
       exact (hx₀.trans_le le_top).false
     | (d : ℚ) =>
       rw [hcx₀] at hx₀
-      have : 0 < (s - e) / d
+      have coef_pos : 0 < (s - e) / d
       · apply div_pos_of_neg_of_neg
         · rwa [sub_neg]
         · rwa [←ERat.coe_neg']
-      --use xₚ + (⟨((s - e) / d), this.le⟩ : ℚ≥0) • x₀
-      let xₚ' : J → ℚ := fun i => (xₚ i).val
-      let x₀' : J → ℚ := fun i => (x₀ i).val
-      use s
-      constructor
-      · rfl
-      let x := xₚ' + ((s - e) / d) • x₀'
-      --use x
-      sorry
+      let k : ℚ≥0 := ⟨((s - e) / d), coef_pos.le⟩
+      refine ⟨s, by rfl, xₚ + k • x₀, ?_, ?_⟩
+      · sorry
+      · sorry
 
 lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
