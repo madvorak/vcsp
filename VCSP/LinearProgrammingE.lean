@@ -33,21 +33,20 @@ variable {I J : Type*} [Fintype I] [Fintype J]
 def ExtendedLP.IsSolution (P : ExtendedLP I J) (x : J → ℚ≥0) : Prop :=
   P.A ₘ* x ≤ P.b
 
-/-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`.
-    Linear program `P` is not considered feasible if all solutions yield `⊤` as the objective. -/
-def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
-  ∃ x : J → ℚ≥0, P.IsSolution x ∧ P.c ᵥ⬝ x ≠ ⊤
-
 /-- Linear program `P` reaches objective value `r` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the the coefficients `c` and summed up,
     the result is the value `r`. Note that `⊤` can be reached but `⊥` cannot. -/
 def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
   ∃ x : J → ℚ≥0, P.IsSolution x ∧ P.c ᵥ⬝ x = r
 
-/-- Linear program `P` is bounded by `r` iff all values reached by `P` are less or equal to `r`.
-    Linear program `P` is always bounded by `⊤` which is allowed by this definition. -/
-def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
-  ∀ p : ℚ∞, P.Reaches p → p ≤ r
+/-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`.
+    Linear program `P` is not considered feasible if all solutions yield `⊤` as the objective. -/
+def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
+  ∃ x : J → ℚ≥0, P.IsSolution x ∧ P.c ᵥ⬝ x ≠ ⊤
+
+/-- Linear program `P` is unbounded iff TODO. -/
+def ExtendedLP.IsUnbounded (P : ExtendedLP I J) : Prop :=
+  ∀ r : ℚ, ∃ p : ℚ, p ≤ r ∧ P.Reaches p
 
 /-- Dualize a linear program in the standard form.
     The matrix gets transposed and its values flip signs.
@@ -448,13 +447,13 @@ lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥
 
 
 lemma StandardLP.unbounded_prim_makes_dual_infeasible [DecidableEq I] {P : ExtendedLP I J}
-    (hP : ∀ r : ℚ, ∃ p : ℚ, p ≤ r ∧ P.Reaches p) :
+    (hP : P.IsUnbounded) :
     ¬ P.dualize.IsFeasible := by
   sorry
 
 lemma llllllll [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J} (hP : P.IsFeasible)
     {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) :
-    ∀ r : ℚ, ∃ p : ℚ, p ≤ r ∧ P.Reaches p := by
+    P.IsUnbounded := by
   obtain ⟨xₚ, hxₚ, not_top⟩ := hP
   change hxₚ to P.A ₘ* xₚ ≤ P.b
   match hcxₚ : P.c ᵥ⬝ xₚ with
