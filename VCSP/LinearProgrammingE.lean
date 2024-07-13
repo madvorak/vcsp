@@ -472,9 +472,17 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg [DecidableEq I] [DecidableEq J] {P
     | (d : ℚ) =>
       rw [hcx₀] at hx₀
       have : 0 < (s - e) / d
-      · sorry -- neg / neg = pos
-      -- TODO retype `(s - e) / d` to `ℚ≥0`
-      -- `use xₚ + ((s - e) / d) • x₀`
+      · apply div_pos_of_neg_of_neg
+        · rwa [sub_neg]
+        · rwa [←ERat.coe_neg']
+      --use xₚ + (⟨((s - e) / d), this.le⟩ : ℚ≥0) • x₀
+      let xₚ' : J → ℚ := fun i => (xₚ i).val
+      let x₀' : J → ℚ := fun i => (x₀ i).val
+      use s
+      constructor
+      · rfl
+      let x := xₚ' + ((s - e) / d) • x₀'
+      --use x
       sorry
 
 lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
