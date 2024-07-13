@@ -44,6 +44,10 @@ lemma zero_smul_ERat_nonbot {a : ℚ∞} (ha : a ≠ ⊥) : (0 : ℚ≥0) • a 
   | ⊤ => rfl
   | (q : ℚ) => rfl
 
+lemma zero_smul_toERat {a : ℚ} : (0 : ℚ≥0) • a.toERat = 0 := by
+  apply zero_smul_ERat_nonbot
+  exact ERat.coe_neq_bot a
+
 
 -- Richard Copley pointed out that we need this homomorphism:
 def Rat.toERatAddHom : ℚ →+ ℚ∞ := ⟨⟨Rat.toERat, ERat.coe_zero⟩, ERat.coe_add⟩
@@ -175,7 +179,7 @@ lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
   exact match hvi : v i with
   | ⊤ => rfl
   | ⊥ => False.elim (hv i hvi)
-  | (q : ℚ) => zero_smul_ERat_nonbot (ERat.coe_neq_bot q)
+  | (q : ℚ) => zero_smul_toERat
 
 lemma Matrix.has_bot_dotProd_nneg {v : I → ℚ∞} {i : I} (hvi : v i = ⊥) (w : I → ℚ≥0) :
     v ᵥ⬝ w = (⊥ : ℚ∞) := by

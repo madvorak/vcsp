@@ -1,4 +1,3 @@
-import Mathlib.Algebra.Order.Pi
 import VCSP.FarkasSpecial
 
 
@@ -419,7 +418,7 @@ lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} (w : J → �
       exact ((ERat.bot_lt_coe p).trans_le huvi).false
     | ⊤ =>
       if hwi0 : w i = 0 then
-        rw [hwi0, zero_smul_ERat_nonbot top_ne_bot, zero_smul_ERat_nonbot (ERat.coe_neq_bot p)]
+        rw [hwi0, zero_smul_ERat_nonbot top_ne_bot, zero_smul_toERat]
       else
         rw [pos_smul_ERat_top (lt_of_le_of_ne (w i).property (Ne.symm hwi0))]
         apply le_top
@@ -428,21 +427,6 @@ lemma Matrix.dotProd_le_dotProd_of_nneg_right {u v : J → ℚ∞} (w : J → �
       · rw [←ERat.coe_le_coe_iff]
         rwa [hui, hvi] at huvi
       exact ERat.coe_le_coe_iff.mpr (mul_le_mul_of_nonneg_left hpq (w i).property)
-
--- TODO what assumptions do the following three lemmas need?
-
-lemma Matrix.neg_dotProd (v : J → ℚ∞) (w : J → ℚ≥0) : -v ᵥ⬝ w = -(v ᵥ⬝ w) := by
-  sorry
-
-lemma Matrix.neg_mulWeig (A : Matrix I J ℚ∞) (w : J → ℚ≥0) : -A ₘ* w = -(A ₘ* w) := by
-  ext
-  apply Matrix.neg_dotProd
-
-lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥0) (w : J → ℚ≥0) :
-    Mᵀ ₘ* v ᵥ⬝ w = M ₘ* w ᵥ⬝ v := by
-  show
-    ∑ j : J, w j • ∑ i : I, v i • M i j = ∑ i : I, v i • ∑ j : J, w j • M i j
-  sorry
 
 
 variable [DecidableEq I] [DecidableEq J]
@@ -456,7 +440,7 @@ lemma ExtendedLP.infeasible_of_unbounded {P : ExtendedLP I J} (hP : P.IsUnbounde
   linarith
 
 lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFeasible)
-    {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) /-(hAx₀ : P.A ₘ* x₀ + 0 • (-P.b) ≤ 0)-/ (hAx₀ : P.A ₘ* x₀ ≤ 0) :
+    {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) (hAx₀ : P.A ₘ* x₀ + (0 : ℚ≥0) • (-P.b) ≤ 0) :
     P.IsUnbounded := by
   obtain ⟨e, xₚ, hxₚ, he⟩ := hP
   --change hxₚ to P.A ₘ* xₚ ≤ P.b
@@ -482,8 +466,7 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
         · rwa [←ERat.coe_neg']
       let k : ℚ≥0 := ⟨((s - e) / d), coef_pos.le⟩
       refine ⟨s, by rfl, xₚ + k • x₀, ?_, ?_⟩
-      · sorry/-
-        intro i
+      · intro i
         match hi : P.b i with
         | ⊥ =>
           exfalso
@@ -491,8 +474,15 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
         | ⊤ =>
           apply le_top
         | (bᵢ : ℚ) =>
-          sorry-/
-      · sorry
+          specialize hAx₀ i
+          rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hi] at hAx₀
+          have zeros : (P.A ₘ* x₀) i + (0 : ℚ∞) ≤ 0
+          · convert hAx₀
+            show (0 : ℚ∞) = 0 • -bᵢ.toERat
+            rw [←ERat.coe_neg, zero_smul_toERat]
+          rw [add_zero] at zeros
+          sorry -- TODO create `mulWeig_add`
+      · sorry -- TODO create `dotProd_add` first
 
 lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
@@ -557,8 +547,7 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
       Matrix.transpose_fromRows, Matrix.fromBlocks_transpose, Matrix.transpose_zero, Matrix.transpose_zero,
       Matrix.transpose_neg, Matrix.transpose_transpose, Matrix.transpose_row, Matrix.fromColumns_neg,
       ←Sum.elim_comp_inl_inr y, Matrix.fromColumns_mulWeig_sumElim,
-      Matrix.fromBlocks_neg, Matrix.ERat_neg_neg, Matrix.ERat_neg_zero, Matrix.ERat_neg_zero, Matrix.neg_mulWeig,
-      -- The last step `Matrix.neg_mulWeig` leads to a wrong conclusion !!!!!!!!!!!!!!!!!!
+      Matrix.fromBlocks_neg, Matrix.ERat_neg_neg, Matrix.ERat_neg_zero, Matrix.ERat_neg_zero,
       ←Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulWeig,
       ←Sum.elim_comp_inl_inr (y ∘ Sum.inl), Matrix.fromColumns_mulWeig_sumElim, Matrix.fromColumns_mulWeig_sumElim,
       Matrix.zero_mulWeig, add_zero, Matrix.zero_mulWeig, zero_add,
@@ -567,19 +556,17 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
     set z := y ∘ Sum.inr
     set x := (y ∘ Sum.inl) ∘ Sum.inr
     set y := (y ∘ Sum.inl) ∘ Sum.inl
-    have hAy' : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) ≤ Matrix.col (Fin 1) (Sum.elim P.c P.b) ₘ* z
-    · rwa [ERat.vec_sub_nonpos_iff] at hAy
-    have hAyx : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) ≤ z 0 • (Sum.elim P.c P.b)
-    · convert hAy'
+    have hAyx : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) + z 0 • (-Sum.elim P.c P.b) ≤ 0
+    · convert hAy
       ext
       simp [Matrix.col, Matrix.mulWeig, Matrix.dotProd]
     set z := z 0
-    have hAyx' : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) ≤ Sum.elim (z • P.c) (z • P.b)
+    have hAyx' : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) + Sum.elim (z • (-P.c)) (z • (-P.b)) ≤ 0
     · convert hAyx
       aesop
-    rw [Sum.elim_le_elim_iff] at hAyx'
+    rw [←Sum.elim_add_add, Sum.elim_nonpos_iff] at hAyx'
     obtain ⟨hy, hx⟩ := hAyx'
-    clear hAy hAy' hAyx
+    clear hAy hAyx
     rw [Matrix.sumElim_dotProd_sumElim, Matrix.zero_dotProd, add_zero, Matrix.sumElim_dotProd_sumElim] at hbc
     have z_pos : 0 < z
     · by_contra contr
@@ -588,12 +575,6 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
         exact nonpos_iff_eq_zero.mp contr
       rw [z_eq_0] at hx hy
       clear contr z_eq_0 z
-      rw [ERat.vec_zero_smul] at hx hy -- If done carefully, this step wouldn't be possible.
-      swap
-      · simpa using P.hcj
-      swap
-      · simpa using P.hbi
-      -- It naively seems that we have `P.A ₘ* x₀ ≤ 0` instead of `P.A ₘ* x₀ + 0 • (-P.b) ≤ 0` or something like that.
       if hxc : P.c ᵥ⬝ x < 0 then
         exact P.infeasible_of_unbounded (P.unbounded_of_feasible_of_neg hP hxc hx) hQ
       else
@@ -630,13 +611,20 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
         rw [hcx, hby] at hbc
         exact (hbc.trans ERat.zero_lt_top).false
       | (q : ℚ) =>
+        have hz : 0 < z⁻¹
+        · exact inv_pos_of_pos z_pos
         refine ⟨z⁻¹ • p, z⁻¹ • q, ⟨z⁻¹ • x, ?_, ?_⟩, ⟨z⁻¹ • y, ?_, ?_⟩, ?_⟩
-        · have hz : 0 < z⁻¹
-          · exact inv_pos_of_pos z_pos
-          rw [←ERat.vec_smul_le_smul_left hz] at hx -- TODO create `smul_mulWeig` and `←smul_mul`
-          sorry -- from `hx`
+        · rw [←ERat.vec_smul_le_smul_left hz] at hx -- TODO create `smul_mulWeig` and `←smul_mul`, and vector version of `ERat.smul_add`
+          have hhx : P.A ₘ* (z⁻¹ • x) + (-P.b) ≤ 0
+          · rw [smul_zero] at hx
+            sorry
+          rwa [ERat.vec_sub_nonpos_iff] at hhx
         · sorry -- from `hcx`
-        · sorry -- from `hy`
+        · rw [←ERat.vec_smul_le_smul_left hz] at hy
+          have hhy : -P.Aᵀ ₘ* (z⁻¹ • y) + (-P.c) ≤ 0
+          · rw [smul_zero] at hy
+            sorry
+          rwa [ERat.vec_sub_nonpos_iff] at hhy
         · sorry -- from `hby`
         rw [hcx, hby] at hbc -- , ERat.smul_add z_pos
         sorry -- from `hbc`
@@ -645,7 +633,7 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     ∃ r : ℚ, P.Reaches (-r).toERat ∧ P.dualize.Reaches r.toERat := by
   obtain ⟨p, q, hp, hq, hpq⟩ := P.strongDuality_aux hP hQ
-  have := P.weakDuality hp hq
+  have := P.weakDuality hp hq -- TODO cleanup
   rw [←ERat.coe_add, ←ERat.coe_zero, ERat.coe_le_coe_iff] at this
   use q
   have hqp : -q = p
