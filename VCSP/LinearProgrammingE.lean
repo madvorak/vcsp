@@ -34,7 +34,7 @@ def ExtendedLP.IsSolution (P : ExtendedLP I J) (x : J → ℚ≥0) : Prop :=
   P.A ₘ* x ≤ P.b
 
 /-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`.
-    Linear program `P` is considered feasible even if all solutions yield `⊥` as the objective. -/
+    Linear program `P` is considered feasible even if all solutions yield `⊤` as the objective. -/
 def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
   ∃ x : J → ℚ≥0, P.IsSolution x
 
@@ -118,7 +118,7 @@ lemma Matrix.fromColumns_mulWeig_sumElim {J₁ J₂ : Type*} [Fintype J₁] [Fin
 theorem ExtendedLP.weakDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     {p : ℚ∞} (hP : P.Reaches p) {q : ℚ∞} (hQ : P.dualize.Reaches q) :
     0 ≤ p + q := by
-  obtain ⟨A, b, c, hai, haj, hbi, hcj, hAb, hAc⟩ := P
+  obtain ⟨A, b, c, hAi, hAj, hbi, hcj, hAb, hAc⟩ := P
   obtain ⟨x, hx, rfl⟩ := hP
   obtain ⟨y, hy, rfl⟩ := hQ
   dsimp [ExtendedLP.dualize] at *
@@ -131,7 +131,7 @@ theorem ExtendedLP.weakDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I
         (by
           intro ⟨i, ⟨s, his⟩, ⟨t, hit⟩⟩
           cases i with
-          | inl i' => exact hai ⟨i', ⟨s, his⟩, ⟨t, hit⟩⟩
+          | inl i' => exact hAi ⟨i', ⟨s, his⟩, ⟨t, hit⟩⟩
           | inr => exact hcj ⟨s, his⟩
         )
         (by
@@ -139,7 +139,7 @@ theorem ExtendedLP.weakDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I
           cases s with
           | inl iₛ =>
             cases t with
-            | inl iₜ => exact haj ⟨j, ⟨iₛ, hjs⟩, ⟨iₜ, hjt⟩⟩
+            | inl iₜ => exact hAj ⟨j, ⟨iₛ, hjs⟩, ⟨iₜ, hjt⟩⟩
             | inr => exact hAc ⟨j, ⟨iₛ, hjs⟩, hjt⟩
           | inr => exact hcj ⟨j, hjs⟩
         )
@@ -448,22 +448,48 @@ lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥
 
 
 lemma StandardLP.unbounded_prim_makes_dual_infeasible [DecidableEq I] {P : ExtendedLP I J}
-    (hP : ∀ r : ℚ, ∃ p : ℚ, r ≤ p ∧ P.Reaches p) :
+    (hP : ∀ r : ℚ, ∃ p : ℚ, p ≤ r ∧ P.Reaches p) :
     ¬ P.dualize.IsFeasible := by
   sorry
 
 lemma llllllll [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J} (hP : P.IsFeasible)
     {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) :
-    ∀ r : ℚ, ∃ p : ℚ, r ≤ p ∧ P.Reaches p := by
+    ∀ r : ℚ, ∃ p : ℚ, p ≤ r ∧ P.Reaches p := by
   obtain ⟨xₚ, hxₚ⟩ := hP
   change hxₚ to P.A ₘ* xₚ ≤ P.b
-  intro s
-  if hs : P.c ᵥ⬝ xₚ ≤ s then
+  match hcxₚ : P.c ᵥ⬝ xₚ with
+  | ⊥ =>
+    exfalso
+    apply P.hcj
+    exact Matrix.dotProd_eq_bot hcxₚ
+  | ⊤ =>
+    -- Major issue: `P.IsFeasible` currently allows `⊤` as the objective value.
+    -- Maybe `hQ` needs to be propagated into this lemma.
+    -- However, it would be better to invoke weak duality elsewhere.
+    -- Otherwise `StandardLP.unbounded_prim_makes_dual_infeasible` with `llllllll` should be one big lemma.
     sorry
-  else
-    push_neg at hs
-    -- have : 0 < (s - P.c ᵥ⬝ xₚ) / (P.c ᵥ⬝ x₀)
-    sorry
+  | (e : ℚ) =>
+    intro s
+    if hs : e ≤ s then
+      exact ⟨e, hs, ⟨xₚ, hxₚ, hcxₚ⟩⟩
+    else
+      push_neg at hs
+      match hcx₀ : P.c ᵥ⬝ x₀ with
+      | ⊥ =>
+        exfalso
+        apply P.hcj
+        exact Matrix.dotProd_eq_bot hcx₀
+      | ⊤ =>
+        exfalso
+        rw [hcx₀] at hx₀
+        exact (hx₀.trans_le le_top).false
+      | (d : ℚ) =>
+        rw [hcx₀] at hx₀
+        have : 0 < (s - e) / d
+        · sorry -- neg / neg = pos
+        -- TODO retype `(s - e) / d` to `ℚ≥0`
+        -- use xₚ + ((s - e) / d) • x₀
+        sorry
 
 lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
@@ -494,13 +520,13 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     match hcx : P.c ᵥ⬝ x with
     | ⊥ =>
       exfalso
-      apply hcj
+      apply P.hcj
       exact Matrix.dotProd_eq_bot hcx
     | ⊤ =>
       exfalso
       match hby : P.b ᵥ⬝ y with
       | ⊥ =>
-        apply hbi
+        apply P.hbi
         exact Matrix.dotProd_eq_bot hby
       | ⊤ =>
         rw [hcx, hby] at hxy
@@ -512,7 +538,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
       match hby : P.b ᵥ⬝ y with
       | ⊥ =>
         exfalso
-        apply hbi
+        apply P.hbi
         exact Matrix.dotProd_eq_bot hby
       | ⊤ =>
         exfalso
@@ -578,13 +604,13 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     match hcx : P.c ᵥ⬝ x with
     | ⊥ =>
       exfalso
-      apply hcj
+      apply P.hcj
       exact Matrix.dotProd_eq_bot hcx
     | ⊤ =>
       exfalso
       match hby : P.b ᵥ⬝ y with
       | ⊥ =>
-        apply hbi
+        apply P.hbi
         exact Matrix.dotProd_eq_bot hby
       | ⊤ =>
         rw [hcx, hby] at hbc
@@ -596,7 +622,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
       match hby : P.b ᵥ⬝ y with
       | ⊥ =>
         exfalso
-        apply hbi
+        apply P.hbi
         exact Matrix.dotProd_eq_bot hby
       | ⊤ =>
         exfalso
