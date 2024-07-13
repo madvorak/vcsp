@@ -34,9 +34,9 @@ def ExtendedLP.IsSolution (P : ExtendedLP I J) (x : J → ℚ≥0) : Prop :=
   P.A ₘ* x ≤ P.b
 
 /-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`.
-    Linear program `P` is considered feasible even if all solutions yield `⊤` as the objective. -/
+    Linear program `P` is not considered feasible if all solutions yield `⊤` as the objective. -/
 def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
-  ∃ x : J → ℚ≥0, P.IsSolution x
+  ∃ x : J → ℚ≥0, P.IsSolution x ∧ P.c ᵥ⬝ x ≠ ⊤
 
 /-- Linear program `P` reaches objective value `r` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the the coefficients `c` and summed up,
@@ -455,7 +455,7 @@ lemma StandardLP.unbounded_prim_makes_dual_infeasible [DecidableEq I] {P : Exten
 lemma llllllll [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J} (hP : P.IsFeasible)
     {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) :
     ∀ r : ℚ, ∃ p : ℚ, p ≤ r ∧ P.Reaches p := by
-  obtain ⟨xₚ, hxₚ⟩ := hP
+  obtain ⟨xₚ, hxₚ, not_top⟩ := hP
   change hxₚ to P.A ₘ* xₚ ≤ P.b
   match hcxₚ : P.c ᵥ⬝ xₚ with
   | ⊥ =>
@@ -463,11 +463,8 @@ lemma llllllll [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J} (hP : P.IsFe
     apply P.hcj
     exact Matrix.dotProd_eq_bot hcxₚ
   | ⊤ =>
-    -- Major issue: `P.IsFeasible` currently allows `⊤` as the objective value.
-    -- Maybe `hQ` needs to be propagated into this lemma.
-    -- However, it would be better to invoke weak duality elsewhere.
-    -- Otherwise `StandardLP.unbounded_prim_makes_dual_infeasible` with `llllllll` should be one big lemma.
-    sorry
+    exfalso
+    exact not_top hcxₚ
   | (e : ℚ) =>
     intro s
     if hs : e ≤ s then
