@@ -445,12 +445,18 @@ lemma Matrix.transpose_mulWeig_dotProd (M : Matrix I J ℚ∞) (v : I → ℚ≥
   sorry
 
 
-lemma ExtendedLP.infeasible_of_unbounded [DecidableEq I] {P : ExtendedLP I J} (hP : P.IsUnbounded) :
-    ¬ P.dualize.IsFeasible := by
-  sorry
+variable [DecidableEq I] [DecidableEq J]
 
-lemma ExtendedLP.unbounded_of_feasible_of_neg [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J} (hP : P.IsFeasible)
-    {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) :
+lemma ExtendedLP.infeasible_of_unbounded {P : ExtendedLP I J} (hP : P.IsUnbounded) :
+    ¬ P.dualize.IsFeasible := by
+  intro ⟨q, hq⟩
+  obtain ⟨p, hpq, hp⟩ := hP (-(q+1))
+  have weak_duality := P.weakDuality hp hq
+  rw [←ERat.coe_add, ←ERat.coe_zero, ERat.coe_le_coe_iff] at weak_duality
+  linarith
+
+lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFeasible)
+    {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) /-(hAx₀ : P.A ₘ* x₀ + 0 • (-P.b) ≤ 0)-/ (hAx₀ : P.A ₘ* x₀ ≤ 0) :
     P.IsUnbounded := by
   obtain ⟨e, xₚ, hxₚ, he⟩ := hP
   --change hxₚ to P.A ₘ* xₚ ≤ P.b
@@ -476,10 +482,19 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg [DecidableEq I] [DecidableEq J] {P
         · rwa [←ERat.coe_neg']
       let k : ℚ≥0 := ⟨((s - e) / d), coef_pos.le⟩
       refine ⟨s, by rfl, xₚ + k • x₀, ?_, ?_⟩
-      · sorry
+      · sorry/-
+        intro i
+        match hi : P.b i with
+        | ⊥ =>
+          exfalso
+          exact P.hbi ⟨i, hi⟩
+        | ⊤ =>
+          apply le_top
+        | (bᵢ : ℚ) =>
+          sorry-/
       · sorry
 
-lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
+lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     ∃ p q : ℚ, P.Reaches p ∧ P.dualize.Reaches q ∧ p + q ≤ 0 := by
   cases
@@ -543,6 +558,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
       Matrix.transpose_neg, Matrix.transpose_transpose, Matrix.transpose_row, Matrix.fromColumns_neg,
       ←Sum.elim_comp_inl_inr y, Matrix.fromColumns_mulWeig_sumElim,
       Matrix.fromBlocks_neg, Matrix.ERat_neg_neg, Matrix.ERat_neg_zero, Matrix.ERat_neg_zero, Matrix.neg_mulWeig,
+      -- The last step `Matrix.neg_mulWeig` leads to a wrong conclusion !!!!!!!!!!!!!!!!!!
       ←Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulWeig,
       ←Sum.elim_comp_inl_inr (y ∘ Sum.inl), Matrix.fromColumns_mulWeig_sumElim, Matrix.fromColumns_mulWeig_sumElim,
       Matrix.zero_mulWeig, add_zero, Matrix.zero_mulWeig, zero_add,
@@ -552,10 +568,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     set x := (y ∘ Sum.inl) ∘ Sum.inr
     set y := (y ∘ Sum.inl) ∘ Sum.inl
     have hAy' : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) ≤ Matrix.col (Fin 1) (Sum.elim P.c P.b) ₘ* z
-    · intro i
-      specialize hAy i
-      rw [Pi.zero_apply, Pi.add_apply, Pi.neg_apply] at hAy
-      sorry
+    · rwa [ERat.vec_sub_nonpos_iff] at hAy
     have hAyx : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) ≤ z 0 • (Sum.elim P.c P.b)
     · convert hAy'
       ext
@@ -563,7 +576,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
     set z := z 0
     have hAyx' : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) ≤ Sum.elim (z • P.c) (z • P.b)
     · convert hAyx
-      sorry
+      aesop
     rw [Sum.elim_le_elim_iff] at hAyx'
     obtain ⟨hy, hx⟩ := hAyx'
     clear hAy hAy' hAyx
@@ -575,19 +588,20 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
         exact nonpos_iff_eq_zero.mp contr
       rw [z_eq_0] at hx hy
       clear contr z_eq_0 z
-      rw [ERat.vec_zero_smul] at hx hy
+      rw [ERat.vec_zero_smul] at hx hy -- If done carefully, this step wouldn't be possible.
       swap
       · simpa using P.hcj
       swap
       · simpa using P.hbi
+      -- It naively seems that we have `P.A ₘ* x₀ ≤ 0` instead of `P.A ₘ* x₀ + 0 • (-P.b) ≤ 0` or something like that.
       if hxc : P.c ᵥ⬝ x < 0 then
-        exact P.infeasible_of_unbounded (P.unbounded_of_feasible_of_neg hP hxc) hQ
+        exact P.infeasible_of_unbounded (P.unbounded_of_feasible_of_neg hP hxc hx) hQ
       else
         have hyb : P.b ᵥ⬝ y < 0
         · push_neg at hxc
           by_contra! contr
           exact (hbc.trans_le (add_nonneg contr hxc)).false
-        exact P.dualize.infeasible_of_unbounded (P.dualize.unbounded_of_feasible_of_neg hQ hyb) (P.dualize_dualize.symm ▸ hP)
+        exact P.dualize.infeasible_of_unbounded (P.dualize.unbounded_of_feasible_of_neg hQ hyb hy) (P.dualize_dualize.symm ▸ hP)
     match hcx : P.c ᵥ⬝ x with
     | ⊥ =>
       exfalso
@@ -627,7 +641,7 @@ lemma ExtendedLP.strongDuality_aux [DecidableEq I] [DecidableEq J] {P : Extended
         rw [hcx, hby] at hbc -- , ERat.smul_add z_pos
         sorry -- from `hbc`
 
-theorem ExtendedLP.strongDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I J}
+theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     ∃ r : ℚ, P.Reaches (-r).toERat ∧ P.dualize.Reaches r.toERat := by
   obtain ⟨p, q, hp, hq, hpq⟩ := P.strongDuality_aux hP hQ
