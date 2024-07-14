@@ -106,6 +106,10 @@ lemma ERat.one_smul (a : ℚ∞) : (1 : ℚ≥0) • a = a :=
   | ⊤ => rfl
   | (q : ℚ) => congr_arg Rat.toERat (one_mul q)
 
+lemma ERat.one_smul_vec (v : J → ℚ∞) : (1 : ℚ≥0) • v = v := by
+  ext
+  apply ERat.one_smul
+
 lemma Matrix.fromColumns_mulWeig_sumElim {J₁ J₂ : Type*} [Fintype J₁] [Fintype J₂]
     (A₁ : Matrix I J₁ ℚ∞) (A₂ : Matrix I J₂ ℚ∞) (v₁ : J₁ → ℚ≥0) (v₂ : J₂ → ℚ≥0) :
     Matrix.fromColumns A₁ A₂ ₘ* Sum.elim v₁ v₂ = A₁ ₘ* v₁ + A₂ ₘ* v₂ := by
@@ -350,6 +354,62 @@ lemma ERat.smul_add {k : ℚ≥0} (hk : 0 < k) (x y : ℚ∞) :
   | ⊤, ⊤ =>
     rw [ERat.top_add_top, pos_smul_ERat_top hk, ERat.top_add_top]
 
+lemma ERat.smul_add_vec {k : ℚ≥0} (hk : 0 < k) (v w : J → ℚ∞) :
+    k • (v + w) = k • v + k • w := by
+  ext
+  apply ERat.smul_add hk
+
+lemma ERat.add_smul (c d : ℚ≥0) (x : ℚ∞) :
+    (c + d) • x = c • x + d • x := by
+  match x with
+  | ⊥ =>
+    rewrite [smul_ERat_bot, smul_ERat_bot, smul_ERat_bot]
+    rfl
+  | ⊤ =>
+    if c_eq_0 : c = 0 then
+      rw [c_eq_0, zero_smul_ERat_nonbot top_ne_bot, zero_add, zero_add]
+    else
+      rw [pos_smul_ERat_top sorry]
+      rw [pos_smul_ERat_top sorry]
+      sorry
+  | (q : ℚ) =>
+    show ((c + d) * q).toERat = (c * q).toERat + (d * q).toERat
+    rw [←ERat.coe_add, add_mul]
+
+lemma Matrix.dotProd_add (x : J → ℚ∞) (v w : J → ℚ≥0) :
+    x ᵥ⬝ (v + w) = x ᵥ⬝ v + x ᵥ⬝ w := by
+  simp [Matrix.dotProd, ERat.add_smul, Finset.sum_add_distrib]
+
+lemma Matrix.mulWeig_add (M : Matrix I J ℚ∞) (v w : J → ℚ≥0) :
+    M ₘ* (v + w) = M ₘ* v + M ₘ* w := by
+  ext
+  apply Matrix.dotProd_add
+
+lemma Matrix.dotProd_smul (x : J → ℚ∞) (k : ℚ≥0) (v : J → ℚ≥0) :
+    x ᵥ⬝ (k • v) = k • (x ᵥ⬝ v) := by
+  show ∑ j : J, (k * v j) • x j = k • ∑ j : J, v j • x j
+  sorry
+
+lemma Matrix.mulWeig_smul (M : Matrix I J ℚ∞) (k : ℚ≥0) (v : J → ℚ≥0) :
+    M ₘ* (k • v) = k • (M ₘ* v) := by
+  ext
+  apply Matrix.dotProd_smul
+
+lemma ERat.mul_smul (c d : ℚ≥0) (x : ℚ∞) :
+    (c * d) • x = c • (d • x) := by
+  match x with
+  | ⊥ =>
+    sorry
+  | ⊤ =>
+    sorry
+  | (q : ℚ) =>
+    sorry
+
+lemma ERat.mul_smul_vec (c d : ℚ≥0) (x : J → ℚ∞) :
+    (c * d) • x = c • (d • x) := by
+  ext
+  apply ERat.mul_smul
+
 lemma Multiset.smul_ERat_sum {k : ℚ≥0} (hk : 0 < k) (s : Multiset ℚ∞) :
     s.summap (k • ·) = k • s.sum := by
   induction s using Multiset.induction with
@@ -481,8 +541,16 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
             show (0 : ℚ∞) = 0 • -bᵢ.toERat
             rw [←ERat.coe_neg, zero_smul_toERat]
           rw [add_zero] at zeros
-          sorry -- TODO create `mulWeig_add`
-      · sorry -- TODO create `dotProd_add` first
+          rw [Matrix.mulWeig_add, Pi.add_apply]
+          sorry
+      · rw [Matrix.dotProd_add, he, Matrix.dotProd_smul, hcx₀]
+        show (e + ((s - e) / d) * d).toERat = s.toERat
+        rw [ERat.coe_eq_coe_iff, div_mul_cancel_of_imp]
+        exact add_sub_cancel e s
+        intro hd
+        exfalso
+        rw [hd] at hx₀
+        exact hx₀.false
 
 lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
@@ -494,7 +562,90 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
           (Matrix.fromBlocks P.A 0 0 (-P.Aᵀ))
           (Matrix.ro1 (Sum.elim P.c P.b)))
         (Sum.elim (Sum.elim P.b P.c) 0)
-        sorry sorry sorry sorry
+        (by
+          intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
+          cases k with
+          | inl k' =>
+            cases k' with
+            | inl i =>
+              cases s with
+              | inl jₛ =>
+                cases t with
+                | inl jₜ => exact P.hAi ⟨i, ⟨⟨jₛ, by simpa using hks⟩, ⟨jₜ, by simpa using hkt⟩⟩⟩
+                | inr iₜ => simp at hkt
+              | inr iₛ => simp at hks
+            | inr j =>
+              cases t with
+              | inl jₜ => simp at hkt
+              | inr iₜ =>
+                cases s with
+                | inl jₛ => simp at hks
+                | inr iₛ => exact P.hAj ⟨j, ⟨iₜ, by simpa using hkt⟩, ⟨iₛ, by simpa using hks⟩⟩
+          | inr =>
+            cases s with
+            | inl jₛ => exact P.hcj ⟨jₛ, hks⟩
+            | inr iₛ => exact P.hbi ⟨iₛ, hks⟩
+        )
+        (by
+          intro ⟨k, ⟨s, hks⟩, ⟨t, hkt⟩⟩
+          cases k with
+          | inl j =>
+            cases s with
+            | inl s' =>
+              cases s' with
+              | inl iₛ =>
+                cases t with
+                | inl t' =>
+                  cases t' with
+                  | inl iₜ => exact P.hAj ⟨j, ⟨⟨iₛ, hks⟩, ⟨iₜ, hkt⟩⟩⟩
+                  | inr jₜ => simp at hkt
+                | inr => exact P.hAc ⟨j, ⟨iₛ, hks⟩, hkt⟩
+              | inr jₛ => simp at hks
+            | inr => exact P.hcj ⟨j, hks⟩
+          | inr i =>
+            cases s with
+            | inl s' =>
+              cases s' with
+              | inl iₛ => simp at hks
+              | inr jₛ =>
+                cases t with
+                | inl t' =>
+                  cases t' with
+                  | inl iₜ => simp at hkt
+                  | inr jₜ => exact P.hAi ⟨i, ⟨jₜ, by simpa using hkt⟩, ⟨jₛ, by simpa using hks⟩⟩
+                | inr => exact P.hAb ⟨i, ⟨jₛ, by simpa using hks⟩, hkt⟩
+            | inr => exact P.hbi ⟨i, hks⟩
+        )
+        (by
+          intro ⟨k, ⟨t, hkt⟩, hk⟩
+          cases k with
+          | inl k' =>
+            cases k' with
+            | inl i =>
+              cases t with
+              | inl jₜ => exact P.hAb ⟨i, ⟨jₜ, hkt⟩, hk⟩
+              | inr iₜ => simp at hkt
+            | inr j =>
+              cases t with
+              | inl jₜ => simp at hkt
+              | inr iₜ => exact P.hAc ⟨j, ⟨iₜ, by simpa using hkt⟩, hk⟩
+          | inr => simp at hk
+        )
+        (by
+          intro ⟨k, ⟨s, hks⟩, hk⟩
+          cases k with
+          | inl k' =>
+            cases k' with
+            | inl i =>
+              cases s with
+              | inl jₛ => exact P.hbi ⟨i, hk⟩
+              | inr iₛ => simp at hks
+            | inr j =>
+              cases s with
+              | inl jₛ => simp at hks
+              | inr iₛ => exact P.hcj ⟨j, hk⟩
+          | inr => simp at hk
+        )
       ) with
   | inl case_x =>
     obtain ⟨x, hx⟩ := case_x
@@ -611,23 +762,31 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
         rw [hcx, hby] at hbc
         exact (hbc.trans ERat.zero_lt_top).false
       | (q : ℚ) =>
-        have hz : 0 < z⁻¹
+        have z_inv_pos : 0 < z⁻¹
         · exact inv_pos_of_pos z_pos
         refine ⟨z⁻¹ • p, z⁻¹ • q, ⟨z⁻¹ • x, ?_, ?_⟩, ⟨z⁻¹ • y, ?_, ?_⟩, ?_⟩
-        · rw [←ERat.vec_smul_le_smul_left hz] at hx -- TODO create `smul_mulWeig` and `←smul_mul`, and vector version of `ERat.smul_add`
-          have hhx : P.A ₘ* (z⁻¹ • x) + (-P.b) ≤ 0
-          · rw [smul_zero] at hx
-            sorry
-          rwa [ERat.vec_sub_nonpos_iff] at hhx
-        · sorry -- from `hcx`
-        · rw [←ERat.vec_smul_le_smul_left hz] at hy
-          have hhy : -P.Aᵀ ₘ* (z⁻¹ • y) + (-P.c) ≤ 0
-          · rw [smul_zero] at hy
-            sorry
-          rwa [ERat.vec_sub_nonpos_iff] at hhy
-        · sorry -- from `hby`
-        rw [hcx, hby] at hbc -- , ERat.smul_add z_pos
-        sorry -- from `hbc`
+        · rwa [
+            ←ERat.vec_smul_le_smul_left z_inv_pos, smul_zero,
+            ERat.smul_add_vec z_inv_pos, ←Matrix.mulWeig_smul, ←ERat.mul_smul_vec,
+            inv_mul_cancel (ne_of_lt z_pos).symm, ERat.one_smul_vec, ERat.vec_sub_nonpos_iff
+          ] at hx
+        · rewrite [Matrix.dotProd_smul, hcx]
+          rfl
+        · rwa [
+            ←ERat.vec_smul_le_smul_left z_inv_pos, smul_zero,
+            ERat.smul_add_vec z_inv_pos, ←Matrix.mulWeig_smul, ←ERat.mul_smul_vec,
+            inv_mul_cancel (ne_of_lt z_pos).symm, ERat.one_smul_vec, ERat.vec_sub_nonpos_iff
+          ] at hy
+        · dsimp only [ExtendedLP.dualize]
+          rewrite [Matrix.dotProd_smul, hby]
+          rfl
+        rw [hcx, hby] at hbc
+        show z⁻¹ * p + z⁻¹ * q ≤ 0
+        rw [←mul_add]
+        have hpq : p + q < 0
+        · rw [←ERat.coe_lt_coe_iff, add_comm]
+          exact hbc
+        exact Linarith.mul_nonpos hpq.le z_inv_pos
 
 theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
