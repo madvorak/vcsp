@@ -376,9 +376,22 @@ lemma ERat.add_smul (c d : ℚ≥0) (x : ℚ∞) :
     if c_eq_0 : c = 0 then
       rw [c_eq_0, zero_smul_ERat_nonbot top_ne_bot, zero_add, zero_add]
     else
-      rw [pos_smul_ERat_top sorry]
-      rw [pos_smul_ERat_top sorry]
-      sorry
+      have c_pos : 0 < c -- TODO lemma
+      · apply lt_of_le_of_ne c.property
+        intro contr
+        exact c_eq_0 (by simpa using contr.symm)
+      rw [pos_smul_ERat_top (add_pos_of_pos_of_nonneg c_pos d.property)]
+      rw [pos_smul_ERat_top c_pos]
+      if d_eq_0 : d = 0 then
+        rewrite [d_eq_0]
+        rfl
+      else
+        have d_pos : 0 < d
+        · apply lt_of_le_of_ne d.property
+          intro contr
+          exact d_eq_0 (by simpa using contr.symm)
+        rewrite [pos_smul_ERat_top d_pos]
+        rfl
   | (q : ℚ) =>
     show ((c + d) * q).toERat = (c * q).toERat + (d * q).toERat
     rw [←ERat.coe_add, add_mul]
@@ -825,3 +838,5 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
   · linarith
   rw [hqp]
   exact ⟨hp, hq⟩
+
+#print axioms ExtendedLP.strongDuality
