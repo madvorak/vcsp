@@ -396,25 +396,6 @@ lemma ERat.add_smul (c d : ℚ≥0) (x : ℚ∞) :
     show ((c + d) * q).toERat = (c * q).toERat + (d * q).toERat
     rw [←ERat.coe_add, add_mul]
 
-lemma Matrix.dotProd_add (x : J → ℚ∞) (v w : J → ℚ≥0) :
-    x ᵥ⬝ (v + w) = x ᵥ⬝ v + x ᵥ⬝ w := by
-  simp [Matrix.dotProd, ERat.add_smul, Finset.sum_add_distrib]
-
-lemma Matrix.mulWeig_add (M : Matrix I J ℚ∞) (v w : J → ℚ≥0) :
-    M ₘ* (v + w) = M ₘ* v + M ₘ* w := by
-  ext
-  apply Matrix.dotProd_add
-
-lemma Matrix.dotProd_smul (x : J → ℚ∞) (k : ℚ≥0) (v : J → ℚ≥0) :
-    x ᵥ⬝ (k • v) = k • (x ᵥ⬝ v) := by
-  show ∑ j : J, (k * v j) • x j = k • ∑ j : J, v j • x j
-  sorry
-
-lemma Matrix.mulWeig_smul (M : Matrix I J ℚ∞) (k : ℚ≥0) (v : J → ℚ≥0) :
-    M ₘ* (k • v) = k • (M ₘ* v) := by
-  ext
-  apply Matrix.dotProd_smul
-
 lemma ERat.mul_smul (c d : ℚ≥0) (x : ℚ∞) :
     (c * d) • x = c • (d • x) := by
   match x with
@@ -446,6 +427,15 @@ lemma ERat.mul_smul_vec (c d : ℚ≥0) (x : J → ℚ∞) :
   ext
   apply ERat.mul_smul
 
+lemma Matrix.dotProd_add (x : J → ℚ∞) (v w : J → ℚ≥0) :
+    x ᵥ⬝ (v + w) = x ᵥ⬝ v + x ᵥ⬝ w := by
+  simp [Matrix.dotProd, ERat.add_smul, Finset.sum_add_distrib]
+
+lemma Matrix.mulWeig_add (M : Matrix I J ℚ∞) (v w : J → ℚ≥0) :
+    M ₘ* (v + w) = M ₘ* v + M ₘ* w := by
+  ext
+  apply Matrix.dotProd_add
+
 lemma Multiset.smul_ERat_sum {k : ℚ≥0} (hk : 0 < k) (s : Multiset ℚ∞) :
     s.summap (k • ·) = k • s.sum := by
   induction s using Multiset.induction with
@@ -462,6 +452,19 @@ lemma Matrix.ERat_smul_dotProd {k : ℚ≥0} (hk : 0 < k) (v : J → ℚ∞) (w 
   show ∑ j : J, w j • k • v j = k • ∑ j : J, w j • v j
   conv => lhs; congr; rfl; ext i; rw [ERat.smul_smul hk]
   apply Finset.smul_ERat_sum hk
+
+lemma Matrix.dotProd_smul {k : ℚ≥0} (hk : 0 < k) (x : J → ℚ∞) (v : J → ℚ≥0) :
+    x ᵥ⬝ (k • v) = k • (x ᵥ⬝ v) := by
+  show ∑ j : J, (k * v j) • x j = k • ∑ j : J, v j • x j
+  rw [←Finset.smul_ERat_sum hk]
+  apply congr_arg
+  ext
+  apply ERat.mul_smul
+
+lemma Matrix.mulWeig_smul {k : ℚ≥0} (hk : 0 < k) (M : Matrix I J ℚ∞) (v : J → ℚ≥0) :
+    M ₘ* (k • v) = k • (M ₘ* v) := by
+  ext
+  apply Matrix.dotProd_smul hk
 
 lemma Multiset.sum_neq_ERat_top {s : Multiset ℚ∞} (hs : ⊤ ∉ s) : s.sum ≠ ⊤ := by
   induction s using Multiset.induction with
@@ -555,11 +558,13 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
       exact (hx₀.trans_le le_top).false
     | (d : ℚ) =>
       rw [hcx₀] at hx₀
-      have coef_pos : 0 < (s - e) / d
+      have coef_pos : 0 < (s - e) / d -- TODO cleanup
       · apply div_pos_of_neg_of_neg
         · rwa [sub_neg]
         · rwa [←ERat.coe_neg']
       let k : ℚ≥0 := ⟨((s - e) / d), coef_pos.le⟩
+      have k_pos : 0 < k
+      · exact coef_pos
       refine ⟨s, by rfl, xₚ + k • x₀, ?_, ?_⟩
       · intro i
         match hi : P.b i with
@@ -576,13 +581,13 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
             show 0 = 0 • -(bᵢ.toERat)
             rw [←ERat.coe_neg, zero_smul_toERat]
           rw [add_zero] at zeros
-          rw [Matrix.mulWeig_add, Matrix.mulWeig_smul, Pi.add_apply]
+          rw [Matrix.mulWeig_add, Matrix.mulWeig_smul k_pos, Pi.add_apply]
           apply add_le_of_le_of_nonpos
           · convert_to (P.A ₘ* xₚ) i ≤ P.b i
             · exact hi.symm
             exact hxₚ i
           · exact ERat.smul_nonpos zeros k
-      · rw [Matrix.dotProd_add, he, Matrix.dotProd_smul, hcx₀]
+      · rw [Matrix.dotProd_add, he, Matrix.dotProd_smul k_pos, hcx₀]
         show (e + ((s - e) / d) * d).toERat = s.toERat
         rw [ERat.coe_eq_coe_iff, div_mul_cancel_of_imp]
         exact add_sub_cancel e s
@@ -806,18 +811,18 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
         refine ⟨z⁻¹ • p, z⁻¹ • q, ⟨z⁻¹ • x, ?_, ?_⟩, ⟨z⁻¹ • y, ?_, ?_⟩, ?_⟩
         · rwa [
             ←ERat.vec_smul_le_smul_left z_inv_pos, smul_zero,
-            ERat.smul_add_vec z_inv_pos, ←Matrix.mulWeig_smul, ←ERat.mul_smul_vec,
+            ERat.smul_add_vec z_inv_pos, ←Matrix.mulWeig_smul z_inv_pos, ←ERat.mul_smul_vec,
             inv_mul_cancel (ne_of_lt z_pos).symm, ERat.one_smul_vec, ERat.vec_sub_nonpos_iff
           ] at hx
-        · rewrite [Matrix.dotProd_smul, hcx]
+        · rewrite [Matrix.dotProd_smul z_inv_pos, hcx]
           rfl
         · rwa [
             ←ERat.vec_smul_le_smul_left z_inv_pos, smul_zero,
-            ERat.smul_add_vec z_inv_pos, ←Matrix.mulWeig_smul, ←ERat.mul_smul_vec,
+            ERat.smul_add_vec z_inv_pos, ←Matrix.mulWeig_smul z_inv_pos, ←ERat.mul_smul_vec,
             inv_mul_cancel (ne_of_lt z_pos).symm, ERat.one_smul_vec, ERat.vec_sub_nonpos_iff
           ] at hy
         · dsimp only [ExtendedLP.dualize]
-          rewrite [Matrix.dotProd_smul, hby]
+          rewrite [Matrix.dotProd_smul z_inv_pos, hby]
           rfl
         rw [hcx, hby] at hbc
         show z⁻¹ * p + z⁻¹ * q ≤ 0
