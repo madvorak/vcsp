@@ -6,47 +6,46 @@ section extrasERat
 
 notation "ℚ∞" => ERat
 
-def NNRat_smul_ERat (c : ℚ≥0) : ℚ∞ → ℚ∞
+def ERat.NNRat_smul (c : ℚ≥0) : ℚ∞ → ℚ∞
 | ⊥ => ⊥
 | ⊤ => if c = 0 then 0 else ⊤
 | (q : ℚ) => (c.val * q).toERat
 
 instance : SMulZeroClass ℚ≥0 ℚ∞ where
-  smul := NNRat_smul_ERat
+  smul := ERat.NNRat_smul
   smul_zero (c : ℚ≥0) := ERat.coe_eq_coe_iff.mpr (mul_zero c.val)
 
-lemma pos_smul_ERat_top {c : ℚ≥0} (hc : 0 < c) : c • (⊤ : ERat) = ⊤ := by
-  show NNRat_smul_ERat c ⊤ = ⊤
-  simp [NNRat_smul_ERat]
+lemma ERat.pos_smul_top {c : ℚ≥0} (hc : 0 < c) : c • (⊤ : ERat) = ⊤ := by
+  show ERat.NNRat_smul c ⊤ = ⊤
+  simp [ERat.NNRat_smul]
   exact hc.ne.symm
 
-lemma smul_ERat_top_neq_bot (c : ℚ≥0) : c • (⊤ : ERat) ≠ ⊥ := by
-  show NNRat_smul_ERat c ⊤ ≠ ⊥
-  by_cases hc0 : c = 0 <;> simp [NNRat_smul_ERat, hc0]
+lemma ERat.smul_top_neq_bot (c : ℚ≥0) : c • (⊤ : ERat) ≠ ⊥ := by
+  show ERat.NNRat_smul c ⊤ ≠ ⊥
+  by_cases hc0 : c = 0 <;> simp [ERat.NNRat_smul, hc0]
 
-lemma smul_ERat_coe_neq_bot (c : ℚ≥0) (q : ℚ) : c • q.toERat ≠ ⊥ :=
+lemma ERat.smul_coe_neq_bot (c : ℚ≥0) (q : ℚ) : c • q.toERat ≠ ⊥ :=
   ERat.coe_neq_bot (c * q)
 
-lemma smul_ERat_bot (c : ℚ≥0) : c • (⊥ : ℚ∞) = ⊥ :=
+lemma ERat.smul_bot (c : ℚ≥0) : c • (⊥ : ℚ∞) = ⊥ :=
   rfl
 
-lemma smul_ERat_nonbot_neq_bot (c : ℚ≥0) {a : ℚ∞} (ha : a ≠ ⊥) : c • a ≠ ⊥ := by
-  match a with
-  | ⊥ => simp at ha
-  | ⊤ => apply smul_ERat_top_neq_bot
-  | (q : ℚ) => apply smul_ERat_coe_neq_bot
+lemma ERat.smul_nonbot_neq_bot (c : ℚ≥0) {r : ℚ∞} (hr : r ≠ ⊥) : c • r ≠ ⊥ := by
+  match r with
+  | ⊥ => simp at hr
+  | ⊤ => apply ERat.smul_top_neq_bot
+  | (q : ℚ) => apply ERat.smul_coe_neq_bot
 
-lemma zero_smul_ERat_nonbot {a : ℚ∞} (ha : a ≠ ⊥) : (0 : ℚ≥0) • a = 0 := by
-  show NNRat_smul_ERat 0 a = 0
-  simp [NNRat_smul_ERat]
-  match a with
-  | ⊥ => simp at ha
+lemma ERat.zero_smul_nonbot {r : ℚ∞} (hr : r ≠ ⊥) : (0 : ℚ≥0) • r = 0 := by
+  show ERat.NNRat_smul 0 r = 0
+  simp [ERat.NNRat_smul]
+  match r with
+  | ⊥ => simp at hr
   | ⊤ => rfl
   | (q : ℚ) => rfl
 
-lemma zero_smul_toERat {a : ℚ} : (0 : ℚ≥0) • a.toERat = 0 := by
-  apply zero_smul_ERat_nonbot
-  exact ERat.coe_neq_bot a
+lemma ERat.zero_smul_coe {q : ℚ} : (0 : ℚ≥0) • q.toERat = 0 :=
+  ERat.zero_smul_nonbot (ERat.coe_neq_bot q)
 
 
 -- Richard Copley pointed out that we need this homomorphism:
@@ -179,7 +178,7 @@ lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
   exact match hvi : v i with
   | ⊤ => rfl
   | ⊥ => False.elim (hv i hvi)
-  | (q : ℚ) => zero_smul_toERat
+  | (q : ℚ) => ERat.zero_smul_coe
 
 lemma Matrix.has_bot_dotProd_nneg {v : I → ℚ∞} {i : I} (hvi : v i = ⊥) (w : I → ℚ≥0) :
     v ᵥ⬝ w = (⊥ : ℚ∞) := by
@@ -196,8 +195,8 @@ lemma Matrix.no_bot_dotProd_nneg {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) (w
   obtain ⟨i, hi⟩ := contr
   match hvi : v i with
   | ⊥ => exact hv i hvi
-  | ⊤ => rw [hvi] at hi; exact smul_ERat_top_neq_bot (w i) hi
-  | (q : ℚ) => rw [hvi] at hi; exact smul_ERat_coe_neq_bot (w i) q hi
+  | ⊤ => rw [hvi] at hi; exact ERat.smul_top_neq_bot (w i) hi
+  | (q : ℚ) => rw [hvi] at hi; exact ERat.smul_coe_neq_bot (w i) q hi
 
 lemma Matrix.no_bot_has_top_dotProd_pos {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     (w : I → ℚ≥0) (hwi : 0 < w i) :
@@ -209,11 +208,11 @@ lemma Matrix.no_bot_has_top_dotProd_pos {v : I → ℚ∞} (hv : ∀ a, v a ≠ 
     · rw [Finset.mem_val]
       apply Finset.mem_univ
     · rw [hvi]
-      exact pos_smul_ERat_top hwi
+      exact ERat.pos_smul_top hwi
   · intro contr
     rw [Multiset.mem_map] at contr
     obtain ⟨b, -, hb⟩ := contr
-    exact smul_ERat_nonbot_neq_bot (w b) (hv b) hb
+    exact ERat.smul_nonbot_neq_bot (w b) (hv b) hb
 
 lemma Matrix.no_bot_has_top_dotProd_le {v : I → ℚ∞} (hv : ∀ a, v a ≠ ⊥) {i : I} (hvi : v i = ⊤)
     (w : I → ℚ≥0) {q : ℚ} (hq : v ᵥ⬝ w ≤ q.toERat) :
@@ -237,14 +236,14 @@ lemma Matrix.dotProd_zero_le_zero (v : I → ℚ∞) :
     · apply bot_le
     · exact hv.choose_spec
 
-lemma Matrix.no_bot_mulWeig_zero {A : Matrix I J ℚ∞} (hA : ∀ i, ∀ j, A i j ≠ ⊥) :
-    A ₘ* (0 : J → ℚ≥0) = (0 : I → ℚ∞) := by
+lemma Matrix.no_bot_mulWeig_zero {M : Matrix I J ℚ∞} (hM : ∀ i, ∀ j, M i j ≠ ⊥) :
+    M ₘ* (0 : J → ℚ≥0) = (0 : I → ℚ∞) := by
   ext
   apply Matrix.no_bot_dotProd_zero
-  apply hA
+  apply hM
 
-lemma Matrix.mulWeig_zero_le_zero (A : Matrix I J ℚ∞) :
-    A ₘ* (0 : J → ℚ≥0) ≤ (0 : I → ℚ∞) := by
+lemma Matrix.mulWeig_zero_le_zero (M : Matrix I J ℚ∞) :
+    M ₘ* (0 : J → ℚ≥0) ≤ (0 : I → ℚ∞) := by
   intro i
   apply Matrix.dotProd_zero_le_zero
 
@@ -362,7 +361,7 @@ theorem extendedFarkas [DecidableEq I]
                 exact hbt
             exact Matrix.no_bot_has_top_dotProd_nneg_le (t.property.right) ht x (hq ▸ ineqalities t.val)
           rw [hxj]
-          apply zero_smul_ERat_nonbot
+          apply ERat.zero_smul_nonbot
           apply i'.property.right
       · intro ⟨x, hx, ineqalities⟩
         use (fun j : J => if hj : (∀ i' : I', A i'.val j ≠ ⊤) then ⟨x ⟨j, hj⟩, hx ⟨j, hj⟩⟩ else 0)
@@ -375,7 +374,7 @@ theorem extendedFarkas [DecidableEq I]
             convert add_zero _
             · apply Finset.sum_eq_zero
               intro j _
-              apply zero_smul_ERat_nonbot
+              apply ERat.zero_smul_nonbot
               exact hi.right j.val
             · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
               apply Finset.subtype_univ_sum_eq_subtype_univ_sum
@@ -476,7 +475,7 @@ theorem extendedFarkas [DecidableEq I]
               exact hAij
           · intro i hi
             rw [h0 i hi]
-            apply zero_smul_ERat_nonbot
+            apply ERat.zero_smul_nonbot
             apply hnb
             exact hi
         · unfold Matrix.dotProd at sharpine
@@ -497,7 +496,7 @@ theorem extendedFarkas [DecidableEq I]
               exact hbi
           · intro i hi
             rw [h0 i hi]
-            apply zero_smul_ERat_nonbot
+            apply ERat.zero_smul_nonbot
             intro contr
             exact hbot ⟨i, contr⟩
       · intro ⟨y, hy, ineqalities, sharpine⟩
@@ -512,7 +511,7 @@ theorem extendedFarkas [DecidableEq I]
             convert add_zero _
             apply Finset.sum_eq_zero
             intro i _
-            apply zero_smul_ERat_nonbot
+            apply ERat.zero_smul_nonbot
             intro contr
             rw [Matrix.neg_apply, ERat.neg_eq_bot_iff] at contr
             exact hj i contr
@@ -547,7 +546,7 @@ theorem extendedFarkas [DecidableEq I]
           convert add_zero _
           · apply Finset.sum_eq_zero
             intro j _
-            apply zero_smul_ERat_nonbot
+            apply ERat.zero_smul_nonbot
             intro contr
             exact hbot ⟨j.val, contr⟩
           · rw [←Finset.sum_coe_sort_eq_attach, Finset.sum_toERat]
