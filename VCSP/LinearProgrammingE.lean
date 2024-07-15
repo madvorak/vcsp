@@ -42,9 +42,15 @@ def ExtendedLP.Reaches (P : ExtendedLP I J) (r : ℚ∞) : Prop :=
 def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
   ∃ p : ℚ, P.Reaches p.toERat
 
-/-- Linear program `P` is unbounded iff TODO. -/
+-- /-- Linear program `P` is unbounded iff TODO. -/
+-- def ExtendedLP.IsUnbounded (P : ExtendedLP I J) : Prop :=
+--   ∀ r : ℚ, ∃ p : ℚ∞, p ≤ r ∧ P.Reaches p
+
+def ExtendedLP.IsBoundedBy (P : ExtendedLP I J) (r : ℚ) : Prop :=
+  ¬∃ p : ℚ∞, p ≤ r ∧ P.Reaches p -- TODO change to `<`
+
 def ExtendedLP.IsUnbounded (P : ExtendedLP I J) : Prop :=
-  ∀ r : ℚ, ∃ p : ℚ∞, p ≤ r ∧ P.Reaches p
+  ∀ r : ℚ, ¬P.IsBoundedBy r -- TODO refactor
 
 /-- Dualize a linear program in the standard form.
     The matrix gets transposed and its values flip signs.
@@ -173,7 +179,8 @@ lemma NNRat.pos_of_not_zero {k : ℚ≥0} (hk : ¬(k = 0)) :
     0 < k := by
   apply lt_of_le_of_ne k.property
   intro contr
-  exact hk (by simpa using contr.symm)
+  apply hk
+  simpa using contr.symm
 
 lemma ERat.smul_nonpos {r : ℚ∞} (hr : r ≤ 0) (k : ℚ≥0) :
     k • r ≤ 0 := by
@@ -530,7 +537,10 @@ variable [DecidableEq I] [DecidableEq J]
 lemma ExtendedLP.infeasible_of_unbounded {P : ExtendedLP I J} (hP : P.IsUnbounded) :
     ¬P.dualize.IsFeasible := by
   intro ⟨q, hq⟩
-  obtain ⟨p, hpq, hp⟩ := hP (-(q+1))
+  specialize hP (-(q+1))
+  unfold ExtendedLP.IsBoundedBy at hP
+  rw [not_not] at hP
+  obtain ⟨p, hpq, hp⟩ := hP
   have weak_duality := P.weakDuality hp hq
   match p with
   | ⊥ => simp at weak_duality
@@ -546,6 +556,8 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
   obtain ⟨e, xₚ, hxₚ, he⟩ := hP
   intro s
   if hs : e ≤ s then
+    unfold ExtendedLP.IsBoundedBy
+    rw [not_not]
     exact ⟨e, by simpa using hs, xₚ, hxₚ, he⟩
   else
     push_neg at hs
@@ -566,6 +578,8 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
         · rwa [←ERat.coe_neg']
       let k : ℚ≥0 := ⟨((s - e) / d), coef_pos.le⟩
       let k_pos : 0 < k := coef_pos
+      unfold ExtendedLP.IsBoundedBy
+      rw [not_not]
       refine ⟨s, by rfl, xₚ + k • x₀, ?_, ?_⟩
       · intro i
         match hi : P.b i with
@@ -833,7 +847,7 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
           exact hbc
         exact Linarith.mul_nonpos hpq.le z_inv_pos
 
-theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
+lemma ExtendedLP.strongDuality_of_both_feasible {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
     ∃ r : ℚ, P.Reaches (-r).toERat ∧ P.dualize.Reaches r.toERat := by
   obtain ⟨p, q, hp, hq, hpq⟩ := P.strongDuality_aux hP hQ
@@ -845,21 +859,55 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
     exact eq_of_le_of_le hpq h0pq
   exact ⟨q, hqp ▸ hp, hq⟩
 
-#print axioms ExtendedLP.strongDuality
+#print axioms ExtendedLP.strongDuality_of_both_feasible
 
 lemma ExtendedLP.unbounded_of_feasible_of_infeasible {P : ExtendedLP I J}
     (hP : P.IsFeasible) (hQ : ¬P.dualize.IsFeasible) :
     P.IsUnbounded := by
-  cases
-    or_of_neq
-      (extendedFarkas (-P.Aᵀ) P.c (by aeply P.hAj) (by aeply P.hAi) (by aeply P.hAc) (by aeply P.hcj)) with
+  let I' : Type _ := { i : I // P.b i ≠ ⊤ }
+  let A' : Matrix I' J ℚ∞ := Matrix.of (fun i' : I' => P.A i'.val)
+  let b' : I' → ℚ∞ := (fun i' : I' => P.b i'.val)
+  cases or_of_neq (extendedFarkas (-A'ᵀ) P.c (by aeply P.hAj) (by aeply P.hAi) (by aeply P.hAc) (by aeply P.hcj)) with
   | inl caseI =>
     exfalso
     obtain ⟨y, hy⟩ := caseI
-    match hby : P.b ᵥ⬝ y with
-    | ⊥ => exact Matrix.no_bot_dotProd_nneg (by simpa using P.hbi) y hby
-    | ⊤ => sorry -- TODO !!
-    | (q : ℚ) => exact hQ ⟨q, y, hy, hby⟩
+    match hby : b' ᵥ⬝ y with
+    | ⊥ => exact Matrix.no_bot_dotProd_nneg (fun i hi => P.hbi ⟨i.val, hi⟩) y hby
+    | ⊤ => exact Matrix.no_top_dotProd_nneg (·.property) y hby
+    | (q : ℚ) =>
+      apply hQ
+      use q, (fun i : I => if hi : (P.b i ≠ ⊤) then y ⟨i, hi⟩ else 0)
+      constructor
+      · unfold ExtendedLP.dualize ExtendedLP.IsSolution Matrix.mulWeig
+        convert hy
+        simp only [Matrix.mulWeig, Matrix.dotProd, dite_not, dite_smul]
+        rw [Finset.sum_dite]
+        convert zero_add _ using 1
+        apply congr_arg₂
+        · apply Finset.sum_eq_zero
+          intro i _
+          apply ERat.zero_smul_nonbot
+          intro contr
+          exact P.hAb ⟨i.val, by aesop, by aesop⟩
+        · rw [←Finset.sum_coe_sort_eq_attach]
+          apply Finset.subtype_univ_sum_eq_subtype_univ_sum
+          · simp [Finset.mem_filter]
+          · intros
+            rfl
+      · simp only [Matrix.dotProd, dite_not, dite_smul]
+        rw [Finset.sum_dite]
+        convert zero_add _
+        · apply Finset.sum_eq_zero
+          intro i _
+          apply ERat.zero_smul_nonbot
+          intro contr
+          exact P.hbi ⟨i.val, contr⟩
+        · change hby to b' ᵥ⬝ y = q.toERat
+          rw [←Finset.sum_coe_sort_eq_attach, ←hby]
+          apply Finset.subtype_univ_sum_eq_subtype_univ_sum
+          · simp [Finset.mem_filter]
+          · intros
+            rfl
   | inr caseJ =>
     obtain ⟨x, hAx, hcx⟩ := caseJ
     apply ExtendedLP.unbounded_of_feasible_of_neg hP hcx
@@ -879,4 +927,21 @@ lemma ExtendedLP.unbounded_of_feasible_of_infeasible {P : ExtendedLP I J}
       · rw [←ERat.coe_neg]
         apply ERat.coe_neq_bot
       rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hbi, ERat.zero_smul_nonbot hq, add_zero]
-      exact hAx i
+      exact hAx ⟨i, hbi ▸ ERat.coe_neq_top q⟩
+
+#print axioms ExtendedLP.unbounded_of_feasible_of_infeasible
+
+open scoped Classical in
+/-- Extended notion of "optimum" of "minimization LP". -/
+noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
+  if P.IsFeasible then
+    if P.IsUnbounded then
+      some ⊥ -- unbounded means that minimum is `⊥`
+    else
+      -- TODO change to the definition `IsBoundedBy` is necessary for this definition to make sense !!!!!!!!!!!!
+      if hr : ∃ r : ℚ, P.Reaches r.toERat ∧ P.IsBoundedBy r then
+        some $ some $ some $ hr.choose -- the "minimum"
+      else
+        none -- invalid finite value (infimum is not attained; later, we prove it cannot happen)
+  else
+    some ⊤ -- infeasible means that minimum is `⊤`

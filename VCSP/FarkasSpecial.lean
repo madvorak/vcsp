@@ -509,12 +509,12 @@ theorem extendedFarkas [DecidableEq I]
             simp only [Matrix.dotProd, dite_smul]
             rw [Finset.sum_dite]
             convert add_zero _
-            apply Finset.sum_eq_zero
-            intro i _
-            apply ERat.zero_smul_nonbot
-            intro contr
-            rw [Matrix.neg_apply, ERat.neg_eq_bot_iff] at contr
-            exact hj i contr
+            · apply Finset.sum_eq_zero
+              intro i _
+              apply ERat.zero_smul_nonbot
+              intro contr
+              rw [Matrix.neg_apply, ERat.neg_eq_bot_iff] at contr
+              exact hj i contr
             · simp only [Matrix.mulVec, Matrix.dotProduct, Matrix.neg_apply, Matrix.transpose_apply, ERat.coe_neg]
               rw [Finset.sum_toERat]
               apply Finset.subtype_univ_sum_eq_subtype_univ_sum
