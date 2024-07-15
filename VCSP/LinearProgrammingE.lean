@@ -195,6 +195,13 @@ theorem ExtendedLP.weakDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I
 
 #print axioms ExtendedLP.weakDuality
 
+lemma ERat.smul_nonpos {x : ℚ∞} (hx : x ≤ 0) (c : ℚ≥0) :
+    c • x ≤ 0 := by
+  match x with
+  | ⊥ => apply bot_le
+  | ⊤ => simp at hx
+  | (q : ℚ) => exact ERat.coe_le_coe_iff.mpr (mul_nonpos_of_nonneg_of_nonpos c.property (coe_nonpos.mp hx))
+
 lemma ERat.add_neg_lt_zero_iff {r s : ℚ∞} (neq_bot : r ≠ ⊥ ∨ s ≠ ⊥) (neq_top : r ≠ ⊤ ∨ s ≠ ⊤) :
     r + (-s) < 0 ↔ r < s := by
   match s with
@@ -399,11 +406,27 @@ lemma ERat.mul_smul (c d : ℚ≥0) (x : ℚ∞) :
     (c * d) • x = c • (d • x) := by
   match x with
   | ⊥ =>
-    sorry
+    iterate 3 rw [smul_ERat_bot]
   | ⊤ =>
-    sorry
+    if d_eq_0 : d = 0 then
+      rw [d_eq_0, zero_smul_ERat_nonbot top_ne_bot, mul_zero, zero_smul_ERat_nonbot top_ne_bot, smul_zero]
+    else
+      have d_pos : 0 < d
+      · apply lt_of_le_of_ne d.property
+        intro contr
+        exact d_eq_0 (by simpa using contr.symm)
+      rw [pos_smul_ERat_top d_pos]
+      if c_eq_0 : c = 0 then
+        rw [c_eq_0, zero_smul_ERat_nonbot top_ne_bot, zero_mul, zero_smul_ERat_nonbot top_ne_bot]
+      else
+        have c_pos : 0 < c
+        · apply lt_of_le_of_ne c.property
+          intro contr
+          exact c_eq_0 (by simpa using contr.symm)
+        rw [pos_smul_ERat_top c_pos, pos_smul_ERat_top (mul_pos c_pos d_pos)]
   | (q : ℚ) =>
-    sorry
+    show ((c * d) * q).toERat = (c * (d * q)).toERat
+    rw [mul_assoc]
 
 lemma ERat.mul_smul_vec (c d : ℚ≥0) (x : J → ℚ∞) :
     (c * d) • x = c • (d • x) := by
@@ -503,7 +526,6 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
     {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) (hAx₀ : P.A ₘ* x₀ + (0 : ℚ≥0) • (-P.b) ≤ 0) :
     P.IsUnbounded := by
   obtain ⟨e, xₚ, hxₚ, he⟩ := hP
-  --change hxₚ to P.A ₘ* xₚ ≤ P.b
   intro s
   if hs : e ≤ s then
     exact ⟨e, hs, xₚ, hxₚ, he⟩
@@ -538,11 +560,15 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
           rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hi] at hAx₀
           have zeros : (P.A ₘ* x₀) i + (0 : ℚ∞) ≤ 0
           · convert hAx₀
-            show (0 : ℚ∞) = 0 • -bᵢ.toERat
+            show 0 = 0 • -(bᵢ.toERat)
             rw [←ERat.coe_neg, zero_smul_toERat]
           rw [add_zero] at zeros
-          rw [Matrix.mulWeig_add, Pi.add_apply]
-          sorry
+          rw [Matrix.mulWeig_add, Matrix.mulWeig_smul, Pi.add_apply]
+          apply add_le_of_le_of_nonpos
+          · convert_to (P.A ₘ* xₚ) i ≤ P.b i
+            · exact hi.symm
+            exact hxₚ i
+          · exact ERat.smul_nonpos zeros k
       · rw [Matrix.dotProd_add, he, Matrix.dotProd_smul, hcx₀]
         show (e + ((s - e) / d) * d).toERat = s.toERat
         rw [ERat.coe_eq_coe_iff, div_mul_cancel_of_imp]
