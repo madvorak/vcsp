@@ -44,7 +44,7 @@ def ExtendedLP.IsFeasible (P : ExtendedLP I J) : Prop :=
 
 /-- Linear program `P` is unbounded iff TODO. -/
 def ExtendedLP.IsUnbounded (P : ExtendedLP I J) : Prop :=
-  ∀ r : ℚ, ∃ p : ℚ, p ≤ r ∧ P.Reaches p.toERat
+  ∀ r : ℚ, ∃ p : ℚ∞, p ≤ r ∧ P.Reaches p
 
 /-- Dualize a linear program in the standard form.
     The matrix gets transposed and its values flip signs.
@@ -193,7 +193,6 @@ theorem ExtendedLP.weakDuality [DecidableEq I] [DecidableEq J] {P : ExtendedLP I
       rw [add_comm]
       exact contr
 
-#print axioms ExtendedLP.weakDuality
 
 lemma ERat.smul_nonpos {x : ℚ∞} (hx : x ≤ 0) (c : ℚ≥0) :
     c • x ≤ 0 := by
@@ -535,8 +534,13 @@ lemma ExtendedLP.infeasible_of_unbounded {P : ExtendedLP I J} (hP : P.IsUnbounde
   intro ⟨q, hq⟩
   obtain ⟨p, hpq, hp⟩ := hP (-(q+1))
   have weak_duality := P.weakDuality hp hq
-  rw [←ERat.coe_add, ←ERat.coe_zero, ERat.coe_le_coe_iff] at weak_duality
-  linarith
+  match p with
+  | ⊥ => simp at weak_duality
+  | ⊤ => exact (hpq.trans_lt (ERat.coe_lt_top _)).false
+  | (p' : ℚ) =>
+    rw [←ERat.coe_add, ←ERat.coe_zero] at weak_duality
+    rw [ERat.coe_le_coe_iff] at weak_duality hpq
+    linarith
 
 lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFeasible)
     {x₀ : J → ℚ≥0} (hx₀ : P.c ᵥ⬝ x₀ < 0) (hAx₀ : P.A ₘ* x₀ + (0 : ℚ≥0) • (-P.b) ≤ 0) :
@@ -544,7 +548,7 @@ lemma ExtendedLP.unbounded_of_feasible_of_neg {P : ExtendedLP I J} (hP : P.IsFea
   obtain ⟨e, xₚ, hxₚ, he⟩ := hP
   intro s
   if hs : e ≤ s then
-    exact ⟨e, hs, xₚ, hxₚ, he⟩
+    exact ⟨e, by simpa using hs, xₚ, hxₚ, he⟩
   else
     push_neg at hs
     match hcx₀ : P.c ᵥ⬝ x₀ with
@@ -845,3 +849,45 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J}
   exact ⟨hp, hq⟩
 
 #print axioms ExtendedLP.strongDuality
+
+lemma ExtendedLP.unbounded_of_feasible_of_infeasible {P : ExtendedLP I J}
+    (hP : P.IsFeasible) (hQ : ¬P.dualize.IsFeasible) :
+    P.IsUnbounded := by
+  cases
+    or_of_neq
+      (extendedFarkas (-P.Aᵀ) P.c (by aeply P.hAj) (by aeply P.hAi) (by aeply P.hAc) (by aeply P.hcj)) with
+  | inl caseI =>
+    exfalso
+    obtain ⟨y, hy⟩ := caseI
+    match hby : P.b ᵥ⬝ y with
+    | ⊥ => exact Matrix.no_bot_dotProd_nneg (by simpa using P.hbi) y hby
+    | ⊤ =>
+      have unbound : P.dualize.IsUnbounded
+      · intro r
+        use ⊥
+        constructor
+        · exact bot_le
+        use y
+        exact ⟨hy, sorry⟩
+      exact ExtendedLP.infeasible_of_unbounded unbound (P.dualize_dualize.symm ▸ hP)
+    | (q : ℚ) => exact hQ ⟨q, y, hy, hby⟩
+  | inr caseJ =>
+    obtain ⟨x, hAx, hcx⟩ := caseJ
+    apply ExtendedLP.unbounded_of_feasible_of_neg hP hcx
+    rw [Matrix.transpose_neg, Matrix.transpose_transpose, Matrix.ERat_neg_neg] at hAx
+    intro i
+    match hbi : P.b i with
+    | ⊥ =>
+      exfalso
+      exact P.hbi ⟨i, hbi⟩
+    | ⊤ =>
+      change hbi to P.b i = ⊤
+      rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hbi, ERat.neg_top, smul_ERat_bot, ERat.add_bot]
+      apply bot_le
+    | (q : ℚ) =>
+      change hbi to P.b i = q.toERat
+      have hq : -q.toERat ≠ (⊥ : ℚ∞)
+      · rw [←ERat.coe_neg]
+        apply ERat.coe_neq_bot
+      rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hbi, zero_smul_ERat_nonbot hq, add_zero]
+      exact hAx i
