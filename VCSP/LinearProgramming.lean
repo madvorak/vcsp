@@ -88,18 +88,6 @@ lemma StandardLP.unbounded_dual_makes_prim_infeasible_tial [OrderedCommRing R]
     let ⟨_, hc, hQ'⟩ := hQ (P.c ⬝ᵥ x)
     ((P.weakDuality ⟨x, ⟨hAx, hx⟩, rfl⟩ hQ').trans_lt hc).false
 
-lemma StandardLP.feasible_dual_makes_prim_bounded_tial [OrderedCommRing R]
-    {P : StandardLP I J R} (hQ : P.dualize.IsFeasible) :
-    ∃ r : R, ∀ p : R, r < p → ¬P.Reaches p := by
-  by_contra! contr
-  exact P.unbounded_prim_makes_dual_infeasible_tial contr hQ
-
-lemma StandardLP.feasible_prim_makes_dual_bounded_tial [OrderedCommRing R]
-    {P : StandardLP I J R} (hP : P.IsFeasible) :
-    ∃ r : R, ∀ q : R, q < r → ¬P.dualize.Reaches q := by
-  by_contra! contr
-  exact P.unbounded_dual_makes_prim_infeasible_tial contr hP
-
 lemma StandardLP.unbounded_prim_makes_dual_infeasible [LinearOrderedCommRing R]
     {P : StandardLP I J R} (hP : ∀ r : R, ∃ p : R, r ≤ p ∧ P.Reaches p) :
     ¬ P.dualize.IsFeasible :=
@@ -113,20 +101,6 @@ lemma StandardLP.unbounded_dual_makes_prim_infeasible [LinearOrderedCommRing R]
   P.unbounded_dual_makes_prim_infeasible_tial (fun r : R =>
     let ⟨q, hqr, hQq⟩ := hQ (r - 1)
     ⟨q, (hqr.trans_lt (sub_one_lt r)), hQq⟩)
-
-theorem StandardLP.feasible_dual_makes_prim_bounded [LinearOrderedCommRing R]
-    {P : StandardLP I J R} (hQ : P.dualize.IsFeasible) :
-    ∃ r : R, ∀ p : R, P.Reaches p → p < r := by
-  by_contra! contr
-  simp_rw [and_comm] at contr
-  exact P.unbounded_prim_makes_dual_infeasible contr hQ
-
-theorem StandardLP.feasible_prim_makes_dual_bounded [LinearOrderedCommRing R]
-    {P : StandardLP I J R} (hP : P.IsFeasible) :
-    ∃ r : R, ∀ q : R, P.dualize.Reaches q → r < q := by
-  by_contra! contr
-  simp_rw [and_comm] at contr
-  exact P.unbounded_dual_makes_prim_infeasible contr hP
 
 /-- If both the prim and the dual are feasible, there is an objective value that is reached
     by both the prim and the dual. -/
