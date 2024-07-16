@@ -76,6 +76,11 @@ noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
   else
     some ⊤ -- infeasible means that the minimum is `⊤`
 
+/-- `Opposites p q` essentially says `none ≠ p = -q`. -/
+def Opposites : Option ℚ∞ → Option ℚ∞ → Prop
+| (p : ℚ∞), (q : ℚ∞) => p = -q  -- includes `⊥ = -⊤` and `⊤ = -⊥`
+| _       , _        => False   -- namely `none ≠ -none`
+
 end extended_LP_definitions
 
 
@@ -902,6 +907,10 @@ lemma ExtendedLP.unbounded_of_feasible_of_infeasible {P : ExtendedLP I J}
       rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hbi, ERat.zero_smul_nonbot hq, add_zero]
       exact hAx ⟨i, hbi ▸ ERat.coe_neq_top q⟩
 
+end extended_LP_properties
+
+section extended_LP_optima
+
 lemma ExtendedLP.optimum_unique {P : ExtendedLP I J} {r s : ℚ}
     (hPr : P.Reaches r.toERat ∧ P.IsBoundedBy r) (hPs : P.Reaches s.toERat ∧ P.IsBoundedBy s) :
     r = s := by
@@ -926,11 +935,6 @@ lemma ExtendedLP.optimum_eq_of_reaches_bounded {P : ExtendedLP I J} {r : ℚ}
   congr
   exact ExtendedLP.optimum_unique hPP.choose_spec ⟨reaches, bounded⟩
 
-/-- `Opposites p q` essentially says `p ≠ none ∧ q ≠ none ∧ p = -q`. -/
-def Opposites : Option ℚ∞ → Option ℚ∞ → Prop
-| (p : ℚ∞), (q : ℚ∞) => p = -q  -- includes `⊥ = -⊤` and `⊤ = -⊥`
-| _       , _        => False   -- namely `none ≠ -none`
-
 lemma opposites_comm (p q : Option ℚ∞) : Opposites p q ↔ Opposites q p := by
   cases p with
   | none =>
@@ -951,6 +955,8 @@ lemma opposites_comm (p q : Option ℚ∞) : Opposites p q ↔ Opposites q p := 
         · simpa [Opposites]
         · simpa [Opposites, neg_eq_iff_eq_neg] using Ne.symm hrs
         rfl
+
+variable [DecidableEq I] [DecidableEq J]
 
 lemma ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFeasible) :
     Opposites P.optimum P.dualize.optimum := by
@@ -1000,8 +1006,27 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J} (feas : P.IsFeasible ∨ P
     (P.strongDuality_of_prim_feas ·)
     (P.strongDuality_of_dual_feas ·)
 
-end extended_LP_properties
+lemma ExtendedLP.optimum_neq_none (P : ExtendedLP I J) : P.optimum ≠ none := by
+  if hP : P.IsFeasible then
+    intro contr
+    simpa [contr, Opposites] using P.strongDuality_of_prim_feas hP
+  else
+    simp [ExtendedLP.optimum, hP]
+
+noncomputable def ExtendedLP.optimum_actual (P : ExtendedLP I J) : ℚ∞ :=
+  match hP : P.optimum with
+  | some p => p
+  | none => False.elim (P.optimum_neq_none hP)
+
+theorem ExtendedLP.strongDuality_actual {P : ExtendedLP I J} (feas : P.IsFeasible ∨ P.dualize.IsFeasible) :
+    P.optimum_actual = -P.dualize.optimum_actual := by
+  have sd := ExtendedLP.strongDuality feas
+  unfold Opposites at sd
+  unfold ExtendedLP.optimum_actual
+  aesop
+
+end extended_LP_optima
 
 end strong_duality
 
-#print axioms ExtendedLP.strongDuality
+#print axioms ExtendedLP.strongDuality_actual
