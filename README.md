@@ -16,12 +16,13 @@ Our long-term goal is to formalize the dichotomy for fixed-template finite-value
 
 ### Farkas-like theorems (can be use independently of the VCSP)
 
-* [David Bartl's version](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasBartl.lean#L192)
-* [Our most general version](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasBartl.lean#L252)
-* [Equality version](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasBasic.lean#L102)
-* [Inequality version](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasBasic.lean#L107)
-* [Special version for extended rationals](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/FarkasSpecial.lean#L282)
-* [Strong LP duality](https://github.com/madvorak/vcsp/blob/3488402c0494233c2498b6914d14e54b02a20909/VCSP/LinearProgramming.lean#L133)
+* [David Bartl's version](https://github.com/madvorak/vcsp/blob/3b9c0fe55ebebf2155536b3363666ac0baffeca5/VCSP/FarkasBartl.lean#L197)
+* [Our most general version](https://github.com/madvorak/vcsp/blob/3b9c0fe55ebebf2155536b3363666ac0baffeca5/VCSP/FarkasBartl.lean#L220)
+* [Equality version](https://github.com/madvorak/vcsp/blob/3b9c0fe55ebebf2155536b3363666ac0baffeca5/VCSP/FarkasBasic.lean#L94)
+* [Inequality version](https://github.com/madvorak/vcsp/blob/3b9c0fe55ebebf2155536b3363666ac0baffeca5/VCSP/FarkasBasic.lean#L99)
+* [Special version for extended rationals](https://github.com/madvorak/vcsp/blob/3b9c0fe55ebebf2155536b3363666ac0baffeca5/VCSP/FarkasSpecial.lean#L252)
+* [Strong LP duality for matrices over LinearOrderedField](https://github.com/madvorak/vcsp/blob/3b9c0fe55ebebf2155536b3363666ac0baffeca5/VCSP/LinearProgramming.lean#L133)
+* [Strong LP duality for matrices over extended rationals](https://github.com/madvorak/vcsp/blob/3b9c0fe55ebebf2155536b3363666ac0baffeca5/VCSP/LinearProgrammingE.lean#L1009)
 
 ## Mathlib contributions that stem from this project
 
