@@ -236,12 +236,6 @@ lemma Matrix.dotProd_zero_le_zero (v : I → ℚ∞) :
     · apply bot_le
     · exact hv.choose_spec
 
-lemma Matrix.no_bot_mulWeig_zero {M : Matrix I J ℚ∞} (hM : ∀ i, ∀ j, M i j ≠ ⊥) :
-    M ₘ* (0 : J → ℚ≥0) = (0 : I → ℚ∞) := by
-  ext
-  apply Matrix.no_bot_dotProd_zero
-  apply hM
-
 lemma Matrix.mulWeig_zero_le_zero (M : Matrix I J ℚ∞) :
     M ₘ* (0 : J → ℚ≥0) ≤ (0 : I → ℚ∞) := by
   intro i
@@ -561,7 +555,5 @@ theorem extendedFarkas [DecidableEq I]
                 exact hbot ⟨i, hbi⟩
               · exfalso
                 exact hi.left hbi
-
-#print axioms extendedFarkas
 
 end specialFarkas

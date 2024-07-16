@@ -116,10 +116,6 @@ lemma top_neq_zero : (⊤ : ERat) ≠ 0 :=
 lemma coe_add (x y : ℚ) : (x + y).toERat = x.toERat + y.toERat :=
   rfl
 
-@[norm_cast]
-lemma coe_nsmul (n : ℕ) (x : ℚ) : (n • x).toERat = n • x.toERat :=
-  map_nsmul (⟨⟨Rat.toERat, coe_zero⟩, coe_add⟩ : ℚ →+ ERat) _ _
-
 @[simp, norm_cast]
 lemma coe_eq_zero {x : ℚ} : (x : ERat) = 0 ↔ x = 0 :=
   ERat.coe_eq_coe_iff
