@@ -25,8 +25,8 @@ structure ExtendedLP (I J : Type*) where
   hAc : ¬∃ j : J, (∃ i : I, A i j = ⊥) ∧ c j = ⊤
 
 open scoped Matrix
-variable {I J : Type*} [Fintype I] [Fintype J]
 
+variable {I J : Type*} [Fintype I] [Fintype J]
 
 section extended_LP_definitions
 
@@ -63,7 +63,7 @@ def ExtendedLP.dualize (P : ExtendedLP I J) : ExtendedLP J I :=
   ⟨-P.Aᵀ, P.c, P.b, by aeply P.hAj, by aeply P.hAi, P.hcj, P.hbi, by aeply P.hAc, by aeply P.hAb⟩
 
 open scoped Classical in
-/-- Extended notion of "optimum" of "minimization LP". -/
+/-- Extended notion of "optimum" of "minimization LP" (the less the better). -/
 noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
   if P.IsFeasible then
     if P.IsUnbounded then
@@ -76,10 +76,10 @@ noncomputable def ExtendedLP.optimum (P : ExtendedLP I J) : Option ℚ∞ :=
   else
     some ⊤ -- infeasible means that the minimum is `⊤`
 
-/-- `Opposites p q` essentially says `none ≠ p = -q`. -/
-def Opposites : Option ℚ∞ → Option ℚ∞ → Prop
-| (p : ℚ∞), (q : ℚ∞) => p = -q  -- includes `⊥ = -⊤` and `⊤ = -⊥`
-| _       , _        => False   -- namely `none ≠ -none`
+/-- `OppositesOptERat p q` essentially says `none ≠ p = -q`. -/
+def OppositesOptERat : Option ℚ∞ → Option ℚ∞ → Prop
+| (p : ℚ∞), (q : ℚ∞) => p = -q  -- opposite values; includes `⊥ = -⊤` and `⊤ = -⊥`
+| _       , _        => False   -- namely `OppositesOptERat none none = False`
 
 end extended_LP_definitions
 
@@ -694,8 +694,8 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
       ←Sum.elim_comp_inl_inr X, Matrix.fromColumns_mulWeig_sumElim, Matrix.fromColumns_mulWeig_sumElim,
       Matrix.zero_mulWeig, add_zero, Matrix.zero_mulWeig, zero_add
     ] at hX
-    set y := X ∘ Sum.inr
     set x := X ∘ Sum.inl
+    set y := X ∘ Sum.inr
     obtain ⟨⟨hx, hy⟩, hxy⟩ := hX
     specialize hxy 0
     change hxy to Sum.elim P.c P.b ᵥ⬝ Sum.elim x y ≤ 0
@@ -743,14 +743,13 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J}
       Matrix.zero_mulWeig, add_zero, Matrix.zero_mulWeig, zero_add,
     ] at hAY
     rw [←Sum.elim_comp_inl_inr Y, ←Sum.elim_comp_inl_inr (Y ∘ Sum.inl)] at hbc
-    set z := Y ∘ Sum.inr
     set x := (Y ∘ Sum.inl) ∘ Sum.inr
     set y := (Y ∘ Sum.inl) ∘ Sum.inl
-    have hAyx : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) + z 0 • (-Sum.elim P.c P.b) ≤ 0
+    set z := (Y ∘ Sum.inr) 0
+    have hAyx : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) + z • (-Sum.elim P.c P.b) ≤ 0
     · convert hAY
       ext
-      simp [Matrix.col, Matrix.mulWeig, Matrix.dotProd]
-    set z := z 0
+      simp [Matrix.col, Matrix.mulWeig, Matrix.dotProd, z]
     have hAyx' : Sum.elim (-P.Aᵀ ₘ* y) (P.A ₘ* x) + Sum.elim (z • (-P.c)) (z • (-P.b)) ≤ 0
     · convert hAyx
       aesop
@@ -935,11 +934,11 @@ lemma ExtendedLP.optimum_eq_of_reaches_bounded {P : ExtendedLP I J} {r : ℚ}
   congr
   exact ExtendedLP.optimum_unique hPP.choose_spec ⟨reaches, bounded⟩
 
-lemma opposites_comm (p q : Option ℚ∞) : Opposites p q ↔ Opposites q p := by
+lemma oppositesOptERat_comm (p q : Option ℚ∞) : OppositesOptERat p q ↔ OppositesOptERat q p := by
   cases p with
   | none =>
     convert_to False ↔ False
-    · simp [Opposites]
+    · simp [OppositesOptERat]
     rfl
   | some r =>
     cases q with
@@ -947,19 +946,19 @@ lemma opposites_comm (p q : Option ℚ∞) : Opposites p q ↔ Opposites q p := 
     | some s =>
       if hrs : r = -s then
         convert_to True ↔ True
-        · simpa [Opposites]
-        · simpa [Opposites, neg_eq_iff_eq_neg] using hrs.symm
+        · simpa [OppositesOptERat]
+        · simpa [OppositesOptERat, neg_eq_iff_eq_neg] using hrs.symm
         rfl
       else
         convert_to False ↔ False
-        · simpa [Opposites]
-        · simpa [Opposites, neg_eq_iff_eq_neg] using Ne.symm hrs
+        · simpa [OppositesOptERat]
+        · simpa [OppositesOptERat, neg_eq_iff_eq_neg] using Ne.symm hrs
         rfl
 
 variable [DecidableEq I] [DecidableEq J]
 
 lemma ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFeasible) :
-    Opposites P.optimum P.dualize.optimum := by
+    OppositesOptERat P.optimum P.dualize.optimum := by
   if hQ : P.dualize.IsFeasible then
     obtain ⟨r, hPr, hQr⟩ := P.strongDuality_of_both_feasible hP hQ
     have hPopt : P.optimum = some (-r).toERat
@@ -997,18 +996,18 @@ lemma ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFeasi
 theorem ExtendedLP.optimum_neq_none (P : ExtendedLP I J) : P.optimum ≠ none := by
   if hP : P.IsFeasible then
     intro contr
-    simpa [contr, Opposites] using P.strongDuality_of_prim_feas hP
+    simpa [contr, OppositesOptERat] using P.strongDuality_of_prim_feas hP
   else
     simp [ExtendedLP.optimum, hP]
 
 lemma ExtendedLP.strongDuality_of_dual_feas {P : ExtendedLP I J} (hQ : P.dualize.IsFeasible) :
-    Opposites P.optimum P.dualize.optimum := by
-  rw [opposites_comm]
+    OppositesOptERat P.optimum P.dualize.optimum := by
+  rw [oppositesOptERat_comm]
   nth_rw 2 [P.dualize_dualize]
   exact P.dualize.strongDuality_of_prim_feas hQ
 
 theorem ExtendedLP.strongDuality {P : ExtendedLP I J} (feas : P.IsFeasible ∨ P.dualize.IsFeasible) :
-    Opposites P.optimum P.dualize.optimum :=
+    OppositesOptERat P.optimum P.dualize.optimum :=
   feas.casesOn
     (P.strongDuality_of_prim_feas ·)
     (P.strongDuality_of_dual_feas ·)
