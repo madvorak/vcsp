@@ -994,6 +994,13 @@ lemma ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J} (hP : P.IsFeasi
     rw [hPopt, hQopt]
     exact ERat.neg_top
 
+theorem ExtendedLP.optimum_neq_none (P : ExtendedLP I J) : P.optimum ≠ none := by
+  if hP : P.IsFeasible then
+    intro contr
+    simpa [contr, Opposites] using P.strongDuality_of_prim_feas hP
+  else
+    simp [ExtendedLP.optimum, hP]
+
 lemma ExtendedLP.strongDuality_of_dual_feas {P : ExtendedLP I J} (hQ : P.dualize.IsFeasible) :
     Opposites P.optimum P.dualize.optimum := by
   rw [opposites_comm]
@@ -1006,27 +1013,8 @@ theorem ExtendedLP.strongDuality {P : ExtendedLP I J} (feas : P.IsFeasible ∨ P
     (P.strongDuality_of_prim_feas ·)
     (P.strongDuality_of_dual_feas ·)
 
-lemma ExtendedLP.optimum_neq_none (P : ExtendedLP I J) : P.optimum ≠ none := by
-  if hP : P.IsFeasible then
-    intro contr
-    simpa [contr, Opposites] using P.strongDuality_of_prim_feas hP
-  else
-    simp [ExtendedLP.optimum, hP]
-
-noncomputable def ExtendedLP.optimum_actual (P : ExtendedLP I J) : ℚ∞ :=
-  match hP : P.optimum with
-  | some p => p
-  | none => False.elim (P.optimum_neq_none hP)
-
-theorem ExtendedLP.strongDuality_actual {P : ExtendedLP I J} (feas : P.IsFeasible ∨ P.dualize.IsFeasible) :
-    P.optimum_actual = -P.dualize.optimum_actual := by
-  have sd := ExtendedLP.strongDuality feas
-  unfold Opposites at sd
-  unfold ExtendedLP.optimum_actual
-  aesop
-
 end extended_LP_optima
 
 end strong_duality
 
-#print axioms ExtendedLP.strongDuality_actual
+#print axioms ExtendedLP.strongDuality
