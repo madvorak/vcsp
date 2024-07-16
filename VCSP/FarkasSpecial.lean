@@ -2,7 +2,7 @@ import VCSP.ExtendedRationals
 import VCSP.FarkasBasic
 
 
-section extrasERat
+section extras_ERat
 
 notation "ℚ∞" => ERat
 
@@ -141,14 +141,14 @@ lemma Multiset.sum_eq_ERat_top {s : Multiset ℚ∞} (htop : ⊤ ∈ s) (hbot : 
       | ⊤ => rfl
       | ⊥ => simp at hbot
 
-end extrasERat
+end extras_ERat
 
 
 open scoped Matrix
 variable {I J : Type*} [Fintype I] [Fintype J]
 
 
-section heteroMatrixProductsDefs
+section hetero_matrix_products_defs
 variable {α γ : Type*} [AddCommMonoid α] [SMul γ α] -- elements come from `α` but weights (coefficients) from `γ`
 
 /-- `Matrix.dotProd v w` is the sum of the element-wise products `w i • v i` akin the dot product but heterogeneous
@@ -166,10 +166,10 @@ def Matrix.mulWeig (M : Matrix I J α) (w : J → γ) (i : I) : α :=
 
 infixr:73 " ₘ* " => Matrix.mulWeig
 
-end heteroMatrixProductsDefs
+end hetero_matrix_products_defs
 
 
-section heteroMatrixProductsLemmasERat
+section hetero_matrix_products_ERat
 
 lemma Matrix.no_bot_dotProd_zero {v : I → ℚ∞} (hv : ∀ i, v i ≠ ⊥) :
     v ᵥ⬝ (0 : I → ℚ≥0) = (0 : ℚ∞) := by
@@ -241,10 +241,10 @@ lemma Matrix.mulWeig_zero_le_zero (M : Matrix I J ℚ∞) :
   intro i
   apply Matrix.dotProd_zero_le_zero
 
-end heteroMatrixProductsLemmasERat
+end hetero_matrix_products_ERat
 
 
-section specialFarkas
+section extended_Farkas
 
 set_option maxHeartbeats 666666 in
 /-- Just like `inequalityFarkas_neg` but for `A` and `b` over extended rationals;
@@ -556,4 +556,4 @@ theorem extendedFarkas [DecidableEq I]
               · exfalso
                 exact hi.left hbi
 
-end specialFarkas
+end extended_Farkas
