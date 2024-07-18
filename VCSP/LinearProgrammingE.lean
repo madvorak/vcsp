@@ -71,7 +71,7 @@ noncomputable def ExtendedLP.optimum (P : ExtendedLP I J F) : Option F∞ :=
       some none --some ⊥ -- unbounded means that the minimum is `⊥`
     else
       if hr : ∃ r : F, P.Reaches (toE r) ∧ P.IsBoundedBy r then
-        some (toE hr.choose) -- the minimum is finite
+        some $ some $ some $ hr.choose -- the minimum is finite
       else
         none -- invalid finite value (infimum is not attained; later, we prove it cannot happen)
   else
@@ -87,11 +87,13 @@ end extended_LP_definitions
 
 section weak_duality
 
-lemma EF.one_smul (r : F∞) : (1 : { a : F // 0 ≤ a }) • r = r :=
+lemma EF.one_smul (r : F∞) : (1 : { a : F // 0 ≤ a }) • r = r := by
   match r with
   | ⊥ => rfl
-  | ⊤ => sorry--rfl
-  | (q : F) => congr_arg toE (one_mul q)
+  | ⊤ =>
+    show EF.smulNN 1 ⊤ = ⊤
+    simp [EF.smulNN]
+  | (q : F) => exact congr_arg toE (one_mul q)
 
 lemma EF.sub_nonpos_iff (r s : F∞) : r + (-s) ≤ 0 ↔ r ≤ s := by
   match r with
@@ -202,12 +204,15 @@ end weak_duality
 
 section strong_duality
 
-lemma NNRat.pos_of_not_zero {k : { a : F // 0 ≤ a }} (hk : ¬(k = 0)) :
+lemma eq_zero_of_zero_eq_val {k : { a : F // 0 ≤ a }} (hk : 0 = k.val) :
+    k = 0 :=
+  Eq.symm (Subtype.eq hk)
+
+lemma pos_of_NN_not_zero {k : { a : F // 0 ≤ a }} (hk : ¬(k = 0)) :
     0 < k := by
   apply lt_of_le_of_ne k.property
   intro contr
-  apply hk
-  sorry--simpa using contr.symm
+  exact hk (eq_zero_of_zero_eq_val contr)
 
 section misc_EF_properties
 
@@ -312,8 +317,8 @@ lemma EF.smul_smul {k : { a : F // 0 ≤ a }} (hk : 0 < k) (l : { a : F // 0 ≤
       rw [EF.pos_smul_top hl, EF.pos_smul_top hk]
     else if hl0 : l = 0 then
       rw [hl0]
-      symm
-      sorry--apply smul_zero
+      show EF.smulNN 0 ⊤ = k • EF.smulNN 0 ⊤
+      simp [EF.smulNN]
     else
       exfalso
       simp_all only [not_lt, nonpos_iff_eq_zero]
@@ -331,14 +336,15 @@ lemma EF.add_smul (k l : { a : F // 0 ≤ a }) (r : F∞) :
       rw [k_eq_0, EF.zero_smul_nonbot top_ne_bot, zero_add, zero_add]
     else
       have k_pos : 0 < k
-      · exact NNRat.pos_of_not_zero k_eq_0
+      · exact pos_of_NN_not_zero k_eq_0
       rw [EF.pos_smul_top (add_pos_of_pos_of_nonneg k_pos l.property)]
       rw [EF.pos_smul_top k_pos]
       if l_eq_0 : l = 0 then
         rewrite [l_eq_0]
-        sorry--rfl
+        show ⊤ = ⊤ + EF.smulNN 0 ⊤
+        simp [EF.smulNN]
       else
-        rewrite [EF.pos_smul_top (NNRat.pos_of_not_zero l_eq_0)]
+        rewrite [EF.pos_smul_top (pos_of_NN_not_zero l_eq_0)]
         rfl
   | (q : F) =>
     show toE ((k + l) * q) = toE (k * q) + toE (l * q)
@@ -378,15 +384,13 @@ lemma EF.mul_smul (k l : { a : F // 0 ≤ a }) (r : F∞) :
       have l_pos : 0 < l
       · apply lt_of_le_of_ne l.property
         intro contr
-        apply l_eq_0
-        convert contr.symm
-        exact eq_iff_eq_of_cmp_eq_cmp rfl
+        exact l_eq_0 (eq_zero_of_zero_eq_val contr)
       rw [EF.pos_smul_top l_pos]
       if k_eq_0 : k = 0 then
         rw [k_eq_0, EF.zero_smul_nonbot top_ne_bot, zero_mul, EF.zero_smul_nonbot top_ne_bot]
       else
         have c_pos : 0 < k
-        · exact NNRat.pos_of_not_zero k_eq_0
+        · exact pos_of_NN_not_zero k_eq_0
         rw [EF.pos_smul_top c_pos, EF.pos_smul_top (mul_pos c_pos l_pos)]
   | (q : F) =>
     show toE ((k * l) * q) = toE (k * (l * q))
@@ -805,7 +809,7 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J F}
       | (q : F) =>
         have z_inv_pos : 0 < z⁻¹
         · exact inv_pos_of_pos z_pos
-        sorry/-refine ⟨z⁻¹ • p, z⁻¹ • q, ⟨z⁻¹ • x, ?_, ?_⟩, ⟨z⁻¹ • y, ?_, ?_⟩, ?_⟩
+        refine ⟨z⁻¹ * p, z⁻¹ * q, ⟨z⁻¹ • x, ?_, ?_⟩, ⟨z⁻¹ • y, ?_, ?_⟩, ?_⟩
         · rwa [
             ←EF.vec_smul_le_smul_left z_inv_pos, smul_zero,
             EF.smul_add_vec z_inv_pos, ←Matrix.mulWeig_smul z_inv_pos, ←EF.mul_smul_vec,
@@ -827,7 +831,7 @@ lemma ExtendedLP.strongDuality_aux {P : ExtendedLP I J F}
         have hpq : p + q < 0
         · rw [←EF.coe_lt_coe_iff, add_comm]
           exact hbc
-        exact Linarith.mul_nonpos hpq.le z_inv_pos-/
+        exact Linarith.mul_nonpos hpq.le z_inv_pos
 
 lemma ExtendedLP.strongDuality_of_both_feasible {P : ExtendedLP I J F}
     (hP : P.IsFeasible) (hQ : P.dualize.IsFeasible) :
@@ -903,11 +907,11 @@ lemma ExtendedLP.unbounded_of_feasible_of_infeasible {P : ExtendedLP I J F}
       apply bot_le
     | (q : F) =>
       change hbi to P.b i = toE q
-      sorry/-have hq : toE (-q) ≠ (⊥ : F∞)
+      have hq : -(toE q) ≠ (⊥ : F∞)
       · rw [←EF.coe_neg]
         apply EF.coe_neq_bot
       rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hbi, EF.zero_smul_nonbot hq, add_zero]
-      exact hAx ⟨i, hbi ▸ EF.coe_neq_top q⟩-/
+      exact hAx ⟨i, hbi ▸ EF.coe_neq_top q⟩
 
 end extended_LP_properties
 
@@ -993,7 +997,9 @@ lemma ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J F} (hP : P.IsFea
     · simp [ExtendedLP.optimum, hP, ExtendedLP.unbounded_of_feasible_of_infeasible hP hQ]
       rfl
     have hQopt : P.dualize.optimum = some (⊤ : F∞)
-    · simp [ExtendedLP.optimum, hQ]
+    · simp only [ExtendedLP.optimum, hQ]
+      apply congr_arg
+      apply congr_arg
       sorry -- WTF ?????????????????????????????????????????????????????????????????????????????
     rw [hPopt, hQopt]
     apply EF.neg_top
