@@ -65,7 +65,7 @@ def ExtendedLP.dualize (P : ExtendedLP I J F) : ExtendedLP J I F :=
 
 open scoped Classical in
 /-- Extended notion of "optimum" of "minimization LP" (the less the better). -/
-noncomputable def ExtendedLP.optimum (P : ExtendedLP I J F) : Option F∞ :=
+noncomputable def ExtendedLP.optimum (P : ExtendedLP I J F) : Option (F∞) :=
   if P.IsFeasible then
     if P.IsUnbounded then
       some none --some ⊥ -- unbounded means that the minimum is `⊥`
@@ -993,16 +993,14 @@ lemma ExtendedLP.strongDuality_of_prim_feas {P : ExtendedLP I J F} (hP : P.IsFea
     rewrite [hPopt, hQopt]
     rfl
   else
-    have hPopt : P.optimum = some (⊥ : F∞)
-    · simp [ExtendedLP.optimum, hP, ExtendedLP.unbounded_of_feasible_of_infeasible hP hQ]
+    have hPopt : P.optimum = some ⊥
+    · simp only [ExtendedLP.optimum, hP, ExtendedLP.unbounded_of_feasible_of_infeasible hP hQ]
       rfl
-    have hQopt : P.dualize.optimum = some (⊤ : F∞)
+    have hQopt : P.dualize.optimum = some ⊤
     · simp only [ExtendedLP.optimum, hQ]
-      apply congr_arg
-      apply congr_arg
-      sorry -- WTF ?????????????????????????????????????????????????????????????????????????????
+      rfl
     rw [hPopt, hQopt]
-    apply EF.neg_top
+    exact EF.neg_top
 
 theorem ExtendedLP.optimum_neq_none (P : ExtendedLP I J F) : P.optimum ≠ none := by
   if hP : P.IsFeasible then
