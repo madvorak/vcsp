@@ -4,14 +4,14 @@ import VCSP.FarkasSpecial
 /-- Linear program over `F∞` in the standard form (i.e.,
     a system of linear inequalities with nonnegative variables).
     Variables are of type `J`. Conditions are indexed by type `I`.
-    Its objective function is intended to be minimized. -/
+    The objective function is intended to be minimized. -/
 structure ExtendedLP (I J F : Type*) [LinearOrderedField F] where
   /-- The left-hand-side matrix. -/
-  A : Matrix I J (F∞)
+  A : Matrix I J F∞
   /-- The right-hand-side vector. -/
-  b : I → (F∞)
+  b : I → F∞
   /-- The objective function coefficients. -/
-  c : J → (F∞)
+  c : J → F∞
   /-- No `⊥` and `⊤` in the same row. -/
   hAi : ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤)
   /-- No `⊥` and `⊤` in the same column. -/
@@ -65,20 +65,20 @@ def ExtendedLP.dualize (P : ExtendedLP I J F) : ExtendedLP J I F :=
 
 open scoped Classical in
 /-- Extended notion of "optimum" of "minimization LP" (the less the better). -/
-noncomputable def ExtendedLP.optimum (P : ExtendedLP I J F) : Option (F∞) :=
+noncomputable def ExtendedLP.optimum (P : ExtendedLP I J F) : Option F∞ :=
   if P.IsFeasible then
     if P.IsUnbounded then
       some none --some ⊥ -- unbounded means that the minimum is `⊥`
     else
-      if hr : ∃ r : F, P.Reaches (toE r) ∧ P.IsBoundedBy r then
-        some $ some $ some $ hr.choose -- the minimum is finite
+      if hf : ∃ f : F, P.Reaches (toE f) ∧ P.IsBoundedBy f then
+        some (toE hf.choose) -- the minimum is finite
       else
         none -- invalid finite value (infimum is not attained; later, we prove it cannot happen)
   else
     some ⊤ -- infeasible means that the minimum is `⊤`
 
 /-- `OppositesOpt p q` essentially says `none ≠ p = -q`. -/
-def OppositesOpt : Option (F∞) → Option (F∞) → Prop
+def OppositesOpt : Option F∞ → Option F∞ → Prop
 | (p : F∞), (q : F∞) => p = -q  -- opposite values; includes `⊥ = -⊤` and `⊤ = -⊥`
 | _       , _        => False   -- namely `OppositesOpt none none = False`
 
@@ -114,14 +114,14 @@ lemma Matrix.sumElim_dotProd_sumElim (u : I → F∞) (v : J → F∞) (x : I �
     Sum.elim u v ᵥ⬝ Sum.elim x y = u ᵥ⬝ x + v ᵥ⬝ y := by
   simp [Matrix.dotProd]
 
-lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (M₁ : Matrix I₁ J (F∞)) (M₂ : Matrix I₂ J (F∞)) (v : J → { a : F // 0 ≤ a }) :
-    Matrix.fromRows M₁ M₂ ₘ* v = Sum.elim (M₁ ₘ* v) (M₂ ₘ* v) := by
+lemma Matrix.fromRows_mulWeig {I₁ I₂ : Type*} (M₁ : Matrix I₁ J F∞) (M₂ : Matrix I₂ J F∞) (w : J → { a : F // 0 ≤ a }) :
+    Matrix.fromRows M₁ M₂ ₘ* w = Sum.elim (M₁ ₘ* w) (M₂ ₘ* w) := by
   ext i
   cases i <;> rfl
 
 lemma Matrix.fromColumns_mulWeig_sumElim {J₁ J₂ : Type*} [Fintype J₁] [Fintype J₂]
-    (M₁ : Matrix I J₁ (F∞)) (M₂ : Matrix I J₂ (F∞)) (v₁ : J₁ → { a : F // 0 ≤ a }) (v₂ : J₂ → { a : F // 0 ≤ a }) :
-    Matrix.fromColumns M₁ M₂ ₘ* Sum.elim v₁ v₂ = M₁ ₘ* v₁ + M₂ ₘ* v₂ := by
+    (M₁ : Matrix I J₁ F∞) (M₂ : Matrix I J₂ F∞) (w₁ : J₁ → { a : F // 0 ≤ a }) (w₂ : J₂ → { a : F // 0 ≤ a }) :
+    Matrix.fromColumns M₁ M₂ ₘ* Sum.elim w₁ w₂ = M₁ ₘ* w₁ + M₂ ₘ* w₂ := by
   ext
   simp [Matrix.fromColumns, Matrix.mulWeig, Matrix.dotProd]
 
@@ -294,9 +294,9 @@ lemma EF.smul_neg {k : { a : F // 0 ≤ a }} {r : F∞} (hkr : k = 0 → r ≠ �
     else
       exfalso
       simp_all
-  | (q : F) =>
+  | (f : F) =>
     rw [←EF.coe_neg]
-    show toE (k * (-q)) = toE (-(k * q))
+    show toE (k * (-f)) = toE (-(k * f))
     rw [mul_neg]
 
 lemma EF.pos_smul_neg {k : { a : F // 0 ≤ a }} (hk : 0 < k) (r : F∞) :
@@ -322,8 +322,8 @@ lemma EF.smul_smul {k : { a : F // 0 ≤ a }} (hk : 0 < k) (l : { a : F // 0 ≤
     else
       exfalso
       simp_all only [not_lt, nonpos_iff_eq_zero]
-  | (q : F) =>
-    exact EF.coe_eq_coe_iff.mpr (mul_left_comm l.val k.val q)
+  | (f : F) =>
+    exact EF.coe_eq_coe_iff.mpr (mul_left_comm l.val k.val f)
 
 lemma EF.add_smul (k l : { a : F // 0 ≤ a }) (r : F∞) :
     (k + l) • r = k • r + l • r := by
@@ -346,8 +346,8 @@ lemma EF.add_smul (k l : { a : F // 0 ≤ a }) (r : F∞) :
       else
         rewrite [EF.pos_smul_top (pos_of_NN_not_zero l_eq_0)]
         rfl
-  | (q : F) =>
-    show toE ((k + l) * q) = toE (k * q) + toE (l * q)
+  | (f : F) =>
+    show toE ((k + l) * f) = toE (k * f) + toE (l * f)
     rw [←EF.coe_add, add_mul]
 
 lemma EF.smul_add {k : { a : F // 0 ≤ a }} (hk : 0 < k) (r s : F∞) :
@@ -392,8 +392,8 @@ lemma EF.mul_smul (k l : { a : F // 0 ≤ a }) (r : F∞) :
         have c_pos : 0 < k
         · exact pos_of_NN_not_zero k_eq_0
         rw [EF.pos_smul_top c_pos, EF.pos_smul_top (mul_pos c_pos l_pos)]
-  | (q : F) =>
-    show toE ((k * l) * q) = toE (k * (l * q))
+  | (f : F) =>
+    show toE ((k * l) * f) = toE (k * (l * f))
     rw [mul_assoc]
 
 lemma EF.one_smul_vec (v : J → F∞) :
@@ -417,7 +417,7 @@ lemma EF.vec_smul_le_smul_left {k : { a : F // 0 ≤ a }} (hk : 0 < k) (u v : I 
   · exact (EF.smul_le_smul_left hk _ _).mp huv
   · exact (EF.smul_le_smul_left hk _ _).mpr huv
 
-lemma Multiset.sum_neq_EF_top {s : Multiset (F∞)} (hs : ⊤ ∉ s) :
+lemma Multiset.sum_neq_EF_top {s : Multiset F∞} (hs : ⊤ ∉ s) :
     s.sum ≠ ⊤ := by
   induction s using Multiset.induction with
   | empty => simp
@@ -431,7 +431,7 @@ lemma Multiset.sum_neq_EF_top {s : Multiset (F∞)} (hs : ⊤ ∉ s) :
       | ⊤ => exact (ih (by simpa using hs) hm).elim
       | (_ : F) => simp [←EF.coe_add]
 
-lemma Multiset.smul_EF_sum {k : { a : F // 0 ≤ a }} (hk : 0 < k) (s : Multiset (F∞)) :
+lemma Multiset.smul_EF_sum {k : { a : F // 0 ≤ a }} (hk : 0 < k) (s : Multiset F∞) :
     s.summap (k • ·) = k • s.sum := by
   induction s using Multiset.induction with
   | empty => simp [Multiset.summap]
@@ -482,24 +482,24 @@ end dotProd_EF_properties
 
 section matrix_EF_properties
 
-lemma Matrix.EF_neg_zero : -(0 : Matrix I J (F∞)) = 0 := by
+lemma Matrix.EF_neg_zero : -(0 : Matrix I J F∞) = 0 := by
   ext
   apply neg_zero
 
-lemma Matrix.EF_neg_neg (M : Matrix I J (F∞)) : -(-M) = M := by
+lemma Matrix.EF_neg_neg (M : Matrix I J F∞) : -(-M) = M := by
   ext
   apply neg_neg
 
-lemma Matrix.zero_mulWeig (v : J → { a : F // 0 ≤ a }) : (0 : Matrix I J (F∞)) ₘ* v = 0 := by
+lemma Matrix.zero_mulWeig (v : J → { a : F // 0 ≤ a }) : (0 : Matrix I J F∞) ₘ* v = 0 := by
   ext
   simp [Matrix.mulWeig, Matrix.dotProd]
 
-lemma Matrix.mulWeig_add (M : Matrix I J (F∞)) (v w : J → { a : F // 0 ≤ a }) :
+lemma Matrix.mulWeig_add (M : Matrix I J F∞) (v w : J → { a : F // 0 ≤ a }) :
     M ₘ* (v + w) = M ₘ* v + M ₘ* w := by
   ext
   apply Matrix.dotProd_add
 
-lemma Matrix.mulWeig_smul {k : { a : F // 0 ≤ a }} (hk : 0 < k) (M : Matrix I J (F∞)) (v : J → { a : F // 0 ≤ a }) :
+lemma Matrix.mulWeig_smul {k : { a : F // 0 ≤ a }} (hk : 0 < k) (M : Matrix I J F∞) (v : J → { a : F // 0 ≤ a }) :
     M ₘ* (k • v) = k • (M ₘ* v) := by
   ext
   apply Matrix.dotProd_smul hk
@@ -849,8 +849,8 @@ lemma ExtendedLP.unbounded_of_feasible_of_infeasible {P : ExtendedLP I J F}
     (hP : P.IsFeasible) (hQ : ¬P.dualize.IsFeasible) :
     P.IsUnbounded := by
   let I' : Type _ := { i : I // P.b i ≠ ⊤ }
-  let A' : Matrix I' J (F∞) := Matrix.of (fun i' : I' => P.A i'.val)
-  let b' : I' → (F∞) := (fun i' : I' => P.b i'.val)
+  let A' : Matrix I' J F∞ := Matrix.of (fun i' : I' => P.A i'.val)
+  let b' : I' → F∞ := (fun i' : I' => P.b i'.val)
   cases or_of_neq (extendedFarkas (-A'ᵀ) P.c (by aeply P.hAj) (by aeply P.hAi) (by aeply P.hAc) (by aeply P.hcj)) with
   | inl caseI =>
     exfalso
@@ -905,13 +905,13 @@ lemma ExtendedLP.unbounded_of_feasible_of_infeasible {P : ExtendedLP I J F}
       change hbi to P.b i = ⊤
       rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hbi, EF.neg_top, EF.smul_bot, EF.add_bot]
       apply bot_le
-    | (q : F) =>
-      change hbi to P.b i = toE q
-      have hq : -(toE q) ≠ (⊥ : F∞)
+    | (f : F) =>
+      change hbi to P.b i = toE f
+      have hf : -(toE f) ≠ (⊥ : F∞)
       · rw [←EF.coe_neg]
         apply EF.coe_neq_bot
-      rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hbi, EF.zero_smul_nonbot hq, add_zero]
-      exact hAx ⟨i, hbi ▸ EF.coe_neq_top q⟩
+      rw [Pi.add_apply, Pi.smul_apply, Pi.neg_apply, hbi, EF.zero_smul_nonbot hf, add_zero]
+      exact hAx ⟨i, hbi ▸ EF.coe_neq_top f⟩
 
 end extended_LP_properties
 
@@ -941,7 +941,7 @@ lemma ExtendedLP.optimum_eq_of_reaches_bounded {P : ExtendedLP I J F} {r : F}
   congr
   exact ExtendedLP.optimum_unique hPP.choose_spec ⟨reaches, bounded⟩
 
-lemma oppositesOpt_comm (p q : Option (F∞)) : OppositesOpt p q ↔ OppositesOpt q p := by
+lemma oppositesOpt_comm (p q : Option F∞) : OppositesOpt p q ↔ OppositesOpt q p := by
   cases p with
   | none =>
     convert_to False ↔ False

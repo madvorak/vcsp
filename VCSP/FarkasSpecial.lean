@@ -4,8 +4,21 @@ import VCSP.FarkasBasic
 
 variable {F : Type*} [LinearOrderedField F]
 
--- Henrik Böving helped me with this notation:
-notation F"∞" => Extend F
+-- Henrik Böving wrote this entire section:
+section notation_EF
+
+syntax:max ident noWs "∞" : term
+
+macro_rules
+| `($F:ident∞) => `(Extend $F)
+
+@[app_unexpander Extend]
+def unexpandExtend : Lean.PrettyPrinter.Unexpander
+  | `($(_) $F:ident) => `($F:ident∞)
+  | _ => throw ()
+
+end notation_EF
+
 
 section extras_EF
 
@@ -14,7 +27,7 @@ def EF.smulNN (c : { a : F // 0 ≤ a }) : F∞ → F∞
 | ⊤ => if c = 0 then 0 else ⊤
 | (f : F) => toE (c.val * f)
 
-instance : SMulZeroClass { a : F // 0 ≤ a } (F∞) where
+instance : SMulZeroClass { a : F // 0 ≤ a } F∞ where
   smul := EF.smulNN
   smul_zero (c : { a : F // 0 ≤ a }) := EF.coe_eq_coe_iff.mpr (mul_zero c.val)
 
@@ -58,7 +71,7 @@ lemma Finset.sum_toE {ι : Type*} [Fintype ι] (s : Finset ι) (f : ι → F) :
     toE (s.sum f) = s.sum (fun i : ι => toE (f i)) :=
   map_sum RatAddHom f s
 
-lemma Multiset.sum_eq_EF_bot_iff (s : Multiset (F∞)) : s.sum = (⊥ : F∞) ↔ ⊥ ∈ s := by
+lemma Multiset.sum_eq_EF_bot_iff (s : Multiset F∞) : s.sum = (⊥ : F∞) ↔ ⊥ ∈ s := by
   constructor <;> intro hs
   · induction s using Multiset.induction with
     | empty =>
@@ -115,7 +128,7 @@ lemma Multiset.sum_eq_EF_bot_iff (s : Multiset (F∞)) : s.sum = (⊥ : F∞) �
       | inl ha => rw [←ha, EF.bot_add]
       | inr hm => rw [ih hm, EF.add_bot]
 
-lemma Multiset.sum_eq_EF_top {s : Multiset (F∞)} (htop : ⊤ ∈ s) (hbot : ⊥ ∉ s) :
+lemma Multiset.sum_eq_EF_top {s : Multiset F∞} (htop : ⊤ ∈ s) (hbot : ⊥ ∉ s) :
     s.sum = (⊤ : F∞) := by
   induction s using Multiset.induction with
   | empty =>
@@ -244,8 +257,8 @@ lemma Matrix.dotProd_zero_le_zero (v : I → F∞) :
     · apply bot_le
     · exact hv.choose_spec
 
-lemma Matrix.mulWeig_zero_le_zero (M : Matrix I J (F∞)) :
-    M ₘ* (0 : J → { a : F // 0 ≤ a }) ≤ (0 : I → (F∞)) := by
+lemma Matrix.mulWeig_zero_le_zero (M : Matrix I J F∞) :
+    M ₘ* (0 : J → { a : F // 0 ≤ a }) ≤ (0 : I → F∞) := by
   intro i
   apply Matrix.dotProd_zero_le_zero
 
@@ -259,9 +272,9 @@ set_option maxHeartbeats 666666 in
     neither is a generalization of the other. -/
 theorem extendedFarkas [DecidableEq I]
     -- The matrix (LHS)
-    (A : Matrix I J (F∞))
+    (A : Matrix I J F∞)
     -- The upper-bounding vector (RHS)
-    (b : I → (F∞))
+    (b : I → F∞)
     -- `A` must not have both `⊥` and `⊤` in the same row
     (hA : ¬∃ i : I, (∃ j : J, A i j = ⊥) ∧ (∃ j : J, A i j = ⊤))
     -- `A` must not have both `⊥` and `⊤` in the same column
