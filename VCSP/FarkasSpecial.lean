@@ -1,4 +1,4 @@
-import VCSP.ExtendedRationals
+import VCSP.ExtendedFields
 import VCSP.FarkasBasic
 
 

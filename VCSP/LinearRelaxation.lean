@@ -4,14 +4,6 @@ import VCSP.LinearProgrammingC
 open scoped Matrix
 
 
-lemma Matrix.fromBlocks_mulVec_sumType {α β γ δ R : Type*} [Semiring R]
-    [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
-    (A : Matrix α β R) (B : Matrix α γ R) (C : Matrix δ β R) (D : Matrix δ γ R)
-    (u : β → R) (v : γ → R) :
-    Matrix.fromBlocks A B C D *ᵥ Sum.elim u v = Sum.elim (A *ᵥ u + B *ᵥ v) (C *ᵥ u + D *ᵥ v) := by
-  rw [←Matrix.fromRows_fromColumn_eq_fromBlocks, Matrix.fromRows_mulVec,
-    Matrix.fromColumns_mulVec_sum_elim, Matrix.fromColumns_mulVec_sum_elim]
-
 -- Emilie (Shad Amethyst) stated this lemma:
 lemma Finset.filter_univ_eq_image {α : Type*} [Fintype α] [DecidableEq α] {p : α → Prop} [DecidablePred p] :
     Finset.univ.filter p = (Finset.univ : Finset { a : α // p a }).image Subtype.val := by
@@ -273,7 +265,7 @@ theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) 
   · simp_rw [CanonicalLP.IsSolution, ValuedCSP.Instance.RelaxBLP]
     constructor
     · ext j
-      rw [Matrix.fromBlocks_mulVec_sumType]
+      rw [Matrix.fromBlocks_mulVec]
       cases j with
       | inl c =>
         obtain ⟨cₜ, cₙ, cₐ⟩ := c

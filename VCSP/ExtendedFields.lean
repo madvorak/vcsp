@@ -1,23 +1,20 @@
 /-
-Adapted from:
+Inspired by:
 https://github.com/leanprover-community/mathlib4/blob/333e2d79fdaee86489af73dee919bc4b66957a52/Mathlib/Data/Real/EReal.lean
-
-Released under Apache 2.0 license.
-Authors: Kevin Buzzard
 -/
 
-import Mathlib.Data.Real.EReal
-
-open Function
+import Mathlib.Algebra.Order.Monoid.WithTop
+import Mathlib.Algebra.Order.Field.Basic
 
 noncomputable section
 
 
-/-- `Extend F` is the type of extended rationals `[-∞, +∞]` or rather `F ∪ {⊥, ⊤}` where, informally speaking,
+/-- `Extend F` is the type of values in `F ∪ {⊥, ⊤}` where, informally speaking,
     `⊥` (negative infinity) is stronger than `⊤` (positive infinity). -/
 def Extend (F : Type*) := WithBot (WithTop F)
 
 variable {F : Type*} [LinearOrderedField F]
+
 
 -- Henrik Böving helped me with this instance:
 instance : LinearOrderedAddCommMonoid (Extend F) :=
@@ -37,7 +34,7 @@ instance : DenselyOrdered (Extend F) := inferInstanceAs (DenselyOrdered (WithBot
 
 instance : DecidableRel ((· < ·) : Extend F → (Extend F) → Prop) := WithBot.decidableLT
 
-/-- The canonical inclusion from `F` to `Extend F`. Registered as a coercion. -/
+/-- The canonical inclusion from `F` to `Extend F` is registered as a coercion. -/
 @[coe] def toE : F → (Extend F) := some ∘ some
 
 instance : Coe F (Extend F) := ⟨toE⟩
@@ -50,7 +47,7 @@ namespace EF
 lemma coe_strictMono : StrictMono (toE (F := F)) :=
   WithBot.coe_strictMono.comp WithTop.coe_strictMono
 
-lemma coe_injective : Injective (toE (F := F)) :=
+lemma coe_injective : Function.Injective (toE (F := F)) :=
   coe_strictMono.injective
 
 @[simp, norm_cast]
@@ -207,7 +204,8 @@ lemma neg_top : -(⊤ : Extend F) = ⊥ :=
 lemma neg_bot : -(⊥ : Extend F) = ⊤ :=
   rfl
 
-@[simp, norm_cast] lemma coe_neg (x : F) : toE (-x) = -(toE x) := rfl
+@[simp, norm_cast]
+lemma coe_neg (x : F) : toE (-x) = -(toE x) := rfl
 
 instance : InvolutiveNeg (Extend F) where
   neg_neg a :=
