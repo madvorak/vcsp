@@ -16,92 +16,27 @@ macro "finishit" : tactic => `(tactic| -- should be `private macro` which Lean d
   simp_rw [Finset.sum_mul] <;> rw [Finset.sum_comm] <;>
   congr <;> ext <;> congr <;> ext <;> ring)
 
-theorem equalityFarkas_neg (A : Matrix I J F) (b : I → F) :
-    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
+theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
+    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, 0 ≤ Aᵀ *ᵥ y ∧ b ⬝ᵥ y < 0) := by
   convert
     coordinateFarkas Aᵀ.mulVecLin ⟨⟨(b ⬝ᵥ ·), Matrix.dotProduct_add b⟩, (Matrix.dotProduct_smul · b)⟩
-      using 1
+      using 3
   · constructor
-    · intro ⟨x, hx, hAxb⟩
-      refine ⟨x, hx, ?_⟩
+    · intro ⟨hx, hAxb⟩
+      refine ⟨hx, ?_⟩
       intro
       simp
       rw [←hAxb]
       finishit
-    · intro ⟨x, hx, hAx⟩
-      refine ⟨x, hx, ?_⟩
+    · intro ⟨hx, hAx⟩
+      refine ⟨hx, ?_⟩
       simp at hAx
       apply Matrix.dotProduct_eq
       intro w
       rw [←hAx w]
       finishit
-  · constructor <;> intro ⟨y, hAy, hby⟩ <;> use -y <;> constructor
-    · simpa [Matrix.mulVecLin, Matrix.neg_mulVec] using hAy
-    · simpa [Matrix.mulVecLin] using hby
-    · simpa [Matrix.mulVecLin, Matrix.neg_mulVec_neg] using hAy
-    · simpa [Matrix.mulVecLin] using hby
 
-theorem inequalityFarkas_neg [DecidableEq I] (A : Matrix I J F) (b : I → F) :
-    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → F, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
-  let A' : Matrix I (I ⊕ J) F := Matrix.fromColumns 1 A
-  convert equalityFarkas_neg A' b using 1 <;> constructor
-  · intro ⟨x, hx, hAxb⟩
-    use Sum.elim (b - A *ᵥ x) x
-    constructor
-    · rw [Sum.nonneg_elim_iff]
-      exact ⟨fun i : I => sub_nonneg_of_le (hAxb i), hx⟩
-    · aesop
-  · intro ⟨x, hx, hAxb⟩
-    use x ∘ Sum.inr
-    constructor
-    · intro
-      apply hx
-    · intro i
-      have hi := congr_fun hAxb i
-      simp [A', Matrix.mulVec, Matrix.dotProduct, Matrix.fromColumns] at hi
-      apply le_of_nneg_add hi
-      apply Fintype.sum_nonneg
-      rw [Pi.le_def]
-      intro
-      rw [Pi.zero_apply]
-      apply mul_nonneg
-      · apply Matrix.zero_le_one_elem
-      · apply hx
-  · intro ⟨y, hy, hAy, hby⟩
-    refine ⟨y, ?_, hby⟩
-    intro k
-    cases k with
-    | inl i => simpa [A', Matrix.neg_mulVec] using Matrix.dotProduct_nonneg_of_nonneg (Matrix.zero_le_one_elem · i) hy
-    | inr j => apply hAy
-  · intro ⟨y, hAy, hby⟩
-    have h1Ay : 0 ≤ (Matrix.fromRows (1 : Matrix I I F) Aᵀ *ᵥ y)
-    · intro k
-      have hAy' : (-(Matrix.fromRows 1 Aᵀ *ᵥ y)) k ≤ 0
-      · simp only [A', Matrix.transpose_fromColumns, Matrix.neg_mulVec, Matrix.transpose_one] at hAy
-        apply hAy
-      rwa [Pi.neg_apply, neg_le, neg_zero] at hAy'
-    refine ⟨y, ?_, ?_, hby⟩
-    · intro i
-      simpa using h1Ay (Sum.inl i)
-    · intro j
-      rw [Matrix.neg_mulVec, Pi.neg_apply, neg_le, Pi.zero_apply, neg_zero]
-      exact h1Ay (Sum.inr j)
-
-macro "convertit" : tactic => `(tactic| -- should be `private macro` again
-  conv => { rhs; rw [Matrix.neg_mulVec, ←neg_zero] } <;>
-  constructor <;> intro hyp i <;> simpa using hyp i)
-
-theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
-    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x = b) ≠ (∃ y : I → F, 0 ≤ Aᵀ *ᵥ y ∧ b ⬝ᵥ y < 0) := by
-  convert equalityFarkas_neg A b using 4
-  convertit
-
-theorem inequalityFarkas [DecidableEq I] (A : Matrix I J F) (b : I → F) :
-    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → F, 0 ≤ y ∧ 0 ≤ Aᵀ *ᵥ y ∧ b ⬝ᵥ y < 0) := by
-  convert inequalityFarkas_neg A b using 5
-  convertit
-
-lemma equalityFrobenius_lt (A : Matrix I J F) (b : I → F) :
+theorem equalityFrobenius_lt (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, A *ᵥ x = b) ≠ (∃ y : I → F, Aᵀ *ᵥ y = 0 ∧ b ⬝ᵥ y < 0) := by
   convert equalityFarkas (Matrix.fromColumns A (-A)) b using 1
   · constructor
@@ -145,3 +80,50 @@ theorem equalityFrobenius (A : Matrix I J F) (b : I → F) :
     rw [Matrix.mulVec_neg, hAy, neg_zero, Matrix.dotProduct_neg, neg_lt_zero]
     push_neg at hlt
     exact ⟨rfl, lt_of_le_of_ne hlt hby.symm⟩
+
+theorem inequalityFarkas [DecidableEq I] (A : Matrix I J F) (b : I → F) :
+    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → F, 0 ≤ y ∧ 0 ≤ Aᵀ *ᵥ y ∧ b ⬝ᵥ y < 0) := by
+  let A' : Matrix I (I ⊕ J) F := Matrix.fromColumns 1 A
+  convert equalityFarkas A' b using 1 <;> constructor
+  · intro ⟨x, hx, hAxb⟩
+    use Sum.elim (b - A *ᵥ x) x
+    constructor
+    · rw [Sum.nonneg_elim_iff]
+      exact ⟨fun i : I => sub_nonneg_of_le (hAxb i), hx⟩
+    · aesop
+  · intro ⟨x, hx, hAxb⟩
+    use x ∘ Sum.inr
+    constructor
+    · intro
+      apply hx
+    · intro i
+      have hi := congr_fun hAxb i
+      simp [A', Matrix.mulVec, Matrix.dotProduct, Matrix.fromColumns] at hi
+      apply le_of_nneg_add hi
+      apply Fintype.sum_nonneg
+      rw [Pi.le_def]
+      intro
+      rw [Pi.zero_apply]
+      apply mul_nonneg
+      · apply Matrix.zero_le_one_elem
+      · apply hx
+  · intro ⟨y, hy, hAy, hby⟩
+    refine ⟨y, ?_, hby⟩
+    intro k
+    cases k with
+    | inl i => simpa [A', Matrix.neg_mulVec] using Matrix.dotProduct_nonneg_of_nonneg (Matrix.zero_le_one_elem · i) hy
+    | inr j => apply hAy
+  · intro ⟨y, hAy, hby⟩
+    have h1Ay : 0 ≤ (Matrix.fromRows (1 : Matrix I I F) Aᵀ *ᵥ y)
+    · intro k
+      simp only [A', Matrix.transpose_fromColumns, Matrix.transpose_one] at hAy
+      apply hAy
+    refine ⟨y, ?_, fun j => h1Ay (Sum.inr j), hby⟩
+    intro i
+    simpa using h1Ay (Sum.inl i)
+
+theorem inequalityFarkas_neg [DecidableEq I] (A : Matrix I J F) (b : I → F) :
+    (∃ x : J → F, 0 ≤ x ∧ A *ᵥ x ≤ b) ≠ (∃ y : I → F, 0 ≤ y ∧ -Aᵀ *ᵥ y ≤ 0 ∧ b ⬝ᵥ y < 0) := by
+  convert inequalityFarkas A b using 5
+  rw [Matrix.neg_mulVec, ←neg_zero]
+  constructor <;> intro hyp i <;> simpa using hyp i

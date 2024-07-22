@@ -6,8 +6,8 @@ import VCSP.Basic
 class LinearOrderedDivisionRing (R : Type*) extends
   LinearOrderedRing R, DivisionRing R
 
-lemma inv_pos_of_pos' {R : Type*} [LinearOrderedDivisionRing R] {a : R} (ha : 0 < a) : 0 < a⁻¹ :=
-  lt_of_mul_lt_mul_left (by simp [ha.ne.symm]) ha.le
+lemma inv_neg_of_neg {R : Type*} [LinearOrderedDivisionRing R] {a : R} (ha : a < 0) : a⁻¹ < 0 :=
+  lt_of_mul_lt_mul_left (by simp [ha.ne]) (neg_nonneg_of_nonpos ha.le)
 
 private def chop {m : ℕ} {R W : Type*} [Semiring R] [AddCommMonoid W] [Module R W]
     (A : W →ₗ[R] Fin m.succ → R) : W →ₗ[R] Fin m → R :=
@@ -80,8 +80,14 @@ variable {R V W : Type*}
 
 private lemma sum_nneg_aux {m : ℕ} [OrderedRing R]
     [OrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommMonoid W] [Module R W]
+    {A : W →ₗ[R] Fin m → R} {y : W} {x : Fin m → V} (hx : 0 ≤ x) (hAy : 0 ≤ A y) :
+    0 ≤ ∑ i : Fin m, A y i • x i :=
+  Finset.sum_nonneg (fun i _ => smul_nonneg (hAy i) (hx i))
+
+private lemma sum_nonpos_aux {m : ℕ} [OrderedRing R]
+    [OrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommMonoid W] [Module R W]
     {A : W →ₗ[R] Fin m → R} {y : W} {x : Fin m → V} (hx : 0 ≤ x) (hAy : A y ≤ 0) :
-    ∑ i : Fin m, A y i • x i ≤ 0 := by
+    ∑ i : Fin m, A y i • x i ≤ 0 := by -- TODO refactor
   rw [←neg_zero, ←le_neg, ←Finset.sum_neg_distrib]
   apply Finset.sum_nonneg
   intro i _
@@ -107,11 +113,11 @@ private lemma finishing_piece {m : ℕ} [Semiring R]
 lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (ih : ∀ A₀ : W →ₗ[R] Fin m → R, ∀ b₀ : W →ₗ[R] V,
-      (∀ y₀ : W, A₀ y₀ ≤ 0 → b₀ y₀ ≤ 0) →
+      (∀ y₀ : W, 0 ≤ A₀ y₀ → 0 ≤ b₀ y₀) →
         (∃ x₀ : Fin m → V, 0 ≤ x₀ ∧ ∀ w₀ : W, ∑ i₀ : Fin m, A₀ w₀ i₀ • x₀ i₀ = b₀ w₀))
-    {A : W →ₗ[R] Fin m.succ → R} {b : W →ₗ[R] V} (hAb : ∀ y : W, A y ≤ 0 → b y ≤ 0) :
+    {A : W →ₗ[R] Fin m.succ → R} {b : W →ₗ[R] V} (hAb : ∀ y : W, 0 ≤ A y → 0 ≤ b y) :
     ∃ x : Fin m.succ → V, 0 ≤ x ∧ ∀ w : W, ∑ i : Fin m.succ, A w i • x i = b w := by
-  if is_easy : ∀ y : W, chop A y ≤ 0 → b y ≤ 0 then
+  if is_easy : ∀ y : W, 0 ≤ chop A y → 0 ≤ b y then
     obtain ⟨x, hx, hbx⟩ := ih (chop A) b is_easy
     use (fun i : Fin m.succ => if hi : i.val < m then x ⟨i.val, hi⟩ else 0)
     constructor
@@ -132,7 +138,7 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
     obtain ⟨y', hay', hby'⟩ := is_easy
     let j : Fin m.succ := ⟨m, lt_add_one m⟩ -- the last (new) index
     let y := (A y' j)⁻¹ • y' -- rescaled `y'`
-    have hAy' : 0 < A y' j
+    have hAy' : A y' j < 0
     · by_contra! contr
       exact (
         (hAb y' (fun i : Fin m.succ =>
@@ -145,12 +151,12 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
         )).trans_lt hby'
       ).false
     have hAy : A y j = 1
-    · convert inv_mul_cancel hAy'.ne.symm
+    · convert inv_mul_cancel hAy'.ne
       simp [y]
     have hAA : ∀ w : W, A (w - (A w j • y)) j = 0
     · intro w
       simp [hAy]
-    have hbA : ∀ w : W, chop A (w - (A w j • y)) ≤ 0 → b (w - (A w j • y)) ≤ 0
+    have hbA : ∀ w : W, 0 ≤ chop A (w - (A w j • y)) → 0 ≤ b (w - (A w j • y))
     · intro w hw
       apply hAb
       intro i
@@ -162,9 +168,9 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
       else
         exfalso
         exact impossible_index hi hij
-    have hbbA : ∀ w : W, chop A w - chop A (A w j • y) ≤ 0 → b w - b (A w j • y) ≤ 0
+    have hbbA : ∀ w : W, 0 ≤ chop A w - chop A (A w j • y) → 0 ≤ b w - b (A w j • y)
     · simpa using hbA
-    have hbAb : ∀ w : W, (chop A - (A · j • chop A y)) w ≤ 0 → (b - (A · j • b y)) w ≤ 0
+    have hbAb : ∀ w : W, 0 ≤ (chop A - (A · j • chop A y)) w → 0 ≤ (b - (A · j • b y)) w
     · simpa using hbbA
     obtain ⟨x', hx', hbx'⟩ := ih (auxLinMaps A y) (auxLinMap A b y) hbAb
     use (fun i : Fin m.succ => if hi : i.val < m then x' ⟨i.val, hi⟩ else b y - ∑ i : Fin m, chop A y i • x' i)
@@ -174,13 +180,13 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
         clear * - hi hx'
         aesop
       else
-        have hAy'' : 0 ≤ (A y' j)⁻¹
-        · exact (inv_pos_of_pos' hAy').le
+        have hAy'' : (A y' j)⁻¹ ≤ 0
+        · exact (inv_neg_of_neg hAy').le
         have hay : chop A y ≤ 0
-        · simpa [y] using smul_nonpos_of_nonneg_of_nonpos hAy'' hay'
+        · simpa [y] using smul_nonpos_of_nonpos_of_nonneg hAy'' hay'
         have hby : 0 ≤ b y
-        · simpa [y] using smul_nonneg hAy'' hby'.le
-        simpa [hi] using (sum_nneg_aux hx' hay).trans hby
+        · simpa [y] using smul_nonneg_of_nonpos_of_nonpos hAy'' hby'.le
+        simpa [hi] using (sum_nonpos_aux hx' hay).trans hby
     · intro w
       have key : ∑ i : Fin m, (chop A w i - A w j * chop A y i) • x' i = b w - A w j • b y
       · simpa using hbx' w
@@ -197,13 +203,13 @@ lemma industepFarkasBartl {m : ℕ} [LinearOrderedDivisionRing R]
 theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] Fin n → R) (b : W →ₗ[R] V) :
-    (∃ x : Fin n → V, 0 ≤ x ∧ ∀ w : W, ∑ j : Fin n, A w j • x j = b w) ≠ (∃ y : W, A y ≤ 0 ∧ 0 < b y) := by
+    (∃ x : Fin n → V, 0 ≤ x ∧ ∀ w : W, ∑ j : Fin n, A w j • x j = b w) ≠ (∃ y : W, 0 ≤ A y ∧ b y < 0) := by
   apply neq_of_iff_neg
   push_neg
   refine ⟨fun ⟨x, hx, hb⟩ y hy => hb y ▸ sum_nneg_aux hx hy, ?_⟩
   induction n generalizing b with -- note that `A` is "generalized" automatically
   | zero =>
-    have A_tauto (w : W) : A w ≤ 0
+    have A_tauto (w : W) : 0 ≤ A w
     · intro j
       exfalso
       apply Nat.not_lt_zero
@@ -211,16 +217,15 @@ theorem finFarkasBartl {n : ℕ} [LinearOrderedDivisionRing R]
     intro hAb
     refine ⟨0, le_refl 0, fun w : W => ?_⟩
     simp_rw [Pi.zero_apply, smul_zero, Finset.sum_const_zero]
-    apply eq_of_le_of_le
-    · simpa using hAb (-w) (A_tauto (-w))
-    · exact hAb w (A_tauto w)
+    apply eq_of_le_of_le (hAb w (A_tauto w))
+    simpa using hAb (-w) (A_tauto (-w))
   | succ m ih =>
     exact industepFarkasBartl ih
 
 theorem fintypeFarkasBartl {J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
     [LinearOrderedAddCommGroup V] [Module R V] [PosSMulMono R V] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] J → R) (b : W →ₗ[R] V) :
-    (∃ x : J → V, 0 ≤ x ∧ ∀ w : W, ∑ j : J, A w j • x j = b w) ≠ (∃ y : W, A y ≤ 0 ∧ 0 < b y) := by
+    (∃ x : J → V, 0 ≤ x ∧ ∀ w : W, ∑ j : J, A w j • x j = b w) ≠ (∃ y : W, 0 ≤ A y ∧ b y < 0) := by
   convert
     finFarkasBartl ⟨⟨fun w : W => fun j' => A w ((Fintype.equivFin J).symm j'), by aesop⟩, by aesop⟩ b
       using 1
@@ -249,10 +254,10 @@ theorem fintypeFarkasBartl {J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
 
 theorem scalarFarkas {J : Type*} [Fintype J] [LinearOrderedDivisionRing R] [AddCommGroup W] [Module R W]
     (A : W →ₗ[R] J → R) (b : W →ₗ[R] R) :
-    (∃ x : J → R, 0 ≤ x ∧ ∀ w : W, ∑ j : J, A w j • x j = b w) ≠ (∃ y : W, A y ≤ 0 ∧ 0 < b y) :=
+    (∃ x : J → R, 0 ≤ x ∧ ∀ w : W, ∑ j : J, A w j • x j = b w) ≠ (∃ y : W, 0 ≤ A y ∧ b y < 0) :=
   fintypeFarkasBartl A b
 
 theorem coordinateFarkas {I J : Type*} [Fintype J] [LinearOrderedDivisionRing R]
     (A : (I → R) →ₗ[R] J → R) (b : (I → R) →ₗ[R] R) :
-    (∃ x : J → R, 0 ≤ x ∧ ∀ w : I → R, ∑ j : J, A w j • x j = b w) ≠ (∃ y : I → R, A y ≤ 0 ∧ 0 < b y) :=
+    (∃ x : J → R, 0 ≤ x ∧ ∀ w : I → R, ∑ j : J, A w j • x j = b w) ≠ (∃ y : I → R, 0 ≤ A y ∧ b y < 0) :=
   scalarFarkas A b
