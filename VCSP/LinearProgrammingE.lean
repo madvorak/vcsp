@@ -204,6 +204,8 @@ end weak_duality
 
 section strong_duality
 
+section nneg_vs_zero
+
 lemma eq_zero_of_zero_eq_val {k : { a : F // 0 ≤ a }} (hk : 0 = k.val) :
     k = 0 :=
   Eq.symm (Subtype.eq hk)
@@ -213,6 +215,8 @@ lemma pos_of_NN_not_zero {k : { a : F // 0 ≤ a }} (hk : ¬(k = 0)) :
   apply lt_of_le_of_ne k.property
   intro contr
   exact hk (eq_zero_of_zero_eq_val contr)
+
+end nneg_vs_zero
 
 section misc_EF_properties
 

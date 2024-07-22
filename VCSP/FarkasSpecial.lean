@@ -60,7 +60,7 @@ lemma EF.zero_smul_nonbot {r : F∞} (hr : r ≠ ⊥) : (0 : { a : F // 0 ≤ a 
   | ⊤ => rfl
   | (f : F) => rfl
 
-lemma EF.zero_smul_coe {f : F} : (0 : { a : F // 0 ≤ a }) • toE f = 0 :=
+lemma EF.zero_smul_coe (f : F) : (0 : { a : F // 0 ≤ a }) • toE f = 0 :=
   EF.zero_smul_nonbot (EF.coe_neq_bot f)
 
 
@@ -188,18 +188,12 @@ end hetero_matrix_products_defs
 section hetero_matrix_products_EF
 
 lemma Matrix.no_bot_dotProd_zero {v : I → F∞} (hv : ∀ i, v i ≠ ⊥) :
-    v ᵥ⬝ (0 : I → { a : F // 0 ≤ a }) = (0 : F∞) := by
-  apply Finset.sum_eq_zero
-  intro i _
-  match hvi : v i with
-  | ⊤ => -- TODO refactor
-    show EF.smulNN 0 ⊤ = 0
-    simp [EF.smulNN]
-  | ⊥ =>
-    exfalso
-    exact False.elim (hv i hvi)
-  | (f : F) =>
-    apply EF.zero_smul_coe
+    v ᵥ⬝ (0 : I → { a : F // 0 ≤ a }) = (0 : F∞) :=
+  Finset.sum_eq_zero (fun (i : I) _ =>
+    match hvi : v i with
+    | ⊤ => show EF.smulNN 0 ⊤ = 0 by simp [EF.smulNN]
+    | ⊥ => False.elim (hv i hvi)
+    | (f : F) => EF.zero_smul_coe f)
 
 lemma Matrix.has_bot_dotProd_nneg {v : I → F∞} {i : I} (hvi : v i = ⊥) (w : I → { a : F // 0 ≤ a }) :
     v ᵥ⬝ w = (⊥ : F∞) := by
@@ -374,8 +368,7 @@ theorem extendedFarkas [DecidableEq I]
                 exfalso
                 apply t.property.left
                 exact hbtv
-            obtain ⟨_, hh⟩ := hbt
-            exact Matrix.no_bot_has_top_dotProd_nneg_le (t.property.right) ht x (hh ▸ ineqalities t.val)
+            exact Matrix.no_bot_has_top_dotProd_nneg_le (t.property.right) ht x (hbt.choose_spec ▸ ineqalities t.val)
           rw [hxj]
           apply EF.zero_smul_nonbot
           apply i'.property.right
