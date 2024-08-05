@@ -942,7 +942,6 @@ lemma ExtendedLP.optimum_eq_of_reaches_bounded {P : ExtendedLP I J F} {r : F}
   have hPb : ¬P.IsUnbounded
   · exact (· ⟨r, bounded⟩)
   simp [ExtendedLP.optimum, hP, hPP, hPb]
-  congr
   exact ExtendedLP.optimum_unique hPP.choose_spec ⟨reaches, bounded⟩
 
 lemma oppositesOpt_comm (p q : Option F∞) : OppositesOpt p q ↔ OppositesOpt q p := by

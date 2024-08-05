@@ -342,7 +342,6 @@ theorem extendedFarkas [DecidableEq I]
           ext j'
           rw [mul_comm]
           simp only [A', Matrix.of_apply]
-          congr
           split <;> rename_i hAij <;> simp only [hAij]
           · rfl
           · exfalso
@@ -473,7 +472,6 @@ theorem extendedFarkas [DecidableEq I]
             congr
             ext i'
             simp only [A', Matrix.neg_apply, Matrix.transpose_apply, Matrix.of_apply]
-            congr
             split <;> rename_i hAij <;> simp only [hAij]
             · rewrite [mul_comm]
               rfl
@@ -533,7 +531,6 @@ theorem extendedFarkas [DecidableEq I]
               · intro i hi hif
                 rw [mul_comm]
                 simp only [A', Matrix.neg_apply, Matrix.of_apply]
-                congr
                 split <;> rename_i hAij <;> simp only [hAij]
                 · rfl
                 · exfalso

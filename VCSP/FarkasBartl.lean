@@ -1,4 +1,5 @@
 import Mathlib.Algebra.Order.Module.Defs
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Tactic.Abel
 import VCSP.Basic
 

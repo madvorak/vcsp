@@ -11,6 +11,10 @@ lemma ite_isTrue {α : Type*} {P : Prop} [Decidable P] (hp : P) (a b : α) :
   simp only [hp]
   apply ite_true
 
+lemma ite_eq_symm {α β : Type*} [DecidableEq α] (a₁ a₂ : α) (b₁ b₂ : β) :
+    (if a₁ = a₂ then b₁ else b₂) = (if a₂ = a₁ then b₁ else b₂) := by
+  aesop
+
 -- Yaël Dillies proved this lemma:
 lemma Multiset.toList_map_sum {α β : Type*} (s : Multiset α) [AddCommMonoid β] (f : α → β) :
     (s.toList.map f).sum = (s.map f).sum := by
@@ -125,7 +129,7 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_marginal (I : Γ.Instanc
     (j : ι) :
     x.toCanonicalRationalSolution.denominator =
     (buildVertically (fun d : D => x.toCanonicalRationalSolution.numerators (Sum.inr ⟨j, d⟩))).length := by
-  rw [List.length_join, List.map_map, Function.comp]
+  rw [List.length_join, Nat.sum_eq_listSum, List.map_map, Function.comp]
   simp_rw [List.length_replicate]
   rw [Multiset.toList_map_sum]
   qify
@@ -152,7 +156,7 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance �
       (fun v : Fin t.fst.n → D =>
         x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩)
       )).length := by
-  rw [List.length_join, List.map_map, Function.comp]
+  rw [List.length_join, Nat.sum_eq_listSum, List.map_map, Function.comp]
   simp_rw [List.length_replicate, Multiset.toList_map_sum]
   qify
   rw [Multiset.map_map, Multiset.map_map]
@@ -285,7 +289,7 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     (Finset.univ.val.toList.map (fun d : D =>
       List.count a (List.replicate (x.toCanonicalRationalSolution.numerators (Sum.inr ⟨t.fst.app k, d⟩)) d))).sum
   rw [Multiset.toList_map_sum, Multiset.toList_map_sum, Finset.sum_map_val, Finset.sum_map_val]
-  simp_rw [List.count_replicate, Finset.sum_ite_eq, Finset.mem_univ, if_true]
+  simp_rw [List.count_replicate, beq_iff_eq, Finset.sum_ite_eq', Finset.mem_univ, if_true, ite_eq_symm]
   rw [Finset.sum_ite, Finset.sum_const_zero, add_zero]
   show
     (Finset.univ.filter (a = · k)).sum (fun v : Fin t.fst.n → D =>
