@@ -36,7 +36,7 @@ theorem equalityFarkas (A : Matrix I J F) (b : I → F) :
       rw [←hAx w]
       finishit
 
-theorem equalityFrobenius_lt (A : Matrix I J F) (b : I → F) :
+theorem equalityFredholm_lt (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, A *ᵥ x = b) ≠ (∃ y : I → F, Aᵀ *ᵥ y = 0 ∧ b ⬝ᵥ y < 0) := by
   convert equalityFarkas (Matrix.fromColumns A (-A)) b using 1
   · constructor
@@ -68,9 +68,9 @@ theorem equalityFrobenius_lt (A : Matrix I J F) (b : I → F) :
       specialize hAyn i
       rwa [Matrix.transpose_neg, Matrix.neg_mulVec, Pi.zero_apply, Pi.neg_apply, Right.nonneg_neg_iff] at hAyn
 
-theorem equalityFrobenius (A : Matrix I J F) (b : I → F) :
+theorem equalityFredholm (A : Matrix I J F) (b : I → F) :
     (∃ x : J → F, A *ᵥ x = b) ≠ (∃ y : I → F, Aᵀ *ᵥ y = 0 ∧ b ⬝ᵥ y ≠ 0) := by
-  convert equalityFrobenius_lt A b using 1
+  convert equalityFredholm_lt A b using 1
   refine ⟨?_, by aesop⟩
   intro ⟨y, hAy, hby⟩
   if hlt : b ⬝ᵥ y < 0 then
