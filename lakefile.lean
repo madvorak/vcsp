@@ -5,8 +5,8 @@ package vcsp {
   moreServerOptions := #[⟨`autoImplicit, false⟩, ⟨`pp.structureInstances, false⟩, ⟨`linter.oldObtain, false⟩]
 }
 
-require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git"
+require duality from git
+  "https://github.com/madvorak/duality.git"
 
 @[default_target]
 lean_lib VCSP {

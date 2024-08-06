@@ -1,5 +1,6 @@
 import Mathlib.Algebra.Order.Pi
-import VCSP.FarkasBasic
+import Duality.FarkasBasic
+import VCSP.Basic
 
 /-!
 
