@@ -6,7 +6,7 @@ package vcsp {
 }
 
 require duality from git
-  "https://github.com/madvorak/duality.git"
+  "https://github.com/madvorak/duality.git" @ "main"
 
 @[default_target]
 lean_lib VCSP {
