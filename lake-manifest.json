@@ -75,7 +75,7 @@
    "type": "git",
    "subDir": null,
    "scope": "",
-   "rev": "c7b1f63f0bafb7f41155eb44eb9acd23f4feb933",
+   "rev": "d3c04ae26b450b590b94fec2144d720e0735c5bf",
    "name": "duality",
    "manifestFile": "lake-manifest.json",
    "inputRev": "main",
