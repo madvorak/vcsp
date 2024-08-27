@@ -1,4 +1,5 @@
-import VCSP.LinearProgramming
+import Mathlib.Algebra.Order.Pi
+import VCSP.Basic
 
 
 /-- Linear program in the canonical form. Variables are of type `J`. Conditions are indexed by type `I`. -/
@@ -11,7 +12,7 @@ structure CanonicalLP (I J R : Type*) where
   c : J → R
 
 open scoped Matrix
-variable {I J R : Type*} [Fintype I] [Fintype J]
+variable {I J R : Type*} [Fintype J]
 
 /-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and
     multiplication by matrix `A` from the left yields the vector `b`. -/
@@ -27,48 +28,3 @@ def CanonicalLP.IsFeasible [OrderedSemiring R] (P : CanonicalLP I J R) : Prop :=
     the result is the value `r`. -/
 def CanonicalLP.Reaches [OrderedSemiring R] (P : CanonicalLP I J R) (r : R) : Prop :=
   ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = r
-
-def CanonicalLP.toStandardLP [Ring R] (P : CanonicalLP I J R) : StandardLP (I ⊕ I) J R :=
-  ⟨Matrix.fromRows P.A (-P.A), Sum.elim P.b (-P.b), P.c⟩
-
-lemma CanonicalLP.toStandardLP_isSolution_iff [OrderedRing R] (P : CanonicalLP I J R) (x : J → R) :
-    P.toStandardLP.IsSolution x ↔ P.IsSolution x := by
-  constructor
-  · intro hyp
-    unfold StandardLP.IsSolution CanonicalLP.toStandardLP at hyp
-    rw [Matrix.fromRows_mulVec, Sum.elim_le_elim_iff] at hyp
-    obtain ⟨⟨ineqPos, ineqNeg⟩, hx⟩ := hyp
-    constructor
-    · apply eq_of_le_of_le ineqPos
-      intro i
-      have almost : -((P.A *ᵥ x) i) ≤ -(P.b i)
-      · specialize ineqNeg i
-        rwa [Matrix.neg_mulVec] at ineqNeg
-      rwa [neg_le_neg_iff] at almost
-    · exact hx
-  · intro ⟨equ, hx⟩
-    unfold CanonicalLP.toStandardLP StandardLP.IsSolution
-    constructor
-    · rw [Matrix.fromRows_mulVec, Sum.elim_le_elim_iff]
-      constructor
-      · exact equ.le
-      rw [Matrix.neg_mulVec]
-      intro i
-      show -((P.A *ᵥ x) i) ≤ -(P.b i)
-      rw [neg_le_neg_iff]
-      exact equ.symm.le i
-    · exact hx
-
-lemma CanonicalLP.toStandardLP_isFeasible_iff [OrderedRing R] (P : CanonicalLP I J R) :
-    P.toStandardLP.IsFeasible ↔ P.IsFeasible := by
-  constructor <;>
-  · intro ⟨x, hx⟩
-    use x
-    simpa [CanonicalLP.toStandardLP_isSolution_iff] using hx
-
-lemma CanonicalLP.toStandardLP_reaches_iff [OrderedRing R] (P : CanonicalLP I J R) (r : R) :
-    P.toStandardLP.Reaches r ↔ P.Reaches r := by
-  constructor <;>
-  · intro ⟨x, hx⟩
-    use x
-    simpa [CanonicalLP.toStandardLP_isSolution_iff] using hx

@@ -1,4 +1,5 @@
 import Mathlib.Tactic.Qify
+import Mathlib.Algebra.Order.BigOperators.Ring.Finset
 import VCSP.LinearProgrammingC
 
 

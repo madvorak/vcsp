@@ -1,4 +1,5 @@
 import Mathlib.Data.Multiset.Fintype
+import Mathlib.Data.Matrix.ColumnRowPartitioned
 import VCSP.LinearProgrammingC
 
 open scoped Matrix

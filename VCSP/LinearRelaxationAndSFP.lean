@@ -1,3 +1,4 @@
+import Duality.Common
 import VCSP.LinearProgrammingQ
 import VCSP.LinearRelaxation
 
@@ -234,8 +235,7 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
       (buildVertically (fun v : Fin t.fst.n → D => x.toCanonicalRationalSolution.numerators (Sum.inl ⟨t, v⟩))).get
         (Fin.cast (I.RelaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t) i)
       )).summap t.fst.f
-  · unfold FractionalOperation.tt
-    unfold Multiset.summap
+  · unfold FractionalOperation.tt Multiset.summap
     aesop
   refine congr_arg₂ _ ?_ rfl
   unfold FractionalOperation.tt
