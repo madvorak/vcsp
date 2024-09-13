@@ -42,10 +42,7 @@ lemma FractionalOperation.IsValid.tt_nonempty {D ι : Type*} {m : ℕ} {ω : Fra
     ω.tt x ≠ ∅ := by
   simpa [FractionalOperation.tt] using valid
 
-abbrev Matrix.ro1 {ι α : Type*} (v : ι → α) := Matrix.row (Fin 1) v
-abbrev Matrix.co1 {ι α : Type*} (v : ι → α) := Matrix.col (Fin 1) v
-
-/-- Nonterminal `aesop` (strongly discouraged to use) -/
+/-- Nonterminal `aesop` (strongly discouraged to use). -/
 macro "aesopnt" : tactic => `(tactic| aesop (config := {warnOnNonterminal := false}))
 
 end uncategorized_stuff

@@ -95,9 +95,8 @@ lemma toCanonicalRationalSolution_toFunction {x : J → ℚ} (hx : 0 ≤ x) :
     exact (x a).den_nz imposs
 
 open scoped Matrix
-variable {I : Type*} [Fintype I]
 
-theorem CanonicalLP.IsSolution.toCanonicalRationalSolution {P : CanonicalLP I J ℚ} {x : J → ℚ} (hx : P.IsSolution x) :
+theorem CanonicalLP.IsSolution.toCanonicalRationalSolution {I : Type*} {P : CanonicalLP I J ℚ} {x : J → ℚ} (hx : P.IsSolution x) :
     P.A *ᵥ x.toCanonicalRationalSolution.toFunction = P.b := by
   rw [toCanonicalRationalSolution_toFunction hx.right]
   exact hx.left

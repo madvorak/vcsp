@@ -216,7 +216,7 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
     rw [←Finset.sum_div]
     congr 1
     apply Finset.univ_sum_mul_of_list_replicate
-  rw [hZ, nsmul_div, le_div_iff hxdQ]
+  rw [hZ, nsmul_div, le_div_iff₀ hxdQ]
   refine le_trans ?_ (sfp.left ⟨t.fst.n, t.fst.f⟩ t.fst.inΓ Z)
   rw [mul_comm, nsmul_eq_mul, mul_le_mul_left hxdQ]
   apply le_of_eq

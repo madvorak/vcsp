@@ -30,6 +30,8 @@ variable
   {C : Type*} [OrderedRing C]
   {Γ : ValuedCSP D C} [DecidableEq (Γ.Term ι)]
 
+set_option linter.unusedSectionVars false
+
 instance deceqInstance (I : Γ.Instance ι) : DecidableEq I :=
   inferInstanceAs (DecidableEq (Σ t : Γ.Term ι, Fin (I.count t)))
 
@@ -272,11 +274,11 @@ theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) 
         obtain ⟨cₜ, cₙ, cₐ⟩ := c
         rw [Sum.elim_inl, Sum.elim_inl, Pi.add_apply]
         if hits : x (cₜ.fst.app cₙ) = cₐ then
-          convert @add_neg_self C _ 1
+          convert @add_neg_cancel C _ 1
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit hits
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit hits
         else
-          convert @add_neg_self C _ 0
+          convert @add_neg_cancel C _ 0
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss hits
           · exact I.RelaxBLP_solutionVCSPtoBLP_top_right_of_miss hits
       | inr j' =>
