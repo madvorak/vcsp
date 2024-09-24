@@ -20,7 +20,7 @@ lemma neg_finset_univ_sum {α R : Type*} [Fintype α] [Ring R] (f : α → R) :
   simp only [Pi.neg_apply, Finset.sum_neg_distrib]
 
 lemma indicator_of_neg {α R : Type*} [Fintype α] [Ring R] (P : α → Prop) [DecidablePred P] :
-    -(fun x => if P x then -1 else (0 : R)) = (fun x => if P x then 1 else 0) := by
+    -(fun a : α => if P a then (-1 : R) else 0) = (fun a : α => if P a then 1 else 0) := by
   aesop
 
 
@@ -78,8 +78,8 @@ set_option maxHeartbeats 333333 in
 lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι → D) :
     I.RelaxBLP.c ⬝ᵥ I.solutionVCSPtoBLP x = I.evalSolution x := by
   unfold Matrix.dotProduct
-  unfold ValuedCSP.Instance.RelaxBLP
   rw [Fintype.sum_sum_type]
+  unfold ValuedCSP.Instance.RelaxBLP
   simp_rw [Sum.elim_inl, Sum.elim_inr, mul_ite, mul_one, mul_zero, ite_self]
   rw [Finset.sum_const_zero, add_zero]
   show
@@ -89,12 +89,12 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
     I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
   simp_rw [mul_ite, mul_one, mul_zero]
   show
-    Finset.sum Finset.univ (fun (e : Σ t : I, (Fin t.fst.n → D)) =>
-      if ∀ (i : Fin e.fst.fst.n), e.snd i = x (e.fst.fst.app i) then e.fst.fst.f e.snd else 0) =
+    Finset.univ.sum (fun (e : Σ t : I, (Fin t.fst.n → D)) =>
+      if ∀ i : Fin e.fst.fst.n, e.snd i = x (e.fst.fst.app i) then e.fst.fst.f e.snd else 0) =
     I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
   -- The rest of this proof is based on a proof by Emilie (Shad Amethyst):
   rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.filter_univ_eq_image,
-      Finset.sum_image (fun _ _ _ _ equ => Subtype.coe_injective equ), Multiset.summap_to_sumFinset]
+      Finset.sum_image (fun _ _ _ _ => (Subtype.coe_injective ·)), Multiset.summap_to_sumFinset]
   apply Finset.sum_equiv ⟨
       fun ⟨⟨⟨t, m⟩, _⟩, _⟩ => ⟨t, m, Fin.prop m⟩,
       fun t => ⟨⟨t, fun i => x (t.fst.app i)⟩, fun _ => rfl⟩,
@@ -104,7 +104,7 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
   · aesopnt
     congr
     ext
-    simp_all
+    apply property_1
 
 variable [CharZero C]
 
