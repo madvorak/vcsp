@@ -42,6 +42,12 @@ lemma FractionalOperation.IsValid.tt_nonempty {D ι : Type*} {m : ℕ} {ω : Fra
     ω.tt x ≠ ∅ := by
   simpa [FractionalOperation.tt] using valid
 
+/-- The "left" or "top" variant. -/
+prefix:max "◩" => Sum.inl
+
+/-- The "right" or "bottom" variant. -/
+prefix:max "◪" => Sum.inr
+
 /-- Nonterminal `aesop` (strongly discouraged to use). -/
 macro "aesopnt" : tactic => `(tactic| aesop (config := {warnOnNonterminal := false}))
 

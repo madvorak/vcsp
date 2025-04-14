@@ -1,5 +1,6 @@
 import VCSP.Basic
 import VCSP.Expressibility
+import Mathlib.Algebra.Order.Group.Finset
 
 
 variable {D C : Type*} [Nonempty D] [Fintype D]
@@ -25,7 +26,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP [LinearOrder
   | @minimize n f _ ih =>
     intro x
     rw [Multiset.nsmul_summap, Finset.smul_sum]
-    simp_rw [←Finset.nsmul_inf']
+    simp_rw [Finset.nsmul_inf']
     let z :=
       fun i : Fin m =>
         (Finset.exists_mem_eq_inf' Finset.univ_nonempty
@@ -45,7 +46,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP [LinearOrder
     simp_rw [Multiset.summap, FractionalOperation.tt, Multiset.map_map, Function.comp_apply]
     apply Multiset.summap_le_summap
     intro g _
-    rw [Finset.nsmul_inf']
+    rw [←Finset.nsmul_inf']
     apply nsmul_le_nsmul_right
     simp only [Finset.inf'_le_iff, Finset.mem_univ, true_and]
     use g z
