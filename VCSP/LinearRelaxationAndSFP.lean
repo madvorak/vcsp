@@ -123,13 +123,13 @@ lemma Finset.univ_sum_mul_of_list_replicate {n m : ℕ} (f : (Fin m → D) → �
   convert (Finset.univ_sum_aux f g).symm using 1
   aesop
 
-noncomputable abbrev buildVertically (p : D → ℕ) : List D :=
+private noncomputable abbrev buildVertically (p : D → ℕ) : List D :=
   (Finset.univ.val.toList.map (fun d : D => List.replicate (p d) d)).flatten
 
 open scoped Matrix
 variable [DecidableEq D] {ι : Type*} [Fintype ι] [DecidableEq ι] {Γ : ValuedCSP D ℚ} [DecidableEq (Γ.Term ι)]
 
-lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_marginal (I : Γ.Instance ι)
+private lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_marginal (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
     (x_solv : I.RelaxBLP.A *ᵥ x.toCanonicalRationalSolution.toFunction = I.RelaxBLP.b)
     (j : ι) :
@@ -162,10 +162,7 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_marginal (I : Γ.Instanc
   symm
   apply Multiset.toList_map_sum
 
-private lemma llll : (@Function.comp ℕ ℤ ℚ Int.cast Nat.cast) = @Nat.cast ℚ Rat.instNatCast := by
-  rfl
-
-lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance ι)
+private lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
     (x_solv : I.RelaxBLP.A *ᵥ x.toCanonicalRationalSolution.toFunction = I.RelaxBLP.b)
     (t : I) :
@@ -191,7 +188,7 @@ lemma ValuedCSP.Instance.RelaxBLP_denominator_eq_height_joint (I : Γ.Instance �
   simp [buildVertically, Multiset.toList_map_sum]
 
 open scoped List in
-lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ.Instance ι} (t : I)
+private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ.Instance ι} (t : I)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
     (solution : CanonicalLP.IsSolution I.RelaxBLP x)
     {ω : FractionalOperation D x.toCanonicalRationalSolution.denominator}
@@ -378,7 +375,7 @@ lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ
   rw [←Finset.sum_div] at the_key
   rw [←div_eq_div_inj the_key hxdQ.ne.symm]
 
-lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
+private lemma ValuedCSP.Instance.RelaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
     (solution : CanonicalLP.IsSolution I.RelaxBLP x)
     {ω : FractionalOperation D x.toCanonicalRationalSolution.denominator}

@@ -74,7 +74,6 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_nneg (I : Γ.Instance ι) (x : ι →
   unfold Pi.hasLe
   aesop
 
-set_option maxHeartbeats 333333 in
 lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι → D) :
     I.RelaxBLP.c ⬝ᵥ I.solutionVCSPtoBLP x = I.evalSolution x := by
   unfold dotProduct
