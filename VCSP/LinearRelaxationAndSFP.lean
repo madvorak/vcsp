@@ -2,7 +2,6 @@ import Duality.Common
 import VCSP.LinearProgrammingQ
 import VCSP.LinearRelaxation
 import Mathlib.Algebra.BigOperators.Field
-import Mathlib.Data.List.Lemmas
 
 
 lemma Sum.fun_elim_index {α β γ : Type*} (x : α → γ) (y : β → γ) :
