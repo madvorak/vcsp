@@ -15,8 +15,8 @@ lemma Multiset.nsmul_summap [AddCommMonoid β] (s : Multiset α) (f : α → β)
 
 lemma Multiset.summap_summap_swap [AddCommMonoid γ]
     (A : Multiset α) (B : Multiset β) (f : α → β → γ) :
-    A.summap (fun a => B.summap (fun b => f a b)) =
-    B.summap (fun b => A.summap (fun a => f a b)) :=
+    A.summap (fun a : α => B.summap (fun b : β => f a b)) =
+    B.summap (fun b : β => A.summap (fun a : α => f a b)) :=
   Multiset.sum_map_sum_map A B
 
 lemma Multiset.summap_le_summap [OrderedAddCommMonoid β] {s : Multiset α}
@@ -35,7 +35,7 @@ end multiset_summap
 section uncategorized_stuff
 
 lemma nneg_comp {α β ι : Type*} [Zero β] [LE β] {x : α → β} (hx : 0 ≤ x) (f : ι → α) : 0 ≤ x ∘ f :=
-  fun (i : ι) => hx (f i)
+  fun i : ι => hx (f i)
 
 lemma FractionalOperation.IsValid.tt_nonempty {D ι : Type*} {m : ℕ} {ω : FractionalOperation D m}
     (valid : ω.IsValid) {x : Fin m → ι → D} :

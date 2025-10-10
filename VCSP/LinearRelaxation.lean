@@ -20,7 +20,7 @@ lemma neg_finset_univ_sum {α R : Type*} [Fintype α] [Ring R] (f : α → R) :
   simp only [Pi.neg_apply, Finset.sum_neg_distrib]
 
 lemma indicator_of_neg {α R : Type*} [Fintype α] [Ring R] (P : α → Prop) [DecidablePred P] :
-    -(fun a : α => if P a then (-1 : R) else 0) = (fun a : α => if P a then 1 else 0) := by
+    -(if P · then (-1 : R) else 0) = (if P · then 1 else 0) := by
   aesop
 
 
@@ -97,13 +97,13 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
   apply Finset.sum_equiv ⟨
       fun ⟨⟨⟨t, m⟩, _⟩, _⟩ => ⟨t, m, Fin.prop m⟩,
       fun t => ⟨⟨t, fun i => x (t.fst.app i)⟩, fun _ => rfl⟩,
-      fun _ => by aesopnt; ext i; exact (property i).symm,
+      fun _ => by aesopnt; ext; symm; tauto,
       fun _ => by aesop⟩
   · aesop
   · aesopnt
     congr
     ext
-    apply property_1
+    tauto
 
 variable [CharZero C]
 
@@ -259,7 +259,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_left (I : Γ.Instance
     1
   simp_rw [←ite_and]
   rw [Finset.sum_boole, Nat.cast_eq_one, Finset.card_eq_one]
-  use ⟨cₜ, fun i : Fin cₜ.fst.n => x (cₜ.fst.app i)⟩
+  use ⟨cₜ, x ∘ cₜ.fst.app⟩
   ext
   simp_rw [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
   aesop

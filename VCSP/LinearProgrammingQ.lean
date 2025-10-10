@@ -17,9 +17,9 @@ variable [Fintype J] [DecidableEq J]
 
 def Function.toCanonicalRationalSolution (x : J → ℚ) : CanonicalRationalSolution J :=
   CanonicalRationalSolution.mk
-    (fun a : J => Finset.univ.prod (fun i : J => if i = a then (x i).num.toNat else (x i).den))
-    (Finset.univ.prod (fun i : J => (x i).den))
-    (Finset.prod_pos (fun i _ => Rat.pos (x i)))
+    (fun a : J => Finset.univ.prod (fun j : J => if j = a then (x j).num.toNat else (x j).den))
+    (Finset.univ.prod (fun j : J => (x j).den))
+    (Finset.prod_pos (fun j : J => fun _ => Rat.pos (x j)))
 
 @[app_unexpander Function.toCanonicalRationalSolution]
 def Function.toCanonicalRationalSolution_unexpand : Lean.PrettyPrinter.Unexpander
@@ -28,17 +28,17 @@ def Function.toCanonicalRationalSolution_unexpand : Lean.PrettyPrinter.Unexpande
 
 
 lemma Finset.univ.prod_single_hit (g : J → ℚ) (a : J) :
-    Finset.univ.prod (fun i : J => if a = i then g i else 1) = g a := by
+    Finset.univ.prod (fun j : J => if a = j then g j else 1) = g a := by
   simp_rw [Finset.prod_ite_eq, Finset.mem_univ, if_true]
 
 lemma Finset.univ.prod_mul_single_hit (f g : J → ℚ) (a : J) :
-    Finset.univ.prod (fun i : J => f i * if a = i then g i else 1) = Finset.univ.prod f * g a := by
+    Finset.univ.prod (fun j : J => f j * if a = j then g j else 1) = Finset.univ.prod f * g a := by
   rw [Finset.prod_mul_distrib, Finset.univ.prod_single_hit]
 
 lemma Finset.univ.prod_with_one_exception {f g : J → ℚ} {a : J} (hfg : f a = 0 → g a = 0) :
-    Finset.univ.prod (fun i : J => if a = i then g i else f i) = Finset.univ.prod f * g a / f a := by
-  if hf : ∀ i : J, f i ≠ 0 then
-    convert Finset.univ.prod_mul_single_hit f (fun i => g i / f i) a using 1
+    Finset.univ.prod (fun j : J => if a = j then g j else f j) = Finset.univ.prod f * g a / f a := by
+  if hf : ∀ j : J, f j ≠ 0 then
+    convert Finset.univ.prod_mul_single_hit f (fun j : J => g j / f j) a using 1
     · apply congr_arg
       ext1 i
       rw [mul_ite, mul_one, mul_div_cancel₀]
@@ -59,7 +59,7 @@ lemma Finset.univ.prod_with_one_exception {f g : J → ℚ} {a : J} (hfg : f a =
     rfl
 
 lemma Finset.univ.prod_with_one_exception' {f g : J → ℚ} {a : J} (hfg : f a = 0 → g a = 0) :
-    Finset.univ.prod (fun i : J => if i = a then g i else f i) = Finset.univ.prod f * g a / f a := by
+    Finset.univ.prod (fun j : J => if j = a then g j else f j) = Finset.univ.prod f * g a / f a := by
   convert Finset.univ.prod_with_one_exception hfg using 3
   apply eq_comm
 
@@ -70,8 +70,8 @@ lemma toCanonicalRationalSolution_toFunction {x : J → ℚ} (hx : 0 ≤ x) :
     x.toCanonicalRationalSolution.toFunction = x := by
   ext1 a
   convert_to
-    Finset.univ.prod (fun i => if i = a then ((x i).num.toNat : ℚ) else ((x i).den : ℚ)) /
-      Finset.univ.prod (fun i => ((x i).den : ℚ)) = x a
+    Finset.univ.prod (fun j : J => if j = a then ((x j).num.toNat : ℚ) else ((x j).den : ℚ)) /
+      Finset.univ.prod (fun j : J => ((x j).den : ℚ)) = x a
   · simp [CanonicalRationalSolution.toFunction, Function.toCanonicalRationalSolution]
   rw [Finset.univ.prod_with_one_exception', mul_div_assoc, mul_comm, mul_div_assoc]
   nth_rw 3 [←Rat.num_div_den (x a)]
@@ -79,12 +79,12 @@ lemma toCanonicalRationalSolution_toFunction {x : J → ℚ} (hx : 0 ≤ x) :
   apply div_self
   intro contr
   rw [Finset.prod_eq_zero_iff] at contr
-  obtain ⟨i, hi⟩ := contr
-  have hxinz : ((x i).den : ℚ) ≠ (0 : ℚ)
+  obtain ⟨j, hj⟩ := contr
+  have hxjnz : ((x j).den : ℚ) ≠ (0 : ℚ)
   · intro impos
     rw [Nat.cast_eq_zero] at impos
-    exact (x i).den_nz impos
-  exact hxinz hi.right
+    exact (x j).den_nz impos
+  exact hxjnz hj.right
   · symm
     apply nat_cast_eq_int_cast_of_nneg
     rw [Rat.num_nonneg]
