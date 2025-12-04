@@ -12,19 +12,19 @@ structure CanonicalLP (I J R : Type*) where
   c : J → R
 
 open scoped Matrix
-variable {I J R : Type*} [Fintype J]
+variable {I J R : Type*} [Fintype J] [OrderedSemiring R]
 
 /-- Vector `x` is a solution to linear program `P` iff all entries of `x` are nonnegative and
     multiplication by matrix `A` from the left yields the vector `b`. -/
-def CanonicalLP.IsSolution [OrderedSemiring R] (P : CanonicalLP I J R) (x : J → R) : Prop :=
+def CanonicalLP.IsSolution (P : CanonicalLP I J R) (x : J → R) : Prop :=
   P.A *ᵥ x = P.b ∧ 0 ≤ x
 
 /-- Linear program `P` is feasible iff there exists a vector `x` that is a solution to `P`. -/
-def CanonicalLP.IsFeasible [OrderedSemiring R] (P : CanonicalLP I J R) : Prop :=
+def CanonicalLP.IsFeasible (P : CanonicalLP I J R) : Prop :=
   ∃ x : J → R, P.IsSolution x
 
 /-- Linear program `P` reaches objective value `r` iff there is a solution `x` such that,
     when its entries are elementwise multiplied by the coefficients `c` and summed up,
     the result is the value `r`. -/
-def CanonicalLP.Reaches [OrderedSemiring R] (P : CanonicalLP I J R) (r : R) : Prop :=
+def CanonicalLP.Reaches (P : CanonicalLP I J R) (r : R) : Prop :=
   ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = r
