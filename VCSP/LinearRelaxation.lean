@@ -298,3 +298,8 @@ theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) 
   · exact I.solutionVCSPtoBLP_cost x
 
 #print axioms ValuedCSP.Instance.RelaxBLP_reaches
+
+lemma ValuedCSP.Instance.optimum_of_minimum (I : Γ.Instance ι)
+    {x : ι → D} (hx : I.RelaxBLP.Minimum (I.evalSolution x)) :
+    I.IsOptimumSolution x :=
+  (hx.right _ <| I.RelaxBLP_reaches ·)
