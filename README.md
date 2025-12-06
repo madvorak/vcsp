@@ -11,6 +11,7 @@ Our long-term goal is to formalize the dichotomy for fixed-template finite-value
 * [If a VCSP template over LinearOrderedCancelAddCommMonoid can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/d9e00ac4cc6f790ec675b4c996cc56a4fd726a0d/VCSP/Hardness.lean#L70)
 * [Basic LP relaxation for VCSP over any OrderedRing of CharZero is valid.](https://github.com/madvorak/vcsp/blob/d9e00ac4cc6f790ec675b4c996cc56a4fd726a0d/VCSP/LinearRelaxation.lean#L261)
 * [If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then Basic LP relaxation is tight.](https://github.com/madvorak/vcsp/blob/d9e00ac4cc6f790ec675b4c996cc56a4fd726a0d/VCSP/LinearRelaxationAndSFP.lean#L398)
+* Corollary (TODO link): If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then the optimum of every instance is equal to the minimum of its Basic LP relaxation.
 
 ## Mathlib contributions that stem from this project
 
