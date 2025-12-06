@@ -73,7 +73,7 @@ theorem ValuedCSP.CanExpressMaxCut.forbids_commutativeFractionalPolymorphism
     {Γ : ValuedCSP D C} (expressMC : Γ.CanExpressMaxCut)
     {ω : FractionalOperation D 2} (valid : ω.IsValid) :
     ¬ ω.IsSymmetricFractionalPolymorphismFor Γ := by
-  rintro ⟨frpol, symme⟩
+  intro ⟨frpol, symme⟩
   obtain ⟨f, fin, fmc⟩ := expressMC
   apply fmc.forbids_commutativeFractionalPolymorphism valid symme
   exact frpol.expressesVCSP ⟨2, f⟩ fin

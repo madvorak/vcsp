@@ -189,7 +189,7 @@ private lemma ValuedCSP.Instance.relaxBLP_denominator_eq_height_joint (I : Γ.In
 open scoped List in
 private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism {I : Γ.Instance ι} (t : I)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
-    (solution : CanonicalLP.IsSolution I.RelaxBLP x)
+    (solution : I.RelaxBLP.IsSolution x)
     {ω : FractionalOperation D x.toCanonicalRationalSolution.denominator}
     (sfp : FractionalOperation.IsSymmetricFractionalPolymorphismFor ω Γ) :
     (ω.tt (fun i : Fin _ => fun j : ι =>
@@ -371,7 +371,7 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
 
 private lemma ValuedCSP.Instance.relaxBLP_improved_by_isSymmetricFractionalPolymorphism (I : Γ.Instance ι)
     {x : ((Σ t : I, (Fin t.fst.n → D)) ⊕ ι × D) → ℚ}
-    (solution : CanonicalLP.IsSolution I.RelaxBLP x)
+    (solution : I.RelaxBLP.IsSolution x)
     {ω : FractionalOperation D x.toCanonicalRationalSolution.denominator}
     (sfp : FractionalOperation.IsSymmetricFractionalPolymorphismFor ω Γ) :
     (ω.tt (fun i : Fin _ => fun j : ι =>
