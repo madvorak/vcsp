@@ -28,3 +28,7 @@ def CanonicalLP.IsFeasible [OrderedSemiring R] (P : CanonicalLP I J R) : Prop :=
     the result is the value `r`. -/
 def CanonicalLP.Reaches [OrderedSemiring R] (P : CanonicalLP I J R) (r : R) : Prop :=
   ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = r
+
+/-- Linear program `P` TODO. -/
+def CanonicalLP.Minimum [OrderedSemiring R] (P : CanonicalLP I J R) (v : R) : Prop :=
+  P.Reaches v ∧ ∀ r : R, P.Reaches r → v ≤ r

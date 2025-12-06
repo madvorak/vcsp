@@ -422,3 +422,22 @@ theorem ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphi
   exact impos.false
 
 #print axioms ValuedCSP.Instance.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms
+
+lemma ValuedCSP.Instance.RelaxBLP_minimum_of_allSymmetricFractionalPolymorphisms (I : Γ.Instance ι)
+    (hΓ : ∀ m : ℕ, ∃ ω : FractionalOperation D m, ω.IsValid ∧ ω.IsSymmetricFractionalPolymorphismFor Γ)
+    {x : ι → D} (hx : I.IsOptimumSolution x) :
+    I.RelaxBLP.Minimum (I.evalSolution x) := by
+  constructor
+  · exact I.RelaxBLP_reaches x
+  · intro r hIr
+    obtain ⟨y, hyr⟩ := I.RelaxBLP_improved_of_allSymmetricFractionalPolymorphisms hIr hΓ
+    by_contra! hxr
+    exact (((hx y).trans hyr).trans_lt hxr).false
+
+theorem ValuedCSP.Instance.isOptimumSolution_iff_of_allSymmetricFractionalPolymorphisms (I : Γ.Instance ι)
+    (hΓ : ∀ m : ℕ, ∃ ω : FractionalOperation D m, ω.IsValid ∧ ω.IsSymmetricFractionalPolymorphismFor Γ)
+    (x : ι → D) :
+    I.IsOptimumSolution x ↔ I.RelaxBLP.Minimum (I.evalSolution x) :=
+  ⟨I.RelaxBLP_minimum_of_allSymmetricFractionalPolymorphisms hΓ, I.optimum_of_minimum⟩
+
+#print axioms ValuedCSP.Instance.isOptimumSolution_iff_of_allSymmetricFractionalPolymorphisms
