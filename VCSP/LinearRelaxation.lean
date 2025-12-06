@@ -107,7 +107,7 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
 
 variable [CharZero C]
 
-lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (hit : x (cₜ.fst.app cₙ) = cₐ) :
     (fun ⟨t, y⟩ =>
@@ -167,7 +167,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
     obtain ⟨htx, rfl, htc⟩ := ht
     aesop
 
-lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (miss : x (cₜ.fst.app cₙ) ≠ cₐ) :
     (fun ⟨t, y⟩ =>
@@ -217,7 +217,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
   intro _ _
   aesop
 
-lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_right_of_hit (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (hit : x (cₜ.fst.app cₙ) = cₐ) :
     (fun ⟨i, a⟩ => if cₜ.fst.app cₙ = i ∧ cₐ = a then -1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inr) = -1 := by
@@ -228,7 +228,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit (I : Γ.Ins
   use (cₜ.fst.app cₙ, cₐ)
   aesop
 
-lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_right_of_miss (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_right_of_miss (I : Γ.Instance ι)
     {cₜ : Σ t : Γ.Term ι, Fin (I.count t)} {cₙ : Fin cₜ.fst.n} {cₐ : D} {x : ι → D}
     (miss : x (cₜ.fst.app cₙ) ≠ cₐ) :
     (fun ⟨i, a⟩ => if cₜ.fst.app cₙ = i ∧ cₐ = a then -1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inr) = -0 := by
@@ -237,7 +237,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_top_right_of_miss (I : Γ.In
   rw [←neg_eq_iff_eq_neg, neg_finset_univ_sum, indicator_of_neg, Finset.sum_boole]
   aesop
 
-lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_right (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_bottom_right (I : Γ.Instance ι)
     (cᵢ : ι) (x : ι → D) :
     (fun ⟨i, _⟩ => if cᵢ = i then 1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inr) = 1 := by
   rw [Sum.elim_comp_inr, dotProduct]
@@ -246,7 +246,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_right (I : Γ.Instanc
   use ⟨cᵢ, x cᵢ⟩
   aesop
 
-lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_left (I : Γ.Instance ι)
+lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_bottom_left (I : Γ.Instance ι)
     (cₜ : I) (x : ι → D) :
     (fun ⟨t, _⟩ => if cₜ = t then 1 else 0) ⬝ᵥ (I.solutionVCSPtoBLP x ∘ Sum.inl) = 1 := by
   rw [Sum.elim_comp_inl, dotProduct]
@@ -264,7 +264,7 @@ lemma ValuedCSP.Instance.RelaxBLP_solutionVCSPtoBLP_bottom_left (I : Γ.Instance
   simp_rw [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_singleton]
   aesop
 
-theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) :
+theorem ValuedCSP.Instance.relaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) :
     I.RelaxBLP.Reaches (I.evalSolution x) := by
   use I.solutionVCSPtoBLP x
   constructor
@@ -278,28 +278,23 @@ theorem ValuedCSP.Instance.RelaxBLP_reaches (I : Γ.Instance ι) (x : ι → D) 
         rw [Sum.elim_inl, Sum.elim_inl, Pi.add_apply]
         if hits : x (cₜ.fst.app cₙ) = cₐ then
           convert @add_neg_cancel C _ 1
-          · exact I.RelaxBLP_solutionVCSPtoBLP_top_left_of_hit hits
-          · exact I.RelaxBLP_solutionVCSPtoBLP_top_right_of_hit hits
+          · exact I.relaxBLP_solutionVCSPtoBLP_top_left_of_hit hits
+          · exact I.relaxBLP_solutionVCSPtoBLP_top_right_of_hit hits
         else
           convert @add_neg_cancel C _ 0
-          · exact I.RelaxBLP_solutionVCSPtoBLP_top_left_of_miss hits
-          · exact I.RelaxBLP_solutionVCSPtoBLP_top_right_of_miss hits
+          · exact I.relaxBLP_solutionVCSPtoBLP_top_left_of_miss hits
+          · exact I.relaxBLP_solutionVCSPtoBLP_top_right_of_miss hits
       | inr j' =>
         rw [Sum.elim_inr, Sum.elim_inr,
           Matrix.fromRows_mulVec, Matrix.fromRows_mulVec, Matrix.zero_mulVec, Matrix.zero_mulVec, Pi.add_apply]
         cases j' with
         | inl cᵢ =>
           rw [Sum.elim_inl, Sum.elim_inl, Pi.zero_apply, zero_add]
-          exact I.RelaxBLP_solutionVCSPtoBLP_bottom_right cᵢ x
+          exact I.relaxBLP_solutionVCSPtoBLP_bottom_right cᵢ x
         | inr cₜ =>
           rw [Sum.elim_inr, Sum.elim_inr, Pi.zero_apply, add_zero]
-          exact I.RelaxBLP_solutionVCSPtoBLP_bottom_left cₜ x
+          exact I.relaxBLP_solutionVCSPtoBLP_bottom_left cₜ x
     · exact I.solutionVCSPtoBLP_nneg x
   · exact I.solutionVCSPtoBLP_cost x
 
-#print axioms ValuedCSP.Instance.RelaxBLP_reaches
-
-lemma ValuedCSP.Instance.optimum_of_minimum (I : Γ.Instance ι)
-    {x : ι → D} (hx : I.RelaxBLP.Minimum (I.evalSolution x)) :
-    I.IsOptimumSolution x :=
-  (hx.right _ <| I.RelaxBLP_reaches ·)
+#print axioms ValuedCSP.Instance.relaxBLP_reaches
