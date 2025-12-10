@@ -30,6 +30,6 @@ def CanonicalLP.Reaches (P : CanonicalLP I J R) (r : R) : Prop :=
   ∃ x : J → R, P.IsSolution x ∧ P.c ⬝ᵥ x = r
 
 /-- Objective value `v` is the minimum of linear program `P` iff
-    `P` reaches `r` but does not reach any lower value. -/
-def CanonicalLP.Minimum [OrderedSemiring R] (P : CanonicalLP I J R) (v : R) : Prop :=
+    `P` reaches `v` but does not reach any lower value. -/
+def CanonicalLP.Minimum (P : CanonicalLP I J R) (v : R) : Prop :=
   P.Reaches v ∧ ∀ r : R, P.Reaches r → v ≤ r
