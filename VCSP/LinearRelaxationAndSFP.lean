@@ -1,7 +1,7 @@
+import Mathlib.Algebra.BigOperators.Field
 import Duality.Common
 import VCSP.LinearProgrammingQ
 import VCSP.LinearRelaxation
-import Mathlib.Algebra.BigOperators.Field
 
 
 lemma Sum.fun_elim_index {α β γ : Type*} (x : α → γ) (y : β → γ) :
@@ -309,7 +309,7 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
   rw [Sum.fun_elim_index, sumElim_dotProduct_sumElim] at key
   simp_rw [dotProduct, Matrix.of_apply, Function.comp_apply] at key
   change key to
-    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
+    (Finset.univ.sigma ↓Finset.univ).sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
       (if ht : t = tᵥ.fst then
         if tᵥ.snd (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a then 1 else 0
         else 0) *
@@ -319,7 +319,7 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
       x.toCanonicalRationalSolution.toFunction ◪p) =
     (0 : ℚ)
   have key' :
-    (Finset.univ.sigma (fun _ => Finset.univ)).sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
+    (Finset.univ.sigma ↓Finset.univ).sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
       (if ht : t = tᵥ.fst then
         if tᵥ.snd (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a then 1 else 0
         else 0) *
@@ -409,10 +409,8 @@ theorem ValuedCSP.Instance.relaxBLP_improved_of_allSymmetricFractionalPolymorphi
   obtain ⟨m, ω, valid, X, result⟩ := I.relaxBLP_improved_of_allSymmetricFractionalPolymorphisms_aux hΓ ho
   have impos : (ω.tt X).summap I.evalSolution < (ω.tt X).summap I.evalSolution
   · apply result.trans_lt
-    convert_to ((ω.tt X).map (fun _ => o)).sum < (ω.tt X).summap I.evalSolution
+    convert_to ((ω.tt X).map ↓o).sum < (ω.tt X).summap I.evalSolution
     · simp [FractionalOperation.tt]
     apply Multiset.summap_lt_summap valid.tt_nonempty
     simp [contr]
   exact impos.false
-
-#print axioms ValuedCSP.Instance.relaxBLP_improved_of_allSymmetricFractionalPolymorphisms

@@ -1,5 +1,6 @@
 import Mathlib.Data.Multiset.Fintype
 import Mathlib.Data.Matrix.ColumnRowPartitioned
+import Duality.Common
 import VCSP.LinearProgrammingC
 
 open scoped Matrix
@@ -93,12 +94,12 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
     I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
   -- The rest of this proof is based on a proof by Emilie (Shad Amethyst):
   rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.filter_univ_eq_image,
-      Finset.sum_image (fun _ _ _ _ => (Subtype.coe_injective ·)), Multiset.summap_to_sumFinset]
+      Finset.sum_image ↓↓↓↓(Subtype.coe_injective ·), Multiset.summap_to_sumFinset]
   apply Finset.sum_equiv ⟨
       fun ⟨⟨⟨t, m⟩, _⟩, _⟩ => ⟨t, m, Fin.prop m⟩,
-      fun t => ⟨⟨t, fun i => x (t.fst.app i)⟩, fun _ => rfl⟩,
-      fun _ => by aesopnt; ext; symm; tauto,
-      fun _ => by aesop⟩
+      fun t => ⟨⟨t, fun i => x (t.fst.app i)⟩, ↓rfl⟩,
+      ↓(by aesopnt; ext; symm; tauto),
+      ↓(by aesop)⟩
   · aesop
   · aesopnt
     congr

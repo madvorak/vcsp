@@ -1,6 +1,6 @@
+import Mathlib.Algebra.Order.Group.Finset
 import VCSP.Basic
 import VCSP.Expressibility
-import Mathlib.Algebra.Order.Group.Finset
 
 
 variable {D C : Type*} [Nonempty D] [Fintype D]

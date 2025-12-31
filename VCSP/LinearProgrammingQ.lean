@@ -1,5 +1,6 @@
 import Mathlib.Tactic.Qify
 import Mathlib.Algebra.Order.BigOperators.Ring.Finset
+import Duality.Common
 import VCSP.LinearProgrammingC
 
 
@@ -19,7 +20,7 @@ def Function.toCanonicalRationalSolution (x : J → ℚ) : CanonicalRationalSolu
   CanonicalRationalSolution.mk
     (fun a : J => Finset.univ.prod (fun j : J => if j = a then (x j).num.toNat else (x j).den))
     (Finset.univ.prod (fun j : J => (x j).den))
-    (Finset.prod_pos (fun j : J => fun _ => Rat.pos (x j)))
+    (Finset.prod_pos (fun j : J => ↓(Rat.pos (x j))))
 
 @[app_unexpander Function.toCanonicalRationalSolution]
 def Function.toCanonicalRationalSolution_unexpand : Lean.PrettyPrinter.Unexpander
