@@ -17,12 +17,10 @@ lemma ite_eq_symm {α β : Type*} [DecidableEq α] (a₁ a₂ : α) (b₁ b₂ :
     (if a₁ = a₂ then b₁ else b₂) = (if a₂ = a₁ then b₁ else b₂) := by
   aesop
 
--- Yaël Dillies proved this lemma:
 lemma Multiset.toList_map_sum {α β : Type*} (s : Multiset α) [AddCommMonoid β] (f : α → β) :
     (s.toList.map f).sum = (s.map f).sum := by
   rw [←Multiset.sum_coe, ←Multiset.map_coe, Multiset.coe_toList]
 
--- Damiano Testa proved this lemma:
 lemma Finset.univ_sum_multisetToType {α β : Type*} [DecidableEq α] [AddCommMonoid β]
     (s : Multiset α) (f : α → β) :
     Finset.univ.sum (fun a : s.ToType => f a.fst) = s.summap f := by

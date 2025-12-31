@@ -6,7 +6,6 @@ import VCSP.LinearProgrammingC
 open scoped Matrix
 
 
--- Emilie (Shad Amethyst) stated this lemma:
 lemma Finset.filter_univ_eq_image {α : Type*} [Fintype α] [DecidableEq α] {p : α → Prop} [DecidablePred p] :
     Finset.univ.filter p = (Finset.univ : Finset { a : α // p a }).image Subtype.val := by
   aesop
@@ -92,7 +91,6 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
     Finset.univ.sum (fun (e : Σ t : I, (Fin t.fst.n → D)) =>
       if ∀ i : Fin e.fst.fst.n, e.snd i = x (e.fst.fst.app i) then e.fst.fst.f e.snd else 0) =
     I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
-  -- The rest of this proof is based on a proof by Emilie (Shad Amethyst):
   rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.filter_univ_eq_image,
       Finset.sum_image ↓↓↓↓(Subtype.coe_injective ·), Multiset.summap_to_sumFinset]
   apply Finset.sum_equiv ⟨
