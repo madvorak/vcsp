@@ -8,10 +8,10 @@ Our long-term goal is to formalize the dichotomy for fixed-template finite-value
 
 ## Results (please see the definitions in [ValuedCSP.lean](https://github.com/leanprover-community/mathlib4/blob/master/Mathlib/Combinatorics/Optimization/ValuedCSP.lean) first)
 
-* [If a VCSP template over LinearOrderedCancelAddCommMonoid can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/d9e00ac4cc6f790ec675b4c996cc56a4fd726a0d/VCSP/Hardness.lean#L70)
-* [Basic LP relaxation for VCSP over any OrderedRing of CharZero is valid.](https://github.com/madvorak/vcsp/blob/d9e00ac4cc6f790ec675b4c996cc56a4fd726a0d/VCSP/LinearRelaxation.lean#L261)
-* [If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then Basic LP relaxation is tight.](https://github.com/madvorak/vcsp/blob/d9e00ac4cc6f790ec675b4c996cc56a4fd726a0d/VCSP/LinearRelaxationAndSFP.lean#L398)
-* Corollary (TODO link): If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then the optimum of every instance is equal to the minimum of its Basic LP relaxation.
+* [If a VCSP template over LinearOrderedCancelAddCommMonoid can express MaxCut, it cannot have any commutative fractional polymorphism.](https://github.com/madvorak/vcsp/blob/2066d8a4dd8193e7782ca6922174cd6cfd3a09e6/VCSP/Hardness.lean#L70)
+* [Basic LP relaxation for VCSP over any OrderedRing of CharZero is valid.](https://github.com/madvorak/vcsp/blob/2066d8a4dd8193e7782ca6922174cd6cfd3a09e6/VCSP/LinearRelaxation.lean#L266)
+* [If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then Basic LP relaxation is tight.](https://github.com/madvorak/vcsp/blob/2066d8a4dd8193e7782ca6922174cd6cfd3a09e6/VCSP/LinearRelaxationAndSFP.lean#L392)
+* Corollary: [If a VCSP template over ℚ has symmetric fractional polymorphisms of all arities, then the optimum of every instance is equal to the minimum of its Basic LP relaxation.](https://github.com/madvorak/vcsp/blob/2066d8a4dd8193e7782ca6922174cd6cfd3a09e6/VCSP/LinearRelaxationCorollary.lean#L23)
 
 ## Mathlib contributions that stem from this project
 
