@@ -10,7 +10,7 @@ abbrev Multiset.summap [AddCommMonoid β] (s : Multiset α) (f : α → β) : β
   (s.map f).sum
 
 lemma Multiset.nsmul_summap [AddCommMonoid β] (s : Multiset α) (f : α → β) (n : ℕ) :
-    n • s.summap f = s.summap (fun a => n • f a) :=
+    n • s.summap f = s.summap (fun a : α => n • f a) :=
   Multiset.sum_map_nsmul.symm
 
 lemma Multiset.summap_summap_swap [AddCommMonoid γ]

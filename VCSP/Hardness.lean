@@ -39,7 +39,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP [LinearOrder
         Finset.univ.inf' Finset.univ_nonempty (fun zᵢ : D => m • f (Matrix.vecCons zᵢ yᵢ))) ≤
       Finset.univ.val.summap (fun i : Fin m =>
         ω.size • f (fun j : Fin n.succ => Matrix.vecCons (z i) (x i) j))
-    · congr
+    · apply congr_arg
       ext i
       exact (Finset.exists_mem_eq_inf' Finset.univ_nonempty _).choose_spec.right
     refine LE.le.trans ?_ ih
@@ -55,11 +55,10 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP [LinearOrder
     ext i
     match i with
     | 0 => rfl
-    | ⟨i'+1, _⟩ => rfl
+    | ⟨_+1, _⟩ => rfl
   | remap _ τ ih =>
     intro x
-    specialize ih (fun i j => x i (τ j))
-    convert ih using 3
+    convert ih (x · <| τ ·) using 3
     unfold FractionalOperation.tt
     rewrite [Multiset.map_map, Multiset.map_map]
     rfl

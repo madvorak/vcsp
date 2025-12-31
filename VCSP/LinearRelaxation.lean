@@ -85,17 +85,17 @@ lemma ValuedCSP.Instance.solutionVCSPtoBLP_cost (I : Γ.Instance ι) (x : ι →
     Finset.univ.sum
       (fun (⟨⟨t, _⟩, v⟩ : Σ _t : I, (Fin _t.fst.n → D)) =>
         t.f v * if (∀ i : Fin t.n, v i = x (t.app i)) then 1 else 0) =
-    I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
+    I.summap (fun t : Γ.Term ι => t.f (fun i : Fin t.n => x (t.app i)))
   simp_rw [mul_ite, mul_one, mul_zero]
   show
     Finset.univ.sum (fun (e : Σ t : I, (Fin t.fst.n → D)) =>
       if ∀ i : Fin e.fst.fst.n, e.snd i = x (e.fst.fst.app i) then e.fst.fst.f e.snd else 0) =
-    I.summap (fun t => t.f (fun i : Fin t.n => x (t.app i)))
+    I.summap (fun t : Γ.Term ι => t.f (fun i : Fin t.n => x (t.app i)))
   rw [Finset.sum_ite, Finset.sum_const_zero, add_zero, Finset.filter_univ_eq_image,
       Finset.sum_image ↓↓↓↓(Subtype.coe_injective ·), Multiset.summap_to_sumFinset]
   apply Finset.sum_equiv ⟨
       fun ⟨⟨⟨t, m⟩, _⟩, _⟩ => ⟨t, m, Fin.prop m⟩,
-      fun t => ⟨⟨t, fun i => x (t.fst.app i)⟩, ↓rfl⟩,
+      fun t : I => ⟨⟨t, x ∘ t.fst.app⟩, ↓rfl⟩,
       ↓(by aesopnt; ext; symm; tauto),
       ↓(by aesop)⟩
   · aesop
@@ -112,7 +112,7 @@ lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
     (fun ⟨t, y⟩ =>
       if ht : cₜ = t
       then
-        if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+        if y (cₙ.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = cₐ
         then 1
         else 0
       else 0
@@ -123,7 +123,7 @@ lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
     Finset.univ.sum (fun (⟨t, v⟩ : Σ _ : I, Fin _ → D) => (
         if ht : cₜ = t
         then
-          if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+          if v (cₙ.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = cₐ
           then 1
           else 0
         else 0
@@ -144,7 +144,7 @@ lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
           then
             if ht : cₜ = t
             then
-              if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+              if v (cₙ.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = cₐ
               then True
               else False
             else False
@@ -163,7 +163,7 @@ lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_hit (I : Γ.Inst
   · aesop
   · intro t ht
     simp only [Function.comp_apply, Finset.mem_filter, Finset.mem_univ, true_and, and_true, if_false_right, dite_else_false] at ht
-    obtain ⟨htx, rfl, htc⟩ := ht
+    obtain ⟨htx, rfl, -⟩ := ht
     aesop
 
 lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Instance ι)
@@ -172,7 +172,7 @@ lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
     (fun ⟨t, y⟩ =>
       if ht : cₜ = t
       then
-        if y (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+        if y (cₙ.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = cₐ
         then 1
         else 0
       else 0
@@ -183,7 +183,7 @@ lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
     Finset.univ.sum (fun (⟨t, v⟩ : Σ _ : I, Fin _ → D) => (
         if ht : cₜ = t
         then
-          if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+          if v (cₙ.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = cₐ
           then 1
           else 0
         else 0
@@ -201,7 +201,7 @@ lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_top_left_of_miss (I : Γ.Ins
           then
             if ht : cₜ = t
             then
-              if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+              if v (cₙ.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = cₐ
               then True
               else False
             else False

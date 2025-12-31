@@ -4,10 +4,6 @@ import VCSP.LinearProgrammingQ
 import VCSP.LinearRelaxation
 
 
-lemma Sum.fun_elim_index {α β γ : Type*} (x : α → γ) (y : β → γ) :
-    (fun i => Sum.elim x y i) = Sum.elim x y :=
-  rfl
-
 lemma ite_isTrue {α : Type*} {P : Prop} [Decidable P] (hp : P) (a b : α) :
     (if P then a else b) = a := by
   simp only [hp]
@@ -30,23 +26,17 @@ lemma Finset.sigma_univ_sum_to_sum_sum {α : Type*} [Fintype α] {σ : α → Ty
     {β : Type*} [AddCommMonoid β]
     (f : (Σ a, σ a) → β) :
     Finset.univ.sum f = Finset.univ.sum (fun a : α => Finset.univ.sum (fun s : σ a => f ⟨a, s⟩)) := by
-  rewrite [←Finset.sum_sigma]
-  rfl
+  apply Finset.sum_sigma
 
 lemma div_eq_div_inj {β : Type*} [GroupWithZero β] {x y z : β} (hxy : x / z = y / z) (hz : z ≠ 0) : x = y := by
-  rw [division_def, division_def, mul_eq_mul_right_iff] at hxy
-  cases hxy with
-  | inl hyp => exact hyp
-  | inr hyp =>
-    exfalso
-    rw [inv_eq_zero] at hyp
-    exact hz hyp
+  rw [div_eq_mul_inv, div_eq_mul_inv, mul_eq_mul_right_iff] at hxy
+  aesop
 
 lemma nsmul_div {β : Type*} [DivisionSemiring β] (n : ℕ) (x y : β) : n • (x / y) = (n • x) / y := by
   rw [←mul_one_div x y, ←mul_one_div (n • x) y, smul_mul_assoc]
 
 lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield β] {f : α → β} {z : β}
-    (hfz : Finset.univ.sum (fun a => f a / z) = (1 : β)) :
+    (hfz : Finset.univ.sum (f · / z) = (1 : β)) :
     z = Finset.univ.sum f := by
   if hz : z = 0 then
     exfalso
@@ -59,11 +49,11 @@ lemma Finset.sum_of_sum_div_const_eq_one {α β : Type*} [Fintype α] [Semifield
     exact div_self hz
 
 lemma List.ofFn_get_fin_cast {α : Type*} {l : List α} {n : ℕ} (hnl : n = l.length) :
-    List.ofFn (fun i : Fin n => l.get (Fin.cast hnl i)) = l := by
+    List.ofFn (fun i : Fin n => l.get (i.cast hnl)) = l := by
   rw [←List.ofFn_congr hnl.symm, List.ofFn_get]
 
 lemma Fin_cast_bijective {m n : ℕ} (hmn : m = n) : Function.Bijective (Fin.cast hmn) :=
-  ⟨fun x y hxy => by aesop, fun z => ⟨⟨z.val, hmn ▸ z.isLt⟩, rfl⟩⟩
+  ⟨↓↓↓(by aesop), fun z : Fin n => ⟨⟨z.val, hmn ▸ z.isLt⟩, rfl⟩⟩
 
 lemma Finset.univ_sum_list_get (x : List ℚ) :
     Finset.univ.sum (fun i : Fin x.length => x[i]) = x.sum := by
@@ -94,14 +84,14 @@ lemma Finset.univ_sum_aux {α : Type*} [Fintype α] (f : α → ℚ) (g : α →
     · aesop
   rw [
     List.map_flatten, List.map_map, ←Finset.sum_to_list, Finset.sum_to_list,
-    show List.map f ∘ (fun a => List.replicate (g a) a) = (fun a => List.replicate (g a) (f a)) by aesop,
+    show List.map f ∘ (fun a : α => List.replicate (g a) a) = (fun a : α => List.replicate (g a) (f a)) by aesop,
     Finset.univ_sum_list_get, List.sum_flatten, List.map_map]
   show
-    ((Multiset.toList Finset.univ.val).map ((fun a => List.sum (List.replicate (g a) (f a))))).sum =
+    ((Multiset.toList Finset.univ.val).map ((fun a : α => List.sum (List.replicate (g a) (f a))))).sum =
     Finset.univ.sum (fun b : α => f b * g b)
   simp_rw [List.sum_replicate]
   convert_to
-    (Finset.univ.val.toList.map (fun a => g a * f a)).sum =
+    (Finset.univ.val.toList.map (fun a : α => g a * f a)).sum =
     Finset.univ.sum (fun b : α => f b * g b)
   · simp
   rw [Multiset.toList_map_sum, Finset.sum_map_val]
@@ -111,12 +101,12 @@ lemma Finset.univ_sum_aux {α : Type*} [Fintype α] (f : α → ℚ) (g : α →
 variable {D : Type*} [Fintype D]
 
 lemma Finset.univ_sum_mul_of_list_replicate {n m : ℕ} (f : (Fin m → D) → ℚ) (g : (Fin m → D) → ℕ)
-    (hn : n = (List.flatten (Finset.univ.val.toList.map (fun v => List.replicate (g v) v))).length) :
+    (hn : n = (List.flatten (Finset.univ.val.toList.map (fun v : Fin m → D => List.replicate (g v) v))).length) :
     Finset.univ.sum (fun v : Fin m → D => f v * g v) =
     Finset.univ.sum (fun i : Fin n =>
       f ((List.flatten (Finset.univ.val.toList.map (fun v : Fin m → D =>
             List.replicate (g v) v
-          ))).get (Fin.cast hn i))) := by
+          ))).get (i.cast hn))) := by
   convert (Finset.univ_sum_aux f g).symm using 1
   aesop
 
@@ -136,7 +126,7 @@ private lemma ValuedCSP.Instance.relaxBLP_denominator_eq_height_marginal (I : Γ
   rw [List.length_flatten, List.map_map]
   show
     x.toCanonicalRationalSolution.denominator =
-    (Finset.univ.val.toList.map (fun d => (List.replicate (x.toCanonicalRationalSolution.numerators ◪⟨j, d⟩) d).length)).sum
+    (Finset.univ.val.toList.map (fun d : D => (List.replicate (x.toCanonicalRationalSolution.numerators ◪⟨j, d⟩) d).length)).sum
   have eqv := congr_fun x_solv ◪◩j
   simp_rw [
     ValuedCSP.Instance.RelaxBLP, Sum.elim_inr,
@@ -191,16 +181,16 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
     {ω : FractionalOperation D x.toCanonicalRationalSolution.denominator}
     (sfp : FractionalOperation.IsSymmetricFractionalPolymorphismFor ω Γ) :
     (ω.tt (fun i : Fin _ => fun j : ι =>
-        (buildVertically (fun d => x.toCanonicalRationalSolution.numerators ◪⟨j, d⟩)).get
-          (Fin.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution j) i)
+        (buildVertically (fun d : D => x.toCanonicalRationalSolution.numerators ◪⟨j, d⟩)).get
+          (i.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution j))
       )).summap t.fst.evalSolution ≤
-    ω.size • Finset.univ.sum (fun v => t.fst.f v * x ◩⟨t, v⟩) := by
+    ω.size • Finset.univ.sum (fun v : Fin t.fst.n → D => t.fst.f v * x ◩⟨t, v⟩) := by
   have hxdQ : 0 < (x.toCanonicalRationalSolution.denominator : ℚ)
   · rw [Nat.cast_pos]
     exact x.toCanonicalRationalSolution.denom_pos
   let Z : Fin x.toCanonicalRationalSolution.denominator → Fin t.fst.n → D := fun i : Fin _ =>
     (buildVertically (fun v : Fin t.fst.n → D => x.toCanonicalRationalSolution.numerators ◩⟨t, v⟩)).get
-      (Fin.cast (I.relaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t) i)
+      (i.cast (I.relaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t))
   have hZ :
     Finset.univ.sum (fun v : Fin t.fst.n → D => t.fst.f v * x ◩⟨t, v⟩) =
     Finset.univ.sum (t.fst.f ∘ Z) / (x.toCanonicalRationalSolution.denominator : ℚ)
@@ -213,12 +203,12 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
         (x.toCanonicalRationalSolution.denominator : ℚ)
     · apply congr_arg
       ext v
-      congr
+      apply congr_arg
       nth_rewrite 1 [←toCanonicalRationalSolution_toFunction solution.right]
       rfl
     simp_rw [←mul_div_assoc]
     rw [←Finset.sum_div]
-    congr 1
+    congr
     apply Finset.univ_sum_mul_of_list_replicate
   rw [hZ, nsmul_div, le_div_iff₀ hxdQ]
   refine le_trans ?_ (sfp.left ⟨t.fst.n, t.fst.f⟩ t.fst.inΓ Z)
@@ -227,17 +217,17 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
   show
     (ω.tt (fun i : Fin _ => fun j : ι =>
         (buildVertically (x.toCanonicalRationalSolution.numerators ◪⟨j, ·⟩)).get
-          (Fin.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution j) i)
+          (i.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution j))
       )).summap (fun x : ι → D => t.fst.f (x ∘ t.fst.app)) =
     (ω.tt Z).summap t.fst.f
   convert_to
     (ω.tt (fun i : Fin _ => fun k : Fin t.fst.n =>
         (buildVertically (x.toCanonicalRationalSolution.numerators ◪⟨t.fst.app k, ·⟩)).get
-          (Fin.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution (t.fst.app k)) i)
+          (i.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution (t.fst.app k)))
       )).summap t.fst.f =
     (ω.tt (fun i : Fin _ =>
       (buildVertically (fun v : Fin t.fst.n → D => x.toCanonicalRationalSolution.numerators ◩⟨t, v⟩)).get
-        (Fin.cast (I.relaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t) i)
+        (i.cast (I.relaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t))
       )).summap t.fst.f
   · unfold FractionalOperation.tt Multiset.summap
     aesop
@@ -250,17 +240,17 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
   show
     List.ofFn (fun i : Fin x.toCanonicalRationalSolution.denominator =>
       (buildVertically (x.toCanonicalRationalSolution.numerators ◪⟨t.fst.app k, ·⟩)).get
-        (Fin.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution (t.fst.app k)) i)) ~
+        (i.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution (t.fst.app k)))) ~
     List.ofFn (fun i : Fin x.toCanonicalRationalSolution.denominator =>
       (buildVertically (x.toCanonicalRationalSolution.numerators ◩⟨t, ·⟩)).get
-        (Fin.cast (I.relaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t) i) k)
+        (i.cast (I.relaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t)) k)
   convert_to
     List.ofFn (fun i : Fin x.toCanonicalRationalSolution.denominator =>
       (buildVertically (x.toCanonicalRationalSolution.numerators ◪⟨t.fst.app k, ·⟩)).get
-        (Fin.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution (t.fst.app k)) i)) ~
+        (i.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution (t.fst.app k)))) ~
     (List.ofFn (fun i : Fin x.toCanonicalRationalSolution.denominator =>
       (buildVertically (x.toCanonicalRationalSolution.numerators ◩⟨t, ·⟩)).get
-        (Fin.cast (I.relaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t) i))).map (· k)
+        (i.cast (I.relaxBLP_denominator_eq_height_joint solution.toCanonicalRationalSolution t)))).map (· k)
   · aesop
   rw [List.ofFn_get_fin_cast, List.ofFn_get_fin_cast, List.map_flatten, List.map_map]
   show
@@ -304,12 +294,12 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
   rw [←Sum.elim_comp_inl_inr x.toCanonicalRationalSolution.toFunction] at key
   unfold Matrix.fromCols at key
   simp_rw [Matrix.of_apply] at key
-  rw [Sum.fun_elim_index, sumElim_dotProduct_sumElim] at key
+  rw [sumElim_dotProduct_sumElim] at key
   simp_rw [dotProduct, Matrix.of_apply, Function.comp_apply] at key
   change key to
     (Finset.univ.sigma ↓Finset.univ).sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
       (if ht : t = tᵥ.fst then
-        if tᵥ.snd (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a then 1 else 0
+        if tᵥ.snd (k.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = a then 1 else 0
         else 0) *
       x.toCanonicalRationalSolution.toFunction ◩tᵥ) +
     Finset.univ.sum (fun p : ι × D =>
@@ -319,7 +309,7 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
   have key' :
     (Finset.univ.sigma ↓Finset.univ).sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
       (if ht : t = tᵥ.fst then
-        if tᵥ.snd (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a then 1 else 0
+        if tᵥ.snd (k.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = a then 1 else 0
         else 0) *
       x.toCanonicalRationalSolution.toFunction ◩tᵥ) +
     Finset.univ.sum (fun p : ι × D =>
@@ -334,7 +324,7 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
     Finset.univ.sum (fun cₜ : I =>
       (Finset.univ.sum (fun cᵥ : Fin cₜ.fst.n → D =>
         (if ht : t = cₜ then
-          if cᵥ (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a then 1 else 0
+          if cᵥ (k.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = a then 1 else 0
           else 0) *
         x.toCanonicalRationalSolution.toFunction ◩⟨cₜ, cᵥ⟩
       ))) =
@@ -343,7 +333,7 @@ private lemma Multiset.ToType.cost_improved_by_isSymmetricFractionalPolymorphism
     Finset.univ.sum (fun cₜ : I =>
       (if ht : t = cₜ then
         Finset.univ.sum (fun cᵥ : Fin cₜ.fst.n → D =>
-          if cᵥ (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) k) = a
+          if cᵥ (k.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht)) = a
           then x.toCanonicalRationalSolution.toFunction ◩⟨cₜ, cᵥ⟩ else 0)
        else 0
       )) =
@@ -373,8 +363,8 @@ private lemma ValuedCSP.Instance.relaxBLP_improved_by_isSymmetricFractionalPolym
     {ω : FractionalOperation D x.toCanonicalRationalSolution.denominator}
     (sfp : FractionalOperation.IsSymmetricFractionalPolymorphismFor ω Γ) :
     (ω.tt (fun i : Fin _ => fun j : ι =>
-        (buildVertically (fun d => x.toCanonicalRationalSolution.numerators ◪⟨j, d⟩)).get
-          (Fin.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution j) i)
+        (buildVertically (fun d : D => x.toCanonicalRationalSolution.numerators ◪⟨j, d⟩)).get
+          (i.cast (I.relaxBLP_denominator_eq_height_marginal solution.toCanonicalRationalSolution j))
       )).summap I.evalSolution ≤
     ω.size • (I.RelaxBLP.c ⬝ᵥ x) := by
   -- LHS:
