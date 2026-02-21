@@ -45,7 +45,7 @@ def ValuedCSP.Instance.RelaxBLP (I : Γ.Instance ι) :
       (Matrix.of fun ⟨cₜ, cₙ, cₐ⟩ => fun ⟨t, v⟩ =>
         if ht : cₜ = t
         then
-          if v (@Fin.cast cₜ.fst.n t.fst.n (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
+          if v (Fin.cast (congr_arg (ValuedCSP.Term.n ∘ Sigma.fst) ht) cₙ) = cₐ
           then 1
           else 0
         else 0)
