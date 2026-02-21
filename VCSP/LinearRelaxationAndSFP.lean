@@ -402,3 +402,5 @@ theorem ValuedCSP.Instance.relaxBLP_improved_of_allSymmetricFractionalPolymorphi
     apply Multiset.summap_lt_summap valid.tt_nonempty
     simp [contr]
   exact impos.false
+
+#print axioms ValuedCSP.Instance.relaxBLP_improved_of_allSymmetricFractionalPolymorphisms

@@ -253,7 +253,7 @@ lemma ValuedCSP.Instance.relaxBLP_solutionVCSPtoBLP_bottom_left (I : Γ.Instance
   show
     Finset.univ.sum (fun (tᵥ : Σ t : I, (Fin t.fst.n → D)) =>
       if cₜ = tᵥ.fst then
-        if ∀ (i : Fin tᵥ.fst.fst.n), tᵥ.snd i = x (tᵥ.fst.fst.app i) then 1 else 0
+        if ∀ i : Fin tᵥ.fst.fst.n, tᵥ.snd i = x (tᵥ.fst.fst.app i) then 1 else 0
         else 0) =
     1
   simp_rw [←ite_and]
