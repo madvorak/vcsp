@@ -32,7 +32,7 @@ lemma FractionalOperation.IsFractionalPolymorphismFor.expressesVCSP [LinearOrder
         (Finset.exists_mem_eq_inf' Finset.univ_nonempty
           (fun d : D => ω.size • f (Matrix.vecCons d (x i)))
         ).choose
-    specialize ih (fun i j => Matrix.vecCons (z i) (x i) j)
+    specialize ih (fun i : Fin m => Matrix.vecCons (z i) (x i))
     rw [Multiset.nsmul_summap, Finset.smul_sum] at ih
     convert_to
       (ω.tt x).summap (fun yᵢ : Fin n → D =>
